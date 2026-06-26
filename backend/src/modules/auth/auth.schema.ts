@@ -1,6 +1,5 @@
 import { z } from "zod";
-
-const STUDENT_EMAIL_DOMAINS = ["university.edu", "student.ac.lk"]; // extend as needed
+import { STUDENT_EMAIL_DOMAINS } from "../../common/config/student-domains";
 
 export const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
@@ -24,5 +23,5 @@ export const RefreshSchema = z.object({
 });
 
 export type RegisterDto = z.infer<typeof RegisterSchema>;
-export type LoginDto = z.infer<typeof LoginSchema>;
-export type RefreshDto = z.infer<typeof RefreshSchema>;
+export type LoginDto    = z.infer<typeof LoginSchema>;
+export type RefreshDto  = z.infer<typeof RefreshSchema>;

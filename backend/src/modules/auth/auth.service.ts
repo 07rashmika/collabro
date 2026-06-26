@@ -28,12 +28,13 @@ export class AuthService {
         email: dto.email,
         passwordHash,
       },
-      select: { id: true, name: true, email: true, createdAt: true },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
 
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
       sub: user.id,
       email: user.email,
+      role: user.role,
     });
 
     await this.prisma.client.refreshToken.create({
@@ -50,6 +51,13 @@ export class AuthService {
   async login(dto: LoginDto) {
     const user = await this.prisma.client.user.findUnique({
       where: { email: dto.email },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        passwordHash: true,
+      },
     });
 
     if (!user) {
@@ -64,6 +72,7 @@ export class AuthService {
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
       sub: user.id,
       email: user.email,
+      role: user.role,
     });
 
     // Rotate: invalidate all old refresh tokens for this user, issue new one
@@ -100,6 +109,7 @@ export class AuthService {
       this.tokenUtil.generateTokenPair({
         sub: stored.user.id,
         email: stored.user.email,
+        role: stored.user.role,
       });
 
     // Rotate refresh token

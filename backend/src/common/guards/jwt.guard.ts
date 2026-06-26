@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from "express";
-import { TokenUtil } from "../../common/utils/token.util";
+import { TokenUtil } from "../utils/token.util";
 
 const tokenUtil = new TokenUtil();
 
-export function authenticate(req: Request, res: Response, next: NextFunction) {
+export function jwtGuard(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader?.startsWith("Bearer ")) {
@@ -21,12 +21,4 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 
   req.user = payload;
   next();
-}
-
-declare global {
-  namespace Express {
-    interface Request {
-      user?: { sub: string; email: string; role: string };
-    }
-  }
 }

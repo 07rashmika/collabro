@@ -6,14 +6,25 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  STUDENT
+  ADMIN
+}
+
 model User {
   id           String         @id @default(cuid())
   name         String
   email        String         @unique
   passwordHash String
+  role          Role           @default(STUDENT)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  profile       Profile?
+  notes         Note[]
+  createdSessions      Session[]            @relation("CreatedSessions")
+  sessionParticipants  SessionParticipant[]
+  messages             Message[]
 }
 
 model RefreshToken {
@@ -23,4 +34,99 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Skill {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  category      String
+  createdAt     DateTime       @default(now())
+  profileSkills ProfileSkill[]
+}
+
+model Profile {
+  id           String         @id @default(cuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?
+  learningGoal String?
+  teachGoal    String?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  skills       ProfileSkill[]
+}
+
+model ProfileSkill {
+  id        String   @id @default(cuid())
+  profileId String
+  skillId   String
+  level     Level
+  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  skill     Skill    @relation(fields: [skillId], references: [id])
+
+  @@unique([profileId, skillId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  tags      String[]
+  isPublic  Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Session {
+  id          String        @id @default(cuid())
+  title       String
+  type        SessionType   @default(TEXT)
+  status      SessionStatus @default(ACTIVE)
+  summary     String?       // AI generated summary — filled later
+  createdBy   String
+  creator     User          @relation("CreatedSessions", fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  messages    Message[]
+  participants SessionParticipant[]
+}
+
+model SessionParticipant {
+  id        String   @id @default(cuid())
+  sessionId String
+  userId    String
+  joinedAt  DateTime @default(now())
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  sessionId String
+  senderId  String
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Level {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum SessionStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum SessionType {
+  TEXT
+  VIDEO
 }

@@ -4,6 +4,7 @@ import { addDays } from "date-fns";
 interface TokenPayload {
   sub: string;
   email: string;
+  role: string; 
 }
 
 const ACCESS_SECRET  = process.env.JWT_ACCESS_SECRET!;
