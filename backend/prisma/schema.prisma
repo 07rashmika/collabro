@@ -25,6 +25,7 @@ model User {
   createdSessions      Session[]            @relation("CreatedSessions")
   sessionParticipants  SessionParticipant[]
   messages             Message[]
+  savedSessions        SavedSession[]
 }
 
 model RefreshToken {
@@ -42,18 +43,28 @@ model Skill {
   category      String
   createdAt     DateTime       @default(now())
   profileSkills ProfileSkill[]
+  sessionTags   SessionTag[]
+}
+
+model StudyArea {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now())
+  profileStudyAreas  ProfileStudyArea[]
 }
 
 model Profile {
-  id           String         @id @default(cuid())
-  userId       String         @unique
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio          String?
   learningGoal String?
   teachGoal    String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  interests    String[]            @default([])
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   skills       ProfileSkill[]
+  studyAreas   ProfileStudyArea[]
 }
 
 model ProfileSkill {
@@ -67,16 +78,35 @@ model ProfileSkill {
   @@unique([profileId, skillId])
 }
 
+model ProfileStudyArea {
+  id          String    @id @default(cuid())
+  profileId   String
+  studyAreaId String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  studyArea   StudyArea @relation(fields: [studyAreaId], references: [id])
+
+  @@unique([profileId, studyAreaId])
+}
+
 model Note {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   title     String
   content   String
   tags      String[]
-  isPublic  Boolean  @default(false)
+  isPublic  Boolean     @default(false)
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  photos    NotePhoto[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model NotePhoto {
+  id        String   @id @default(cuid())
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  url       String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Session {
@@ -85,12 +115,44 @@ model Session {
   type        SessionType   @default(TEXT)
   status      SessionStatus @default(ACTIVE)
   summary     String?       // AI generated summary — filled later
+  scheduledAt DateTime?     // set for sessions created to run at a future time
+  joinCode    String        @unique @default(cuid())
+  // Reversibly encrypted (AES-256-GCM, see common/utils/crypto.ts) rather
+  // than hashed — the creator can look the plaintext password back up from
+  // the session info panel, which a one-way hash can't support.
+  encryptedPassword String?
+  isPublic    Boolean       @default(false)
   createdBy   String
   creator     User          @relation("CreatedSessions", fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   messages    Message[]
   participants SessionParticipant[]
+  tags        SessionTag[]
+  savedBy     SavedSession[]
+}
+
+model SessionTag {
+  id        String  @id @default(cuid())
+  sessionId String
+  skillId   String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  skill     Skill   @relation(fields: [skillId], references: [id])
+
+  @@unique([sessionId, skillId])
+}
+
+/// A user's bookmark of a session — surfaced in the Sessions tab under
+/// "Saved" regardless of whether they're a participant.
+model SavedSession {
+  id        String   @id @default(cuid())
+  userId    String
+  sessionId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sessionId])
 }
 
 model SessionParticipant {

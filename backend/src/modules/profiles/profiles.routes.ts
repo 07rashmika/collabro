@@ -25,6 +25,10 @@ router.delete("/", (req, res) => profilesController.deleteProfile(req, res));
 router.post("/skills", (req, res) => profilesController.addSkill(req, res));
 router.delete("/skills", (req, res) => profilesController.removeSkill(req, res));
 
+// Study areas
+router.post("/study-areas", (req, res) => profilesController.addStudyArea(req, res));
+router.delete("/study-areas", (req, res) => profilesController.removeStudyArea(req, res));
+
 // View another student's profile
 router.get("/:userId", (req, res) =>
   profilesController.getProfileByUserId(req, res)

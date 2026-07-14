@@ -3,6 +3,10 @@ export interface SkillWithLevel {
   level: "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
 }
 
+export interface StudyAreaRef {
+  studyArea: { id: string; name: string };
+}
+
 export interface StudentProfile {
   userId: string;
   name: string;
@@ -10,7 +14,9 @@ export interface StudentProfile {
   bio: string | null;
   learningGoal: string | null;
   teachGoal: string | null;
+  interests: string[];
   skills: SkillWithLevel[];
+  studyAreas: StudyAreaRef[];
 }
 
 export interface MatchScore {
@@ -19,7 +25,11 @@ export interface MatchScore {
   skillOverlapScore: number;
   complementaryScore: number;
   goalAlignmentScore: number;
+  studyAreaOverlapScore: number;
+  interestOverlapScore: number;
   matchedSkills: string[];
   complementarySkills: string[];
+  matchedStudyAreas: string[];
+  matchedInterests: string[];
   aiReason: string;
 }

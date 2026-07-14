@@ -17,7 +17,15 @@ router.use(jwtGuard, studentDomainGuard);
 
 // ── Read-only (all students) ──────────────────────────────────────────────────
 router.get("/categories", (req, res) => skillsController.getCategories(req, res));
+// Live suggestions from the external apilayer Skills API — registered
+// before "/:id" so "search" isn't swallowed as an id lookup.
+router.get("/search",     (req, res) => skillsController.searchSkills(req, res));
 router.get("/",           (req, res) => skillsController.getAllSkills(req, res));
+
+// Lets a student type a skill that isn't in the catalog yet — creates it
+// if missing (case-insensitive dedupe) instead of requiring an admin.
+router.post("/find-or-create", (req, res) => skillsController.findOrCreateSkill(req, res));
+
 router.get("/:id",        (req, res) => skillsController.getSkillById(req, res));
 
 // ── Write operations (admin only) ─────────────────────────────────────────────

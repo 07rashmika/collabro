@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Collabro (Android emulator)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "frontend",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=API_BASE_URL=http://10.0.2.2:3000"]
+    },
+    {
+      "name": "Collabro (Chrome/Linux desktop, backend on localhost)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "frontend",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=API_BASE_URL=http://localhost:3000"]
+    },
+    {
+      "name": "Collabro (Physical device, backend on LAN)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": "frontend",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=API_BASE_URL=http://192.168.1.4:3000"]
+    }
+  ]
+}

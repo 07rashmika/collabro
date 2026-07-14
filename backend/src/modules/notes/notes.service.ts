@@ -1,3 +1,5 @@
+import fs from "fs/promises";
+import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
 import { CreateNoteDto, UpdateNoteDto, NoteQueryDto } from "./notes.schema";
@@ -13,7 +15,13 @@ const noteSelect = {
   author: {
     select: { id: true, name: true, email: true },
   },
+  photos: {
+    select: { id: true, url: true, createdAt: true },
+    orderBy: { createdAt: "asc" as const },
+  },
 } as const;
+
+const UPLOADS_ROOT = path.join(__dirname, "../../../uploads");
 
 export class NotesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -193,5 +201,59 @@ export class NotesService {
     });
 
     return [...new Set(notes.flatMap((n) => n.tags))].sort();
+  }
+
+  async addPhotos(noteId: string, userId: string, files: Express.Multer.File[]) {
+    const note = await this.prisma.client.note.findUnique({
+      where: { id: noteId },
+    });
+
+    if (!note) {
+      throw new AppError("Note not found", 404);
+    }
+
+    if (note.authorId !== userId) {
+      throw new AppError("You can only add photos to your own notes", 403);
+    }
+
+    await this.prisma.client.notePhoto.createMany({
+      data: files.map((file) => ({
+        noteId,
+        url: `/uploads/notes/${file.filename}`,
+      })),
+    });
+
+    return this.prisma.client.note.findUnique({
+      where: { id: noteId },
+      select: noteSelect,
+    });
+  }
+
+  async deletePhoto(noteId: string, photoId: string, userId: string) {
+    const photo = await this.prisma.client.notePhoto.findUnique({
+      where: { id: photoId },
+      include: { note: true },
+    });
+
+    if (!photo || photo.noteId !== noteId) {
+      throw new AppError("Photo not found", 404);
+    }
+
+    if (photo.note.authorId !== userId) {
+      throw new AppError("You can only delete photos from your own notes", 403);
+    }
+
+    await this.prisma.client.notePhoto.delete({ where: { id: photoId } });
+
+    const filePath = path.join(UPLOADS_ROOT, "notes", path.basename(photo.url));
+    await fs.unlink(filePath).catch(() => {
+      // File already gone (or never existed) — the DB row is the source of
+      // truth, so a missing file on disk shouldn't fail the request.
+    });
+
+    return this.prisma.client.note.findUnique({
+      where: { id: noteId },
+      select: noteSelect,
+    });
   }
 }

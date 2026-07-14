@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ZodError, z } from "zod";
 import { SkillsService } from "./skills.service";
-import { CreateSkillSchema, UpdateSkillSchema } from "./skills.schema";
+import { CreateSkillSchema, UpdateSkillSchema, FindOrCreateSkillSchema } from "./skills.schema";
 
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
@@ -31,6 +31,21 @@ export class SkillsController {
     }
   }
 
+  async searchSkills(req: Request, res: Response) {
+    try {
+      const q = (req.query.q as string | undefined)?.trim();
+      if (!q) {
+        res.status(400).json({ message: "Query param 'q' is required" });
+        return;
+      }
+      const count = req.query.count ? Number(req.query.count) : undefined;
+      const skills = await this.skillsService.searchExternalSkills(q, count);
+      res.status(200).json(skills);
+    } catch (err) {
+      res.status(502).json({ message: (err as Error).message });
+    }
+  }
+
   async getCategories(req: Request, res: Response) {
     try {
       const categories = await this.skillsService.getCategories();
@@ -53,6 +68,22 @@ export class SkillsController {
         return;
       }
       res.status(409).json({ message: (err as Error).message });
+    }
+  }
+
+  async findOrCreateSkill(req: Request, res: Response) {
+    try {
+      const dto = FindOrCreateSkillSchema.parse(req.body);
+      const skill = await this.skillsService.findOrCreateSkill(dto);
+      res.status(200).json(skill);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: z.treeifyError(err) });
+        return;
+      }
+      res.status(500).json({ message: (err as Error).message });
     }
   }
 

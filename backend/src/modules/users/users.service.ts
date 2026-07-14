@@ -12,10 +12,16 @@ const publicUserSelect = {
       bio: true,
       learningGoal: true,
       teachGoal: true,
+      interests: true,
       skills: {
         select: {
           level: true,
           skill: { select: { id: true, name: true, category: true } },
+        },
+      },
+      studyAreas: {
+        select: {
+          studyArea: { select: { id: true, name: true } },
         },
       },
     },

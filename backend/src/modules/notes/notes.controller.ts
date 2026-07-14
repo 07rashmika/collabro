@@ -92,4 +92,26 @@ export class NotesController {
       res.status(200).json(tags);
     } catch (err) { handleError(res, err); }
   }
+
+  async uploadPhotos(req: Request, res: Response) {
+    try {
+      const files = (req.files as Express.Multer.File[] | undefined) ?? [];
+      if (files.length === 0) {
+        throw new AppError("No photos provided", 400);
+      }
+      const note = await this.notesService.addPhotos(req.params.id as string, req.user!.sub, files);
+      res.status(201).json(note);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async deletePhoto(req: Request, res: Response) {
+    try {
+      const note = await this.notesService.deletePhoto(
+        req.params.id as string,
+        req.params.photoId as string,
+        req.user!.sub
+      );
+      res.status(200).json(note);
+    } catch (err) { handleError(res, err); }
+  }
 }

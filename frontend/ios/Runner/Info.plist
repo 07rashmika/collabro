@@ -49,6 +49,12 @@
 	</dict>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>Collabro uses the camera to scan text from photos and for video call sessions.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Collabro needs access to your photo library to scan text from images.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Collabro uses the microphone for video call sessions.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

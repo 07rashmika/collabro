@@ -4,6 +4,8 @@ import {
   UpdateProfileDto,
   AddSkillDto,
   RemoveSkillDto,
+  AddStudyAreaDto,
+  RemoveStudyAreaDto,
 } from "./profiles.schema";
 
 const profileSelect = {
@@ -11,6 +13,7 @@ const profileSelect = {
   bio: true,
   learningGoal: true,
   teachGoal: true,
+  interests: true,
   createdAt: true,
   updatedAt: true,
   user: {
@@ -28,6 +31,16 @@ const profileSelect = {
           id: true,
           name: true,
           category: true,
+        },
+      },
+    },
+  },
+  studyAreas: {
+    select: {
+      studyArea: {
+        select: {
+          id: true,
+          name: true,
         },
       },
     },
@@ -78,12 +91,18 @@ export class ProfilesService {
         bio: dto.bio,
         learningGoal: dto.learningGoal,
         teachGoal: dto.teachGoal,
+        interests: dto.interests,
         skills: dto.skills
           ? {
               create: dto.skills.map((s) => ({
                 skillId: s.skillId,
                 level: s.level,
               })),
+            }
+          : undefined,
+        studyAreas: dto.studyAreaIds
+          ? {
+              create: dto.studyAreaIds.map((studyAreaId) => ({ studyAreaId })),
             }
           : undefined,
       },
@@ -108,6 +127,7 @@ export class ProfilesService {
         bio: dto.bio,
         learningGoal: dto.learningGoal,
         teachGoal: dto.teachGoal,
+        interests: dto.interests,
       },
       select: profileSelect,
     });
@@ -202,6 +222,87 @@ export class ProfilesService {
         profileId_skillId: {
           profileId: profile.id,
           skillId: dto.skillId,
+        },
+      },
+    });
+  }
+
+  async addStudyArea(userId: string, dto: AddStudyAreaDto) {
+    const profile = await this.prisma.client.profile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error("Profile not found — create your profile first");
+    }
+
+    const studyArea = await this.prisma.client.studyArea.findUnique({
+      where: { id: dto.studyAreaId },
+    });
+
+    if (!studyArea) {
+      throw new Error("Study area not found");
+    }
+
+    const existing = await this.prisma.client.profileStudyArea.findUnique({
+      where: {
+        profileId_studyAreaId: {
+          profileId: profile.id,
+          studyAreaId: dto.studyAreaId,
+        },
+      },
+    });
+
+    if (existing) {
+      return this.prisma.client.profileStudyArea.findUniqueOrThrow({
+        where: {
+          profileId_studyAreaId: {
+            profileId: profile.id,
+            studyAreaId: dto.studyAreaId,
+          },
+        },
+        select: { studyArea: { select: { id: true, name: true } } },
+      });
+    }
+
+    const profileStudyArea = await this.prisma.client.profileStudyArea.create({
+      data: {
+        profileId: profile.id,
+        studyAreaId: dto.studyAreaId,
+      },
+      select: { studyArea: { select: { id: true, name: true } } },
+    });
+
+    return profileStudyArea;
+  }
+
+  async removeStudyArea(userId: string, dto: RemoveStudyAreaDto) {
+    const profile = await this.prisma.client.profile.findUnique({
+      where: { userId },
+    });
+
+    if (!profile) {
+      throw new Error("Profile not found");
+    }
+
+    const existing = await this.prisma.client.profileStudyArea.findUnique({
+      where: {
+        profileId_studyAreaId: {
+          profileId: profile.id,
+          studyAreaId: dto.studyAreaId,
+        },
+      },
+    });
+
+    if (!existing) {
+      throw new Error("Study area not on your profile");
+    }
+
+    await this.prisma.client.profileStudyArea.delete({
+      where: {
+        profileId_studyAreaId: {
+          profileId: profile.id,
+          studyAreaId: dto.studyAreaId,
         },
       },
     });

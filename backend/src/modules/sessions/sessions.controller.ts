@@ -8,6 +8,8 @@ import {
   SendMessageSchema,
   SessionQuerySchema,
   MessageQuerySchema,
+  JoinByCodeSchema,
+  PageQuerySchema,
 } from "./sessions.schema";
 
 function handleError(res: Response, err: unknown) {
@@ -48,6 +50,51 @@ export class SessionsController {
       const dto     = CreateSessionSchema.parse(req.body);
       const session = await this.sessionsService.createSession(req.user!.sub, dto);
       res.status(201).json(session);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async joinByCode(req: Request, res: Response) {
+    try {
+      const dto     = JoinByCodeSchema.parse(req.body);
+      const session = await this.sessionsService.joinSessionByCode(req.user!.sub, dto);
+      res.status(200).json(session);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async discoverSessions(req: Request, res: Response) {
+    try {
+      const query  = PageQuerySchema.parse(req.query);
+      const result = await this.sessionsService.discoverPublicSessions(req.user!.sub, query);
+      res.status(200).json(result);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async getSavedSessions(req: Request, res: Response) {
+    try {
+      const query  = PageQuerySchema.parse(req.query);
+      const result = await this.sessionsService.getSavedSessions(req.user!.sub, query);
+      res.status(200).json(result);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async saveSession(req: Request, res: Response) {
+    try {
+      await this.sessionsService.saveSession(req.user!.sub, req.params.id as string);
+      res.status(204).send();
+    } catch (err) { handleError(res, err); }
+  }
+
+  async unsaveSession(req: Request, res: Response) {
+    try {
+      await this.sessionsService.unsaveSession(req.user!.sub, req.params.id as string);
+      res.status(204).send();
+    } catch (err) { handleError(res, err); }
+  }
+
+  async getSessionPassword(req: Request, res: Response) {
+    try {
+      const result = await this.sessionsService.getSessionPassword(req.params.id as string, req.user!.sub);
+      res.status(200).json(result);
     } catch (err) { handleError(res, err); }
   }
 
@@ -115,6 +162,13 @@ export class SessionsController {
     try {
       await this.sessionsService.deleteMessage(req.params.messageId as string, req.user!.sub);
       res.status(204).send();
+    } catch (err) { handleError(res, err); }
+  }
+
+  async getIceServers(req: Request, res: Response) {
+    try {
+      const result = await this.sessionsService.getIceServers(req.params.id as string, req.user!.sub);
+      res.status(200).json(result);
     } catch (err) { handleError(res, err); }
   }
 }
