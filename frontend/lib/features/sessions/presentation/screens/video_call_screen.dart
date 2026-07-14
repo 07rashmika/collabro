@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
@@ -252,7 +254,13 @@ class _VideoCallViewState extends State<_VideoCallView> {
                     );
                   }
                   if (state is CallDisconnected) {
-                    Navigator.of(context).pop();
+                    // A plain pop isn't reliable here: this listener can fire
+                    // while the session-info end drawer is still open (the
+                    // "End Session Permanently" button lives inside it), and
+                    // Navigator.pop() closes an open drawer first rather than
+                    // the route — leaving the now-dead call screen on screen.
+                    // Going straight to the Sessions tab sidesteps that.
+                    context.go(AppRoutes.sessions);
                   }
                 },
                 builder: (context, state) {

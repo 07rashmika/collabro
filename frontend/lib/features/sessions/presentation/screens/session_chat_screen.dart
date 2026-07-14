@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
@@ -165,7 +166,11 @@ class _SessionChatViewState extends State<_SessionChatView> {
         child: BlocListener<SessionsCubit, SessionsState>(
           listener: (context, state) {
             if (state is SessionSaved) {
-              context.pop();
+              // Not context.pop(): the "End Session Permanently" button
+              // lives inside the still-open end drawer at this point, and a
+              // plain pop closes that drawer rather than the route, leaving
+              // the now-closed session on screen. Go straight to Sessions.
+              context.go(AppRoutes.sessions);
             } else if (state is SessionsError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -241,7 +246,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                           backgroundColor: AppColors.warning,
                         ),
                       );
-                      context.pop();
+                      context.go(AppRoutes.sessions);
                     }
                   },
                   builder: (context, state) {
