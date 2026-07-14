@@ -1,6 +1,6 @@
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
-import { ICE_SERVERS }   from "./signaling/ice-servers.config";
+import { generateZegoToken04 } from "../../common/utils/zego-token.util";
 import { endRoom }       from "./signaling/room-registry";
 import { SignalingMessageType } from "./signaling/signaling.types";
 import {
@@ -16,6 +16,8 @@ import {
   JoinByCodeDto,
   PageQueryDto,
 } from "./sessions.schema";
+
+const ZEGO_TOKEN_TTL_SECONDS = 60 * 60; // 1 hour — re-requested per call join, not stored
 
 const sessionSelect = {
   id: true,
@@ -518,9 +520,15 @@ export class SessionsService {
     await this.prisma.client.message.delete({ where: { id: messageId } });
   }
 
-  // ── Video calling (WebRTC ICE config) ───────────────────────────────────
+  // ── Video calling (ZegoCloud) ───────────────────────────────────────────
 
-  async getIceServers(sessionId: string, userId: string) {
+  async getZegoToken(sessionId: string, userId: string) {
+    const appId = process.env.ZEGO_APP_ID;
+    const serverSecret = process.env.ZEGO_SERVER_SECRET;
+    if (!appId || !serverSecret) {
+      throw new AppError("Video calling is not configured on this server", 503);
+    }
+
     const session = await this.prisma.client.session.findUnique({
       where:   { id: sessionId },
       include: { participants: true },
@@ -537,6 +545,13 @@ export class SessionsService {
       throw new AppError("You are not a participant of this session", 403);
     }
 
-    return { iceServers: ICE_SERVERS };
+    const token = generateZegoToken04(
+      Number(appId),
+      userId,
+      serverSecret,
+      ZEGO_TOKEN_TTL_SECONDS
+    );
+
+    return { token, appId: Number(appId), roomId: sessionId };
   }
 }

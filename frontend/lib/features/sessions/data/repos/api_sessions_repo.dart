@@ -2,9 +2,9 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
-import '../../domain/entities/ice_server_config.dart';
 import '../../domain/entities/session_message.dart';
 import '../../domain/entities/study_session.dart';
+import '../../domain/entities/zego_call_credentials.dart';
 import '../../domain/repos/sessions_repo.dart';
 import '../sessions_endpoints.dart';
 
@@ -235,14 +235,14 @@ class ApiSessionsRepo implements SessionsRepo {
   }
 
   @override
-  Future<IceServersResponse> getIceServers(String sessionId) async {
+  Future<ZegoCallCredentials> getZegoCallCredentials(String sessionId) async {
     try {
-      final response = await apiClient.get(SessionsEndpoints.iceServers(sessionId));
-      return IceServersResponse.fromJson(response.data as Map<String, dynamic>);
+      final response = await apiClient.get(SessionsEndpoints.zegoToken(sessionId));
+      return ZegoCallCredentials.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
-      throw Exception('Fetching ICE servers failed: $e');
+      throw Exception('Fetching video call credentials failed: $e');
     }
   }
 }

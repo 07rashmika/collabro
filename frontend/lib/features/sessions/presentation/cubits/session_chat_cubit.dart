@@ -17,11 +17,11 @@ part 'session_chat_state.dart';
 /// sends go over the socket only, since the backend persists them there
 /// before broadcasting (sending over REST too would double-write).
 ///
-/// [signalingService] is connected/disposed here too: for a text-only
-/// session this Cubit is the sole owner of the socket. When a video call's
-/// chat drawer shares one [SignalingService] with a `VideoCallCubit`,
-/// `connect()`/`dispose()` on the shared instance are idempotent, so both
-/// owners calling them is safe.
+/// [signalingService] is connected/disposed here too. This Cubit is the
+/// sole owner of the socket in every case — video calls now use ZegoCloud's
+/// SDK for the call itself, so [SignalingService] only ever carries chat and
+/// session-ended notifications, never a second owner's offer/answer/ICE
+/// traffic. `connect()`/`dispose()` are idempotent regardless.
 class SessionChatCubit extends Cubit<SessionChatState> {
   final ChatSocketService chatSocketService;
   final SignalingService signalingService;

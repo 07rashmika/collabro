@@ -165,9 +165,9 @@ export class SessionsController {
     } catch (err) { handleError(res, err); }
   }
 
-  async getIceServers(req: Request, res: Response) {
+  async getZegoToken(req: Request, res: Response) {
     try {
-      const result = await this.sessionsService.getIceServers(req.params.id as string, req.user!.sub);
+      const result = await this.sessionsService.getZegoToken(req.params.id as string, req.user!.sub);
       res.status(200).json(result);
     } catch (err) { handleError(res, err); }
   }

@@ -57,9 +57,9 @@ router.delete("/:id/messages/:messageId", (req, res) =>
   sessionsController.deleteMessage(req, res)
 );
 
-// Video calling (WebRTC ICE config)
-router.get("/:id/ice-servers", (req, res) =>
-  sessionsController.getIceServers(req, res)
+// Video calling (ZegoCloud)
+router.get("/:id/zego-token", (req, res) =>
+  sessionsController.getZegoToken(req, res)
 );
 
 export default router;

@@ -1,6 +1,6 @@
-import '../entities/ice_server_config.dart';
 import '../entities/session_message.dart';
 import '../entities/study_session.dart';
+import '../entities/zego_call_credentials.dart';
 
 abstract class SessionsRepo {
   Future<List<StudySession>> getMySessions({
@@ -39,5 +39,5 @@ abstract class SessionsRepo {
   Future<SessionMessage> sendMessage(String sessionId, String content);
   Future<void> deleteMessage(String sessionId, String messageId);
 
-  Future<IceServersResponse> getIceServers(String sessionId);
+  Future<ZegoCallCredentials> getZegoCallCredentials(String sessionId);
 }
