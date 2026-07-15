@@ -55,8 +55,10 @@ class _NotesListViewState extends State<_NotesListView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -73,12 +75,12 @@ class _NotesListViewState extends State<_NotesListView> {
                     child: Text(
                       'My Notes',
                       textAlign: TextAlign.center,
-                      style: AppTypography.headlineMedium,
+                      style: typography.headlineMedium,
                     ),
                   ),
                   IconButton(
                     onPressed: _openEditor,
-                    icon: const Icon(Icons.add, color: AppColors.textPrimary),
+                    icon: Icon(Icons.add, color: colors.textPrimary),
                   ),
                 ],
               ),
@@ -94,9 +96,9 @@ class _NotesListViewState extends State<_NotesListView> {
                 child: BlocBuilder<NotesCubit, NotesState>(
                   builder: (context, state) {
                     if (state is NotesLoading || state is NotesInitial) {
-                      return const Center(
+                      return Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                       );
                     }
@@ -106,7 +108,7 @@ class _NotesListViewState extends State<_NotesListView> {
                         child: Text(
                           state.message,
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }
@@ -119,7 +121,7 @@ class _NotesListViewState extends State<_NotesListView> {
                         child: Text(
                           'No notes yet. Tap + to create your first one.',
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }

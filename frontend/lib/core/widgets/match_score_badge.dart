@@ -11,15 +11,17 @@ class MatchScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: colors.primaryGradient,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: Text(
         '$score% Match',
-        style: AppTypography.labelSmall.copyWith(
+        style: typography.labelSmall.copyWith(
           color: Colors.white,
           fontWeight: FontWeight.w700,
         ),

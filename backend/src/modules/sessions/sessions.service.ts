@@ -296,42 +296,63 @@ export class SessionsService {
     };
   }
 
-  /// Public sessions the caller isn't already in, upcoming, whose tags
-  /// overlap with the caller's own skills — the feed that surfaces on the
-  /// Home tab's Upcoming Sessions alongside the user's own sessions.
+  /// Public sessions the caller isn't already in, upcoming, ranked by how
+  /// many of a session's skill tags overlap with the caller's own profile
+  /// skills — the more relevant a session is to what the caller is
+  /// learning, the earlier it surfaces, ahead of raw scheduling order. With
+  /// no `search` a skill-match is also required to appear at all (the feed
+  /// that surfaces on the Home tab's Upcoming Sessions); with a `search`
+  /// term (Discovery tab) that gate is dropped in favor of a title search,
+  /// so it works for callers with no skills on their profile, with skill
+  /// overlap only affecting order.
   async discoverPublicSessions(userId: string, query: PageQueryDto) {
-    const { page, limit } = query;
+    const { search, page, limit } = query;
     const skip = (page - 1) * limit;
 
     const myProfile = await this.prisma.client.profile.findUnique({
       where:  { userId },
       select: { skills: { select: { skillId: true } } },
     });
-    const mySkillIds = myProfile?.skills.map((s) => s.skillId) ?? [];
+    const mySkillIds = new Set(myProfile?.skills.map((s) => s.skillId) ?? []);
 
-    if (mySkillIds.length === 0) {
-      return { sessions: [], meta: { total: 0, page, limit, totalPages: 0 } };
-    }
-
-    const where = {
+    const baseWhere = {
       isPublic:    true,
       status:      "ACTIVE" as const,
       scheduledAt: { gte: new Date() },
       createdBy:   { not: userId },
       participants: { none: { userId } },
-      tags: { some: { skillId: { in: mySkillIds } } },
     };
 
-    const [sessions, total] = await Promise.all([
-      this.prisma.client.session.findMany({
-        where,
-        select:  sessionSelect,
-        orderBy: { scheduledAt: "asc" },
-        skip,
-        take: limit,
-      }),
-      this.prisma.client.session.count({ where }),
-    ]);
+    let where: typeof baseWhere & Record<string, unknown> = baseWhere;
+
+    if (search) {
+      where = { ...baseWhere, title: { contains: search, mode: "insensitive" as const } };
+    } else {
+      if (mySkillIds.size === 0) {
+        return { sessions: [], meta: { total: 0, page, limit, totalPages: 0 } };
+      }
+
+      where = { ...baseWhere, tags: { some: { skillId: { in: [...mySkillIds] } } } };
+    }
+
+    // Ranking needs the full matching set scored before it can be paged, so
+    // this fetches everything the where-clause allows rather than a single
+    // DB page — fine at this app's scale (mirrors MatchingService).
+    const matches = await this.prisma.client.session.findMany({
+      where,
+      select:  sessionSelect,
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    const scored = matches
+      .map((session) => ({
+        session,
+        score: session.tags.filter((t) => mySkillIds.has(t.skill.id)).length,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const total = scored.length;
+    const sessions = scored.slice(skip, skip + limit).map((s) => s.session);
 
     const saved = await this.savedSessionIds(userId, sessions.map((s) => s.id));
     return {

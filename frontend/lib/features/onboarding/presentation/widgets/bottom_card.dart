@@ -26,6 +26,8 @@ class BottomCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final bottomPad = MediaQuery.of(context).padding.bottom;
 
     return Container(
@@ -35,13 +37,13 @@ class BottomCard extends StatelessWidget {
         AppSpacing.screenHorizontal,
         bottomPad + AppSpacing.xl,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundCard,
+      decoration: BoxDecoration(
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(AppSpacing.radiusXxl),
           topRight: Radius.circular(AppSpacing.radiusXxl),
         ),
-        border: Border(top: BorderSide(color: AppColors.border)),
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.max,
@@ -50,8 +52,8 @@ class BottomCard extends StatelessWidget {
             controller: pageController,
             count: onboardingPages.length,
             effect: ExpandingDotsEffect(
-              activeDotColor: AppColors.primary,
-              dotColor: AppColors.border,
+              activeDotColor: colors.primary,
+              dotColor: colors.border,
               dotHeight: 6,
               dotWidth: 6,
               expansionFactor: 4,
@@ -83,16 +85,16 @@ class BottomCard extends StatelessWidget {
             children: [
               Text(
                 'Already have an account? ',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
+                style: typography.bodySmall.copyWith(
+                  color: colors.textSecondary,
                 ),
               ),
               GestureDetector(
                 onTap: onSignIn,
                 child: Text(
                   'Sign In',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.primary,
+                  style: typography.bodySmall.copyWith(
+                    color: colors.primary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

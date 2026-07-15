@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/network/api_client.dart';
 import 'package:frontend/core/router/app_router.dart';
+import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/features/auth/data/repos/api_auth_repo.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/matching/data/repos/api_matching_repo.dart';
@@ -13,10 +15,13 @@ import 'package:frontend/features/profiles/data/repos/api_profiles_repo.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 import 'package:frontend/features/sessions/data/repos/api_sessions_repo.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
+import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
 import 'package:frontend/features/skills/data/repos/api_skills_repo.dart';
 import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
 import 'package:frontend/features/study_areas/data/repos/api_study_areas_repo.dart';
 import 'package:frontend/features/study_areas/domain/repos/study_areas_repo.dart';
+import 'package:frontend/features/users/data/repos/api_users_repo.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -36,6 +41,7 @@ class MyApp extends StatelessWidget {
     final profilesRepo = ApiProfilesRepo(apiClient: apiClient);
     final skillsRepo = ApiSkillsRepo(apiClient: apiClient);
     final studyAreasRepo = ApiStudyAreasRepo(apiClient: apiClient);
+    final usersRepo = ApiUsersRepo(apiClient: apiClient);
 
     return MultiRepositoryProvider(
       providers: [
@@ -47,12 +53,22 @@ class MyApp extends StatelessWidget {
         RepositoryProvider<ProfilesRepo>(create: (_) => profilesRepo),
         RepositoryProvider<SkillsRepo>(create: (_) => skillsRepo),
         RepositoryProvider<StudyAreasRepo>(create: (_) => studyAreasRepo),
+        RepositoryProvider<UsersRepo>(create: (_) => usersRepo),
       ],
-      child: MaterialApp.router(
-        title: 'Collabro',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-        routerConfig: AppRouter.router,
+      child: BlocProvider(
+        create: (_) => ThemeCubit(storage: storage),
+        child: BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return MaterialApp.router(
+              title: 'Collabro',
+              debugShowCheckedModeBanner: false,
+              theme: buildAppTheme(AppColors.light, Brightness.light),
+              darkTheme: buildAppTheme(AppColors.dark, Brightness.dark),
+              themeMode: themeMode,
+              routerConfig: AppRouter.router,
+            );
+          },
+        ),
       ),
     );
   }

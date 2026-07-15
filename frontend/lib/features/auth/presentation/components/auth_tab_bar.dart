@@ -51,6 +51,8 @@ class _Tab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return GestureDetector(
       onTap: isActive ? null : onTap,
       behavior: HitTestBehavior.opaque,
@@ -61,14 +63,14 @@ class _Tab extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: AppTypography.titleMedium.copyWith(
-                color: isActive ? AppColors.textPrimary : AppColors.textTertiary,
+              style: typography.titleMedium.copyWith(
+                color: isActive ? colors.textPrimary : colors.textTertiary,
               ),
             ),
           ),
           Container(
             height: 2,
-            color: isActive ? AppColors.textPrimary : Colors.transparent,
+            color: isActive ? colors.textPrimary : Colors.transparent,
           ),
         ],
       ),

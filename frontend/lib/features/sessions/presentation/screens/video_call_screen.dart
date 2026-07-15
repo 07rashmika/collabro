@@ -174,17 +174,19 @@ class _VideoCallViewState extends State<_VideoCallView> {
   }
 
   Future<void> _confirmEndSession(BuildContext context) async {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        title: const Text(
+        backgroundColor: colors.backgroundCard,
+        title: Text(
           'End session permanently?',
-          style: AppTypography.titleMedium,
+          style: typography.titleMedium,
         ),
-        content: const Text(
+        content: Text(
           'This closes the session for everyone and can\'t be undone.',
-          style: AppTypography.bodyMedium,
+          style: typography.bodyMedium,
         ),
         actions: [
           TextButton(
@@ -193,9 +195,9 @@ class _VideoCallViewState extends State<_VideoCallView> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
+            child: Text(
               'End Session',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: colors.error),
             ),
           ),
         ],
@@ -208,13 +210,15 @@ class _VideoCallViewState extends State<_VideoCallView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final isCreator =
         widget.currentUserId != null &&
         widget.currentUserId == widget.session.creatorId;
 
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       endDrawer: SessionInfoPanel(
         session: widget.session,
         currentUserId: widget.currentUserId,
@@ -229,7 +233,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             }
@@ -249,7 +253,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
-                        backgroundColor: AppColors.error,
+                        backgroundColor: colors.error,
                       ),
                     );
                   }
@@ -265,9 +269,9 @@ class _VideoCallViewState extends State<_VideoCallView> {
                 },
                 builder: (context, state) {
                   if (state is CallConnecting) {
-                    return const Center(
+                    return Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                        color: colors.primary,
                       ),
                     );
                   }
@@ -280,16 +284,16 @@ class _VideoCallViewState extends State<_VideoCallView> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.videocam_off_outlined,
-                            color: AppColors.error,
+                            color: colors.error,
                             size: 48,
                           ),
                           const SizedBox(height: AppSpacing.lg),
                           Text(
                             state.message,
                             textAlign: TextAlign.center,
-                            style: AppTypography.bodyMedium,
+                            style: typography.bodyMedium,
                           ),
                           const SizedBox(height: AppSpacing.xl),
                           PrimaryButton(
@@ -314,12 +318,12 @@ class _VideoCallViewState extends State<_VideoCallView> {
                 child: IconButton(
                   onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
                   tooltip: 'Session info',
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                   style: IconButton.styleFrom(
-                    backgroundColor: AppColors.overlay,
+                    backgroundColor: colors.overlay,
                   ),
                 ),
               ),
@@ -335,8 +339,8 @@ class _VideoCallViewState extends State<_VideoCallView> {
       children: [
         Column(
           children: [
-            if (state.isReconnecting) _buildReconnectingBanner(),
-            Expanded(child: _buildVideoGrid(state)),
+            if (state.isReconnecting) _buildReconnectingBanner(context),
+            Expanded(child: _buildVideoGrid(context, state)),
             _buildControls(context, state),
           ],
         ),
@@ -345,10 +349,11 @@ class _VideoCallViewState extends State<_VideoCallView> {
     );
   }
 
-  Widget _buildReconnectingBanner() {
+  Widget _buildReconnectingBanner(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
-      color: AppColors.warning,
+      color: colors.warning,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: const Text(
         'Reconnecting…',
@@ -358,7 +363,9 @@ class _VideoCallViewState extends State<_VideoCallView> {
     );
   }
 
-  Widget _buildVideoGrid(ActiveCallState state) {
+  Widget _buildVideoGrid(BuildContext context, ActiveCallState state) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final remoteEntries = _remoteRenderers.entries.toList();
     final isSharingScreen = state is ScreenSharing;
 
@@ -373,6 +380,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
             Expanded(
               child: _localRendererReady
                   ? _buildVideoTile(
+                      context,
                       renderer: _localRenderer,
                       participant: CallParticipant(
                         userId: 'local',
@@ -383,12 +391,12 @@ class _VideoCallViewState extends State<_VideoCallView> {
                       ),
                       mirror: !isSharingScreen,
                     )
-                  : const Center(
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                  : Center(
+                      child: CircularProgressIndicator(color: colors.primary),
                     ),
             ),
             const SizedBox(height: AppSpacing.sm),
-            Text('Waiting for others to join…', style: AppTypography.bodyMedium),
+            Text('Waiting for others to join…', style: typography.bodyMedium),
           ],
         ),
       );
@@ -414,6 +422,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
             final renderer = remoteEntries[i].value;
             final participant = _findParticipant(state.participants, userId);
             return _buildVideoTile(
+              context,
               renderer: renderer,
               participant: participant,
               mirror: false,
@@ -427,6 +436,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
             width: 100,
             height: 140,
             child: _buildVideoTile(
+              context,
               renderer: _localRenderer,
               participant: CallParticipant(
                 userId: 'local',
@@ -452,17 +462,20 @@ class _VideoCallViewState extends State<_VideoCallView> {
     return null;
   }
 
-  Widget _buildVideoTile({
+  Widget _buildVideoTile(
+    BuildContext context, {
     required RTCVideoRenderer renderer,
     required CallParticipant? participant,
     required bool mirror,
   }) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.backgroundCard,
-          border: Border.all(color: AppColors.border, width: 1.5),
+          color: colors.backgroundCard,
+          border: Border.all(color: colors.border, width: 1.5),
         ),
         child: Stack(
           fit: StackFit.expand,
@@ -474,10 +487,10 @@ class _VideoCallViewState extends State<_VideoCallView> {
                 objectFit: RTCVideoViewObjectFit.RTCVideoViewObjectFitCover,
               )
             else
-              const Center(
+              Center(
                 child: Icon(
                   Icons.videocam_off,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                   size: 32,
                 ),
               ),
@@ -491,7 +504,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.overlay,
+                    color: colors.overlay,
                     borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
                   ),
                   child: Row(
@@ -516,7 +529,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
                         padding: const EdgeInsets.only(left: 2),
                         child: Text(
                           participant.name,
-                          style: AppTypography.caption.copyWith(
+                          style: typography.caption.copyWith(
                             color: Colors.white,
                           ),
                         ),
@@ -532,6 +545,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
   }
 
   Widget _buildControls(BuildContext context, ActiveCallState state) {
+    final colors = AppColors.of(context);
     final cubit = context.read<VideoCallCubit>();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
@@ -539,17 +553,20 @@ class _VideoCallViewState extends State<_VideoCallView> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _controlButton(
+            context,
             icon: state.isMicMuted ? Icons.mic_off : Icons.mic,
             active: !state.isMicMuted,
             onPressed: cubit.toggleMic,
           ),
           _controlButton(
+            context,
             icon: state.isCameraOff ? Icons.videocam_off : Icons.videocam,
             active: !state.isCameraOff,
             onPressed: cubit.toggleCamera,
           ),
           if (!_isIOS)
             _controlButton(
+              context,
               icon: Icons.screen_share,
               active: state is ScreenSharing,
               onPressed: () {
@@ -562,20 +579,23 @@ class _VideoCallViewState extends State<_VideoCallView> {
             )
           else
             _controlButton(
+              context,
               icon: Icons.screen_share_outlined,
               active: false,
               onPressed: null,
               tooltip: 'Screen share isn\'t supported on iOS yet',
             ),
           _controlButton(
+            context,
             icon: Icons.chat_bubble_outline,
             active: _showChat,
             onPressed: () => setState(() => _showChat = !_showChat),
           ),
           _controlButton(
+            context,
             icon: Icons.call_end,
             active: false,
-            backgroundColor: AppColors.error,
+            backgroundColor: colors.error,
             onPressed: cubit.hangUp,
           ),
         ],
@@ -583,20 +603,22 @@ class _VideoCallViewState extends State<_VideoCallView> {
     );
   }
 
-  Widget _controlButton({
+  Widget _controlButton(
+    BuildContext context, {
     required IconData icon,
     required bool active,
     VoidCallback? onPressed,
     Color? backgroundColor,
     String? tooltip,
   }) {
+    final colors = AppColors.of(context);
     final button = IconButton(
       onPressed: onPressed,
       icon: Icon(icon, color: Colors.white),
       style: IconButton.styleFrom(
         backgroundColor:
             backgroundColor ??
-            (active ? AppColors.primary : AppColors.backgroundElevated),
+            (active ? colors.primary : colors.backgroundElevated),
         shape: const CircleBorder(),
         padding: const EdgeInsets.all(AppSpacing.md),
       ),
@@ -605,14 +627,16 @@ class _VideoCallViewState extends State<_VideoCallView> {
   }
 
   Widget _buildChatDrawer(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Positioned(
       left: 0,
       right: 0,
       bottom: 0,
       height: MediaQuery.of(context).size.height * 0.45,
       child: Container(
-        decoration: const BoxDecoration(
-          color: AppColors.backgroundMedium,
+        decoration: BoxDecoration(
+          color: colors.backgroundMedium,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(AppSpacing.radiusLg),
           ),
@@ -624,10 +648,10 @@ class _VideoCallViewState extends State<_VideoCallView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Chat', style: AppTypography.titleLarge),
+                  Text('Chat', style: typography.titleLarge),
                   IconButton(
                     onPressed: () => setState(() => _showChat = false),
-                    icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                    icon: Icon(Icons.close, color: colors.textPrimary),
                   ),
                 ],
               ),
@@ -636,9 +660,9 @@ class _VideoCallViewState extends State<_VideoCallView> {
               child: BlocBuilder<SessionChatCubit, SessionChatState>(
                 builder: (context, chatState) {
                   if (chatState is! ChatConnected) {
-                    return const Center(
+                    return Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.primary,
+                        color: colors.primary,
                       ),
                     );
                   }
@@ -666,6 +690,8 @@ class _VideoCallViewState extends State<_VideoCallView> {
   }
 
   Widget _buildChatInput(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final controller = TextEditingController();
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.sm),
@@ -674,13 +700,13 @@ class _VideoCallViewState extends State<_VideoCallView> {
           Expanded(
             child: TextField(
               controller: controller,
-              style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
+              style: typography.bodyMedium.copyWith(
+                color: colors.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: 'Message…',
                 filled: true,
-                fillColor: AppColors.backgroundInput,
+                fillColor: colors.backgroundInput,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.md,
                   vertical: AppSpacing.sm,
@@ -704,7 +730,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
               context.read<SessionChatCubit>().sendMessage(text);
               controller.clear();
             },
-            icon: const Icon(Icons.send, color: AppColors.primary),
+            icon: Icon(Icons.send, color: colors.primary),
           ),
         ],
       ),
@@ -720,6 +746,7 @@ class _CompactMessageRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final typography = AppTypography.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Align(
@@ -728,7 +755,7 @@ class _CompactMessageRow extends StatelessWidget {
           isMine
               ? message.content
               : '${message.senderName}: ${message.content}',
-          style: AppTypography.bodySmall,
+          style: typography.bodySmall,
         ),
       ),
     );

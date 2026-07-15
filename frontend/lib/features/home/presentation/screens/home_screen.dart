@@ -65,6 +65,7 @@ class _HomeView extends StatelessWidget {
   /// screen will let them in — tapping straight through would 403. Sessions
   /// the user already owns or participates in skip straight to navigation.
   Future<void> _openSession(BuildContext context, StudySession session) async {
+    final colors = AppColors.of(context);
     final alreadyJoined = session.participants.any((p) => p.userId == user.id);
     if (alreadyJoined) {
       context.push(AppRoutes.sessionDetail, extra: session);
@@ -91,7 +92,7 @@ class _HomeView extends StatelessWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppColors.error,
+            backgroundColor: colors.error,
           ),
         );
       }
@@ -99,17 +100,19 @@ class _HomeView extends StatelessWidget {
   }
 
   Future<String?> _promptForPassword(BuildContext context, String title) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final controller = TextEditingController();
     return showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        title: Text('Password required', style: AppTypography.titleMedium),
+        backgroundColor: colors.backgroundCard,
+        title: Text('Password required', style: typography.titleMedium),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('"$title" is password-protected.', style: AppTypography.bodyMedium),
+            Text('"$title" is password-protected.', style: typography.bodyMedium),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               label: 'Password',
@@ -136,8 +139,10 @@ class _HomeView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       drawer: HomeDrawer(user: user),
       body: SafeArea(
         child: Builder(
@@ -162,7 +167,7 @@ class _HomeView extends StatelessWidget {
                   ),
                   Expanded(
                     child: RefreshIndicator(
-                      color: AppColors.primary,
+                      color: colors.primary,
                       onRefresh: () => Future.wait([
                         context.read<MatchingCubit>().loadMatches(),
                         context.read<SessionsCubit>().loadUpcomingSessions(),
@@ -180,15 +185,13 @@ class _HomeView extends StatelessWidget {
                             const SizedBox(height: AppSpacing.lg),
                             AppSearchField(
                               hint: 'Search for subjects, partners, or...',
-                              onTap: () =>
-                                  showComingSoonSnackBar(context, 'Search'),
+                              onTap: () => context.go(AppRoutes.discovery),
                             ),
                             const SizedBox(height: AppSpacing.xxl),
                             DashboardSectionHeader(
                               title: 'Recommended Partners',
                               actionLabel: 'View All',
-                              onActionTap: () =>
-                                  showComingSoonSnackBar(context, 'Discovery'),
+                              onActionTap: () => context.go(AppRoutes.discovery),
                             ),
                             const SizedBox(height: AppSpacing.md),
                             const RecommendedPartnersList(),
@@ -203,13 +206,13 @@ class _HomeView extends StatelessWidget {
                               builder: (context, state) {
                                 if (state is SessionsLoading ||
                                     state is SessionsInitial) {
-                                  return const Padding(
-                                    padding: EdgeInsets.symmetric(
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
                                       vertical: AppSpacing.lg,
                                     ),
                                     child: Center(
                                       child: CircularProgressIndicator(
-                                        color: AppColors.primary,
+                                        color: colors.primary,
                                       ),
                                     ),
                                   );
@@ -222,7 +225,7 @@ class _HomeView extends StatelessWidget {
                                     ),
                                     child: Text(
                                       state.message,
-                                      style: AppTypography.bodySmall,
+                                      style: typography.bodySmall,
                                     ),
                                   );
                                 }
@@ -238,7 +241,7 @@ class _HomeView extends StatelessWidget {
                                     ),
                                     child: Text(
                                       'No upcoming sessions scheduled.',
-                                      style: AppTypography.bodySmall,
+                                      style: typography.bodySmall,
                                     ),
                                   );
                                 }

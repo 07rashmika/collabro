@@ -11,6 +11,8 @@ class AuthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Column(
       children: [
         SizedBox(
@@ -25,7 +27,7 @@ class AuthHeader extends StatelessWidget {
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primary.withValues(alpha: 0.25),
+                      colors.primary.withValues(alpha: 0.25),
                       Colors.transparent,
                     ],
                   ),
@@ -33,10 +35,10 @@ class AuthHeader extends StatelessWidget {
               ),
               ShaderMask(
                 shaderCallback: (bounds) =>
-                    AppColors.primaryGradient.createShader(bounds),
+                    colors.primaryGradient.createShader(bounds),
                 child: Text(
                   'Collabro',
-                  style: AppTypography.displayLarge.copyWith(
+                  style: typography.displayLarge.copyWith(
                     color: Colors.white,
                   ),
                 ),
@@ -48,8 +50,8 @@ class AuthHeader extends StatelessWidget {
         Text(
           tagline,
           textAlign: TextAlign.center,
-          style: AppTypography.bodyMedium.copyWith(
-            color: AppColors.textSecondary,
+          style: typography.bodyMedium.copyWith(
+            color: colors.textSecondary,
           ),
         ),
       ],

@@ -76,9 +76,11 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
   }
 
   Future<void> _scanText(BuildContext context) async {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusMd)),
       ),
@@ -87,13 +89,13 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: const Icon(Icons.photo_camera_outlined, color: AppColors.textPrimary),
-              title: Text('Take a photo', style: AppTypography.titleMedium),
+              leading: Icon(Icons.photo_camera_outlined, color: colors.textPrimary),
+              title: Text('Take a photo', style: typography.titleMedium),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library_outlined, color: AppColors.textPrimary),
-              title: Text('Choose from gallery', style: AppTypography.titleMedium),
+              leading: Icon(Icons.photo_library_outlined, color: colors.textPrimary),
+              title: Text('Choose from gallery', style: typography.titleMedium),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -113,9 +115,9 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
 
       if (scannedText.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't find any text in that image."),
-            backgroundColor: AppColors.error,
+          SnackBar(
+            content: const Text("Couldn't find any text in that image."),
+            backgroundColor: colors.error,
           ),
         );
         return;
@@ -130,7 +132,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to scan text: $e'),
-          backgroundColor: AppColors.error,
+          backgroundColor: colors.error,
         ),
       );
     } finally {
@@ -182,8 +184,10 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<NotesCubit, NotesState>(
           listener: (context, state) {
@@ -193,7 +197,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
               setState(() => _photos = state.note.photos);
             } else if (state is NotesError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+                SnackBar(content: Text(state.message), backgroundColor: colors.error),
               );
             }
           },
@@ -209,13 +213,13 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                     children: [
                       IconButton(
                         onPressed: () => context.pop(),
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       ),
                       Expanded(
                         child: Text(
                           _isEditing ? 'Edit Note' : 'New Note',
                           textAlign: TextAlign.center,
-                          style: AppTypography.headlineMedium,
+                          style: typography.headlineMedium,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -251,7 +255,7 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                   ),
                   if (_isEditing) ...[
                     const SizedBox(height: AppSpacing.lg),
-                    Text('Photos', style: AppTypography.titleMedium),
+                    Text('Photos', style: typography.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
                     BlocBuilder<NotesCubit, NotesState>(
                       builder: (context, state) {
@@ -279,17 +283,17 @@ class _NoteEditorViewState extends State<_NoteEditorView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Make public', style: AppTypography.titleMedium),
+                            Text('Make public', style: typography.titleMedium),
                             Text(
                               'Public notes can be discovered by other students.',
-                              style: AppTypography.bodySmall,
+                              style: typography.bodySmall,
                             ),
                           ],
                         ),
                       ),
                       Switch(
                         value: _isPublic,
-                        activeThumbColor: AppColors.primary,
+                        activeThumbColor: colors.primary,
                         onChanged: (value) => setState(() => _isPublic = value),
                       ),
                     ],

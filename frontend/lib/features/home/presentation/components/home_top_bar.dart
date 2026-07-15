@@ -18,20 +18,22 @@ class HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
           onPressed: onMenuTap,
-          icon: const Icon(Icons.menu, color: AppColors.textPrimary),
+          icon: Icon(Icons.menu, color: colors.textPrimary),
         ),
-        Text('Collabro', style: AppTypography.headlineMedium),
+        Text('Collabro', style: typography.headlineMedium),
         IconButton(
           onPressed: onNotificationsTap,
           icon: Stack(
             clipBehavior: Clip.none,
             children: [
-              const Icon(Icons.notifications_outlined, color: AppColors.textPrimary),
+              Icon(Icons.notifications_outlined, color: colors.textPrimary),
               if (hasUnreadNotifications)
                 Positioned(
                   right: 0,
@@ -39,8 +41,8 @@ class HomeTopBar extends StatelessWidget {
                   child: Container(
                     width: 8,
                     height: 8,
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
+                    decoration: BoxDecoration(
+                      color: colors.error,
                       shape: BoxShape.circle,
                     ),
                   ),

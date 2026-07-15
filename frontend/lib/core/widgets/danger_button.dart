@@ -17,9 +17,11 @@ class DangerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return TextButton(
       onPressed: onPressed,
-      style: TextButton.styleFrom(foregroundColor: AppColors.error),
+      style: TextButton.styleFrom(foregroundColor: colors.error),
       child: Row(
         mainAxisAlignment: .center,
         children: [
@@ -29,7 +31,7 @@ class DangerButton extends StatelessWidget {
           ],
           Text(
             label,
-            style: AppTypography.labelMedium.copyWith(color: AppColors.error),
+            style: typography.labelMedium.copyWith(color: colors.error),
           ),
         ],
       ),

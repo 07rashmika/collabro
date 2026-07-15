@@ -101,17 +101,19 @@ class _SessionChatViewState extends State<_SessionChatView> {
   }
 
   Future<void> _confirmEndSession(BuildContext context) async {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        title: const Text(
+        backgroundColor: colors.backgroundCard,
+        title: Text(
           'End session permanently?',
-          style: AppTypography.titleMedium,
+          style: typography.titleMedium,
         ),
-        content: const Text(
+        content: Text(
           'This closes the session for everyone and can\'t be undone.',
-          style: AppTypography.bodyMedium,
+          style: typography.bodyMedium,
         ),
         actions: [
           TextButton(
@@ -120,9 +122,9 @@ class _SessionChatViewState extends State<_SessionChatView> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
+            child: Text(
               'End Session',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: colors.error),
             ),
           ),
         ],
@@ -147,9 +149,11 @@ class _SessionChatViewState extends State<_SessionChatView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
       key: _scaffoldKey,
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       endDrawer: BlocBuilder<SessionChatCubit, SessionChatState>(
         builder: (context, state) {
           final currentUserId = state is ChatConnected ? state.currentUserId : null;
@@ -175,7 +179,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             }
@@ -190,9 +194,9 @@ class _SessionChatViewState extends State<_SessionChatView> {
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     Expanded(
@@ -201,14 +205,14 @@ class _SessionChatViewState extends State<_SessionChatView> {
                         children: [
                           Text(
                             widget.session.title,
-                            style: AppTypography.titleLarge,
+                            style: typography.titleLarge,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             '${widget.session.participants.length} participants'
                             '${_isClosed ? ' · Closed' : ''}',
-                            style: AppTypography.bodySmall,
+                            style: typography.bodySmall,
                           ),
                         ],
                       ),
@@ -216,15 +220,15 @@ class _SessionChatViewState extends State<_SessionChatView> {
                     IconButton(
                       onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
                       tooltip: 'Session info',
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.more_vert,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: AppSpacing.lg, color: AppColors.border),
+              Divider(height: AppSpacing.lg, color: colors.border),
               Expanded(
                 child: BlocConsumer<SessionChatCubit, SessionChatState>(
                   listener: (context, state) {
@@ -233,17 +237,17 @@ class _SessionChatViewState extends State<_SessionChatView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(state.message),
-                          backgroundColor: AppColors.error,
+                          backgroundColor: colors.error,
                         ),
                       );
                     }
                     if (state is ChatSessionEnded) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
+                        SnackBar(
+                          content: const Text(
                             'This session has been permanently ended.',
                           ),
-                          backgroundColor: AppColors.warning,
+                          backgroundColor: colors.warning,
                         ),
                       );
                       context.go(AppRoutes.sessions);
@@ -251,9 +255,9 @@ class _SessionChatViewState extends State<_SessionChatView> {
                   },
                   builder: (context, state) {
                     if (state is ChatConnecting) {
-                      return const Center(
+                      return Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                       );
                     }
@@ -263,7 +267,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                         child: Text(
                           state.message,
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }
@@ -277,7 +281,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                       return Center(
                         child: Text(
                           'No messages yet. Say hello!',
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }
@@ -319,18 +323,18 @@ class _SessionChatViewState extends State<_SessionChatView> {
                       Expanded(
                         child: TextField(
                           controller: _messageController,
-                          style: AppTypography.bodyLarge.copyWith(
-                            color: AppColors.textPrimary,
+                          style: typography.bodyLarge.copyWith(
+                            color: colors.textPrimary,
                           ),
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _send(),
                           decoration: InputDecoration(
                             hintText: 'Type a message...',
-                            hintStyle: AppTypography.bodyLarge.copyWith(
-                              color: AppColors.textHint,
+                            hintStyle: typography.bodyLarge.copyWith(
+                              color: colors.textHint,
                             ),
                             filled: true,
-                            fillColor: AppColors.backgroundInput,
+                            fillColor: colors.backgroundInput,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: AppSpacing.lg,
                               vertical: AppSpacing.md,
@@ -339,24 +343,24 @@ class _SessionChatViewState extends State<_SessionChatView> {
                               borderRadius: BorderRadius.circular(
                                 AppSpacing.radiusFull,
                               ),
-                              borderSide: const BorderSide(
-                                color: AppColors.border,
+                              borderSide: BorderSide(
+                                color: colors.border,
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(
                                 AppSpacing.radiusFull,
                               ),
-                              borderSide: const BorderSide(
-                                color: AppColors.border,
+                              borderSide: BorderSide(
+                                color: colors.border,
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(
                                 AppSpacing.radiusFull,
                               ),
-                              borderSide: const BorderSide(
-                                color: AppColors.primary,
+                              borderSide: BorderSide(
+                                color: colors.primary,
                               ),
                             ),
                           ),
@@ -366,7 +370,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                       IconButton(
                         onPressed: _send,
                         style: IconButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: colors.primary,
                           shape: const CircleBorder(),
                         ),
                         icon: const Icon(Icons.send, color: Colors.white),

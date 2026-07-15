@@ -33,17 +33,19 @@ class AppBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       height: AppSpacing.bottomNavHeight,
-      decoration: const BoxDecoration(
-        color: AppColors.backgroundCard,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: colors.backgroundCard,
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Row(
         children: List.generate(_navItems.length, (i) {
           final item = _navItems[i];
           final isActive = i == currentIndex;
-          final color = isActive ? AppColors.navActive : AppColors.navInactive;
+          final color = isActive ? colors.navActive : colors.navInactive;
 
           return Expanded(
             child: InkWell(
@@ -55,7 +57,7 @@ class AppBottomNavBar extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     item.label,
-                    style: AppTypography.caption.copyWith(color: color),
+                    style: typography.caption.copyWith(color: color),
                   ),
                 ],
               ),

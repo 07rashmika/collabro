@@ -21,29 +21,31 @@ class AiSummarySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome, color: AppColors.primary, size: AppSpacing.iconMd),
+              Icon(Icons.auto_awesome, color: colors.primary, size: AppSpacing.iconMd),
               const SizedBox(width: AppSpacing.xs),
-              Text('AI Summary', style: AppTypography.headlineSmall),
+              Text('AI Summary', style: typography.headlineSmall),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
           if (summary == null) ...[
             Text(
               'Generate a quick summary of this note.',
-              style: AppTypography.bodySmall,
+              style: typography.bodySmall,
             ),
             const SizedBox(height: AppSpacing.md),
             PrimaryButton(
@@ -53,11 +55,11 @@ class AiSummarySection extends StatelessWidget {
               onPressed: isGenerating ? null : onGenerate,
             ),
           ] else ...[
-            Text(summary!, style: AppTypography.bodyMedium),
+            Text(summary!, style: typography.bodyMedium),
             const SizedBox(height: AppSpacing.sm),
             Text(
               "Placeholder summary — AI summarization isn't wired up yet.",
-              style: AppTypography.caption,
+              style: typography.caption,
             ),
             const SizedBox(height: AppSpacing.sm),
             TextButton(
@@ -65,7 +67,7 @@ class AiSummarySection extends StatelessWidget {
               style: TextButton.styleFrom(padding: EdgeInsets.zero),
               child: Text(
                 'Regenerate',
-                style: AppTypography.labelSmall.copyWith(color: AppColors.primaryLight),
+                style: typography.labelSmall.copyWith(color: colors.primaryLight),
               ),
             ),
           ],

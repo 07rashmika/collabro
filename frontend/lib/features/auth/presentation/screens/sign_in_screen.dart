@@ -56,8 +56,10 @@ class _SignInViewState extends State<_SignInView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) async {
@@ -81,7 +83,7 @@ class _SignInViewState extends State<_SignInView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             }
@@ -101,9 +103,9 @@ class _SignInViewState extends State<_SignInView> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.cardPaddingLarge),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundCard,
+                      color: colors.backgroundCard,
                       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -157,8 +159,8 @@ class _SignInViewState extends State<_SignInView> {
                             },
                             child: Text(
                               'Forgot Password?',
-                              style: AppTypography.bodySmall.copyWith(
-                                color: AppColors.primaryLight,
+                              style: typography.bodySmall.copyWith(
+                                color: colors.primaryLight,
                               ),
                             ),
                           ),
@@ -181,7 +183,7 @@ class _SignInViewState extends State<_SignInView> {
                   Text(
                     "By continuing, you agree to Collabro's Terms of Service and Privacy Policy.",
                     textAlign: TextAlign.center,
-                    style: AppTypography.caption,
+                    style: typography.caption,
                   ),
                 ],
               ),

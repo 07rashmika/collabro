@@ -77,6 +77,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
   }
 
   Future<void> _createAndSelectTag(String name) async {
+    final colors = AppColors.of(context);
     setState(() => _tagsBusy = true);
     try {
       final skill = await context.read<SkillsRepo>().findOrCreateSkill(name);
@@ -92,7 +93,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppColors.error,
+          backgroundColor: colors.error,
         ),
       );
     }
@@ -110,6 +111,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
   }
 
   Future<void> _pickDate(BuildContext context) async {
+    final colors = AppColors.of(context);
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -118,10 +120,10 @@ class _NewSessionViewState extends State<_NewSessionView> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.primary,
-            surface: AppColors.backgroundCard,
-            onSurface: AppColors.textPrimary,
+          colorScheme: ColorScheme.dark(
+            primary: colors.primary,
+            surface: colors.backgroundCard,
+            onSurface: colors.textPrimary,
           ),
         ),
         child: child!,
@@ -131,15 +133,16 @@ class _NewSessionViewState extends State<_NewSessionView> {
   }
 
   Future<void> _pickTime(BuildContext context) async {
+    final colors = AppColors.of(context);
     final picked = await showTimePicker(
       context: context,
       initialTime: _scheduledTime ?? TimeOfDay.now(),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: AppColors.primary,
-            surface: AppColors.backgroundCard,
-            onSurface: AppColors.textPrimary,
+          colorScheme: ColorScheme.dark(
+            primary: colors.primary,
+            surface: colors.backgroundCard,
+            onSurface: colors.textPrimary,
           ),
         ),
         child: child!,
@@ -149,21 +152,22 @@ class _NewSessionViewState extends State<_NewSessionView> {
   }
 
   void _create(BuildContext context) {
+    final colors = AppColors.of(context);
     if (!_formKey.currentState!.validate()) return;
     if (_scheduleForLater && (_scheduledDate == null || _scheduledTime == null)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pick a date and time for the session'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Pick a date and time for the session'),
+          backgroundColor: colors.error,
         ),
       );
       return;
     }
     if (_scheduleForLater && _scheduledAt!.isBefore(DateTime.now())) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Scheduled time must be in the future'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Scheduled time must be in the future'),
+          backgroundColor: colors.error,
         ),
       );
       return;
@@ -184,8 +188,10 @@ class _NewSessionViewState extends State<_NewSessionView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<SessionsCubit, SessionsState>(
           listener: (context, state) async {
@@ -194,7 +200,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
               if (context.mounted) context.pop(true);
             } else if (state is SessionsError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+                SnackBar(content: Text(state.message), backgroundColor: colors.error),
               );
             }
           },
@@ -210,13 +216,13 @@ class _NewSessionViewState extends State<_NewSessionView> {
                     children: [
                       IconButton(
                         onPressed: () => context.pop(),
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       ),
                       Expanded(
                         child: Text(
                           'New Session',
                           textAlign: TextAlign.center,
-                          style: AppTypography.headlineMedium,
+                          style: typography.headlineMedium,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -232,7 +238,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
                         (value == null || value.trim().isEmpty) ? 'Title is required' : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Type', style: AppTypography.labelMedium),
+                  Text('Type', style: typography.labelMedium),
                   const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
@@ -254,13 +260,13 @@ class _NewSessionViewState extends State<_NewSessionView> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Visibility', style: AppTypography.labelMedium),
+                  Text('Visibility', style: typography.labelMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     _isPublic
                         ? 'Anyone with matching interests can find this on their Home tab.'
                         : 'Only people you invite or share the code with can join.',
-                    style: AppTypography.bodySmall,
+                    style: typography.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Row(
@@ -304,7 +310,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
                     }).toList(),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  Text('When', style: AppTypography.labelMedium),
+                  Text('When', style: typography.labelMedium),
                   const SizedBox(height: AppSpacing.sm),
                   Row(
                     children: [
@@ -352,20 +358,20 @@ class _NewSessionViewState extends State<_NewSessionView> {
                     ),
                   ],
                   const SizedBox(height: AppSpacing.lg),
-                  Text('Participants (optional)', style: AppTypography.labelMedium),
+                  Text('Participants (optional)', style: typography.labelMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Skip this to start solo — you can share an invite link or add people later.',
-                    style: AppTypography.bodySmall,
+                    style: typography.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   BlocBuilder<MatchingCubit, MatchingState>(
                     builder: (context, state) {
                       if (state is MatchesInitial || state is MatchesLoading) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                           child: Center(
-                            child: CircularProgressIndicator(color: AppColors.primary),
+                            child: CircularProgressIndicator(color: colors.primary),
                           ),
                         );
                       }
@@ -373,7 +379,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
                       if (state is MatchesError) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                          child: Text(state.message, style: AppTypography.bodySmall),
+                          child: Text(state.message, style: typography.bodySmall),
                         );
                       }
 
@@ -383,7 +389,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
                           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                           child: Text(
                             'No study partners to invite yet.',
-                            style: AppTypography.bodySmall,
+                            style: typography.bodySmall,
                           ),
                         );
                       }
@@ -400,14 +406,14 @@ class _NewSessionViewState extends State<_NewSessionView> {
                                 _selectedParticipantIds.remove(m.userId);
                               }
                             }),
-                            activeColor: AppColors.primary,
+                            activeColor: colors.primary,
                             contentPadding: EdgeInsets.zero,
                             controlAffinity: ListTileControlAffinity.trailing,
                             title: Row(
                               children: [
                                 UserAvatar(name: m.name, size: AppSpacing.avatarSm),
                                 const SizedBox(width: AppSpacing.sm),
-                                Text(m.name, style: AppTypography.bodyLarge),
+                                Text(m.name, style: typography.bodyLarge),
                               ],
                             ),
                           );
@@ -460,6 +466,8 @@ class _PickerField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
@@ -469,18 +477,18 @@ class _PickerField extends StatelessWidget {
           vertical: AppSpacing.md,
         ),
         decoration: BoxDecoration(
-          color: AppColors.backgroundInput,
+          color: colors.backgroundInput,
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
-            Icon(icon, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+            Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 label,
-                style: AppTypography.bodyMedium,
+                style: typography.bodyMedium,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

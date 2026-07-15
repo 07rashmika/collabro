@@ -20,6 +20,8 @@ class MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: GestureDetector(
@@ -32,14 +34,14 @@ class MessageBubble extends StatelessWidget {
           ),
           constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
           decoration: BoxDecoration(
-            color: isMine ? AppColors.primary : AppColors.backgroundCard,
+            color: isMine ? colors.primary : colors.backgroundCard,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(AppSpacing.radiusMd),
               topRight: const Radius.circular(AppSpacing.radiusMd),
               bottomLeft: Radius.circular(isMine ? AppSpacing.radiusMd : AppSpacing.xs),
               bottomRight: Radius.circular(isMine ? AppSpacing.xs : AppSpacing.radiusMd),
             ),
-            border: isMine ? null : Border.all(color: AppColors.border),
+            border: isMine ? null : Border.all(color: colors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,20 +51,20 @@ class MessageBubble extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 2),
                   child: Text(
                     message.senderName,
-                    style: AppTypography.labelSmall.copyWith(color: AppColors.primaryLight),
+                    style: typography.labelSmall.copyWith(color: colors.primaryLight),
                   ),
                 ),
               Text(
                 message.content,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: isMine ? Colors.white : AppColors.textPrimary,
+                style: typography.bodyMedium.copyWith(
+                  color: isMine ? Colors.white : colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 timeAgo(message.createdAt),
-                style: AppTypography.caption.copyWith(
-                  color: isMine ? Colors.white70 : AppColors.textTertiary,
+                style: typography.caption.copyWith(
+                  color: isMine ? Colors.white70 : colors.textTertiary,
                 ),
               ),
             ],

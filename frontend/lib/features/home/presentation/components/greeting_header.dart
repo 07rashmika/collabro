@@ -8,6 +8,7 @@ class GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text('Hi, $name! 👋', style: AppTypography.headlineLarge);
+    final typography = AppTypography.of(context);
+    return Text('Hi, $name! 👋', style: typography.headlineLarge);
   }
 }

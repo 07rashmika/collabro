@@ -22,15 +22,17 @@ class SelectableChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: AppDuration.fast,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          gradient: selected ? AppColors.primaryGradient : null,
-          color: selected ? null : AppColors.chipBackground,
-          border: Border.all(color: selected ? Colors.transparent : AppColors.chipBorder),
+          gradient: selected ? colors.primaryGradient : null,
+          color: selected ? null : colors.chipBackground,
+          border: Border.all(color: selected ? Colors.transparent : colors.chipBorder),
           borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
         ),
         child: Row(
@@ -38,16 +40,16 @@ class SelectableChip extends StatelessWidget {
           children: [
             Text(
               label,
-              style: AppTypography.labelSmall.copyWith(
-                color: selected ? Colors.white : AppColors.textSecondary,
+              style: typography.labelSmall.copyWith(
+                color: selected ? Colors.white : colors.textSecondary,
               ),
             ),
             if (trailingLabel != null) ...[
               const SizedBox(width: AppSpacing.xs),
               Text(
                 '· $trailingLabel',
-                style: AppTypography.labelSmall.copyWith(
-                  color: selected ? Colors.white : AppColors.textTertiary,
+                style: typography.labelSmall.copyWith(
+                  color: selected ? Colors.white : colors.textTertiary,
                   fontWeight: FontWeight.w600,
                 ),
               ),

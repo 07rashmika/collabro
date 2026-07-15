@@ -58,6 +58,7 @@ export const MessageQuerySchema = z.object({
 });
 
 export const PageQuerySchema = z.object({
+  search: z.string().optional(),
   page: z
     .string()
     .optional()

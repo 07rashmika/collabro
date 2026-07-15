@@ -51,36 +51,38 @@ class _TagInputState extends State<TagInput> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTypography.labelMedium),
+        Text(widget.label, style: typography.labelMedium),
         const SizedBox(height: AppSpacing.sm),
         TextField(
           controller: _controller,
-          style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+          style: typography.bodyLarge.copyWith(color: colors.textPrimary),
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: AppTypography.bodyLarge.copyWith(color: AppColors.textHint),
+            hintStyle: typography.bodyLarge.copyWith(color: colors.textHint),
             filled: true,
-            fillColor: AppColors.backgroundInput,
+            fillColor: colors.backgroundInput,
             suffixIcon: IconButton(
-              icon: const Icon(Icons.add, color: AppColors.primary),
+              icon: Icon(Icons.add, color: colors.primary),
               onPressed: _submit,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.primary),
+              borderSide: BorderSide(color: colors.primary),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -103,20 +105,20 @@ class _TagInputState extends State<TagInput> {
                       bottom: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.chipBackground,
-                      border: Border.all(color: AppColors.chipBorder),
+                      color: colors.chipBackground,
+                      border: Border.all(color: colors.chipBorder),
                       borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(tag, style: AppTypography.labelSmall),
+                        Text(tag, style: typography.labelSmall),
                         InkWell(
                           onTap: () => widget.onRemove(tag),
                           borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.all(4),
-                            child: Icon(Icons.close, size: 14, color: AppColors.textTertiary),
+                            child: Icon(Icons.close, size: 14, color: colors.textTertiary),
                           ),
                         ),
                       ],

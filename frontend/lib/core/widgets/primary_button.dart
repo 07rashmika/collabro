@@ -21,13 +21,15 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return SizedBox(
       height: AppSpacing.buttonHeightMd,
       width: .infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: onPressed == null ? null : AppColors.primaryGradient,
-          color: onPressed == null ? AppColors.backgroundElevated : null,
+          gradient: onPressed == null ? null : colors.primaryGradient,
+          color: onPressed == null ? colors.backgroundElevated : null,
           borderRadius: .circular(AppSpacing.radiusMd),
         ),
         child: ElevatedButton(
@@ -36,7 +38,7 @@ class PrimaryButton extends StatelessWidget {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             foregroundColor: Colors.white,
-            disabledForegroundColor: AppColors.textTertiary,
+            disabledForegroundColor: colors.textTertiary,
             disabledBackgroundColor: Colors.transparent,
             shape: RoundedRectangleBorder(
               borderRadius: .circular(AppSpacing.radiusMd),
@@ -60,7 +62,7 @@ class PrimaryButton extends StatelessWidget {
                     ],
                     Text(
                       label,
-                      style: AppTypography.labelLarge.copyWith(
+                      style: typography.labelLarge.copyWith(
                         color: Colors.white,
                       ),
                     ),

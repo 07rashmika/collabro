@@ -21,6 +21,8 @@ class SessionListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final isVideo = session.type == SessionType.video;
     final isClosed = session.status == SessionStatus.closed;
 
@@ -31,9 +33,9 @@ class SessionListCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
-          color: AppColors.backgroundCard,
+          color: colors.backgroundCard,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
@@ -42,12 +44,12 @@ class SessionListCard extends StatelessWidget {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.backgroundElevated,
+                color: colors.backgroundElevated,
                 borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
               ),
               child: Icon(
                 isVideo ? Icons.videocam_outlined : Icons.chat_bubble_outline,
-                color: isVideo ? AppColors.info : AppColors.primary,
+                color: isVideo ? colors.info : colors.primary,
               ),
             ),
             const SizedBox(width: AppSpacing.md),
@@ -57,7 +59,7 @@ class SessionListCard extends StatelessWidget {
                 children: [
                   Text(
                     session.title,
-                    style: AppTypography.titleMedium,
+                    style: typography.titleMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -65,7 +67,7 @@ class SessionListCard extends StatelessWidget {
                   Text(
                     '${session.participants.length} participants · ${timeAgo(session.updatedAt)}'
                     '${isClosed ? ' · Closed' : ''}',
-                    style: AppTypography.bodySmall,
+                    style: typography.bodySmall,
                   ),
                 ],
               ),
@@ -76,7 +78,7 @@ class SessionListCard extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 icon: Icon(
                   session.savedByMe ? Icons.bookmark : Icons.bookmark_border,
-                  color: session.savedByMe ? AppColors.primary : AppColors.textTertiary,
+                  color: session.savedByMe ? colors.primary : colors.textTertiary,
                 ),
                 tooltip: session.savedByMe ? 'Remove from saved' : 'Save session',
               ),

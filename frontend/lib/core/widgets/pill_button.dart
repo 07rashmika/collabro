@@ -21,11 +21,13 @@ class PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final isPrimary = variant == PillButtonVariant.primary;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: isPrimary ? AppColors.primaryGradient : null,
-        color: isPrimary ? null : AppColors.backgroundElevated,
+        gradient: isPrimary ? colors.primaryGradient : null,
+        color: isPrimary ? null : colors.backgroundElevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: TextButton(
@@ -38,8 +40,8 @@ class PillButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: AppTypography.labelMedium.copyWith(
-            color: isPrimary ? Colors.white : AppColors.textSecondary,
+          style: typography.labelMedium.copyWith(
+            color: isPrimary ? Colors.white : colors.textSecondary,
           ),
         ),
       ),

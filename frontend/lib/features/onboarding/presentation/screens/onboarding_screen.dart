@@ -51,39 +51,42 @@ class _OnboardingViewState extends State<_OnboardingView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final totalH = constraints.maxHeight;
-          final heroH = totalH * 0.45;
-          final cardH = totalH * 0.55;
+      backgroundColor: colors.backgroundDark,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final totalH = constraints.maxHeight;
+            final heroH = totalH * 0.45;
+            final cardH = totalH * 0.55;
 
-          return Stack(
-            children: [
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: heroH,
-                child: HeroSection(height: heroH),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                height: cardH,
-                child: BottomCard(
-                  pageController: _pageController,
-                  onPageChanged: (i) =>
-                      context.read<OnboardingCubit>().pageChanged(i),
-                  onGetStarted: _next,
-                  onSignIn: () => context.go(AppRoutes.signIn),
+            return Stack(
+              children: [
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: heroH,
+                  child: HeroSection(height: heroH),
                 ),
-              ),
-            ],
-          );
-        },
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  height: cardH,
+                  child: BottomCard(
+                    pageController: _pageController,
+                    onPageChanged: (i) =>
+                        context.read<OnboardingCubit>().pageChanged(i),
+                    onGetStarted: _next,
+                    onSignIn: () => context.go(AppRoutes.signIn),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

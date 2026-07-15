@@ -57,11 +57,13 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final session = widget.session;
     final showAccessSection = _canSeeCode || _isCreator;
 
     return Drawer(
-      backgroundColor: AppColors.backgroundMedium,
+      backgroundColor: colors.backgroundMedium,
       width: MediaQuery.of(context).size.width * 0.86,
       child: BlocListener<SessionsCubit, SessionsState>(
         listener: (context, state) {
@@ -74,7 +76,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
           } else if (state is SessionsError && _loadingPassword) {
             setState(() => _loadingPassword = false);
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+              SnackBar(content: Text(state.message), backgroundColor: colors.error),
             );
           }
         },
@@ -85,11 +87,11 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Session Info', style: AppTypography.headlineSmall),
+                    child: Text('Session Info', style: typography.headlineSmall),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                    icon: Icon(Icons.close, color: colors.textPrimary),
                   ),
                 ],
               ),
@@ -99,7 +101,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               const SizedBox(height: AppSpacing.sm),
               _InfoCard(
                 children: [
-                  Text(session.title, style: AppTypography.titleLarge),
+                  Text(session.title, style: typography.titleLarge),
                   const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: AppSpacing.xs,
@@ -140,22 +142,22 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                 _InfoCard(
                   children: [
                     if (_canSeeCode) ...[
-                      Text('Join Code', style: AppTypography.labelMedium),
+                      Text('Join Code', style: typography.labelMedium),
                       const SizedBox(height: AppSpacing.xs),
                       Row(
                         children: [
                           Expanded(
                             child: Text(
                               session.joinCode!,
-                              style: AppTypography.bodyMedium.copyWith(letterSpacing: 1.1),
+                              style: typography.bodyMedium.copyWith(letterSpacing: 1.1),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.copy_outlined,
                               size: AppSpacing.iconSm,
-                              color: AppColors.textTertiary,
+                              color: colors.textTertiary,
                             ),
                             visualDensity: VisualDensity.compact,
                             onPressed: _copyCode,
@@ -165,15 +167,15 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                     ],
                     if (_isCreator) ...[
                       if (_canSeeCode)
-                        const Divider(color: AppColors.border, height: AppSpacing.lg),
-                      Text('Password', style: AppTypography.labelMedium),
+                        Divider(color: colors.border, height: AppSpacing.lg),
+                      Text('Password', style: typography.labelMedium),
                       const SizedBox(height: AppSpacing.xs),
                       if (!session.hasPassword)
-                        Text('No password set', style: AppTypography.bodySmall)
+                        Text('No password set', style: typography.bodySmall)
                       else if (_passwordRevealed)
                         Text(
                           _revealedPassword ?? '—',
-                          style: AppTypography.bodyMedium.copyWith(letterSpacing: 1.1),
+                          style: typography.bodyMedium.copyWith(letterSpacing: 1.1),
                         )
                       else
                         TextButton.icon(
@@ -184,22 +186,22 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           ),
                           icon: _loadingPassword
-                              ? const SizedBox(
+                              ? SizedBox(
                                   width: 14,
                                   height: 14,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppColors.primary,
+                                    color: colors.primary,
                                   ),
                                 )
-                              : const Icon(
+                              : Icon(
                                   Icons.visibility_outlined,
                                   size: AppSpacing.iconSm,
-                                  color: AppColors.primary,
+                                  color: colors.primary,
                                 ),
                           label: Text(
                             'Reveal password',
-                            style: AppTypography.bodyMedium.copyWith(color: AppColors.primary),
+                            style: typography.bodyMedium.copyWith(color: colors.primary),
                           ),
                         ),
                     ],
@@ -222,7 +224,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                           Expanded(
                             child: Text(
                               p.name,
-                              style: AppTypography.bodyMedium,
+                              style: typography.bodyMedium,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -248,10 +250,10 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      icon: const Icon(Icons.stop_circle_outlined, color: AppColors.error),
+                      icon: Icon(Icons.stop_circle_outlined, color: colors.error),
                       label: Text(
                         'End Session Permanently',
-                        style: AppTypography.bodyMedium.copyWith(color: AppColors.error),
+                        style: typography.bodyMedium.copyWith(color: colors.error),
                       ),
                     ),
                   ],
@@ -272,10 +274,12 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Text(
       label.toUpperCase(),
-      style: AppTypography.labelSmall.copyWith(
-        color: AppColors.textTertiary,
+      style: typography.labelSmall.copyWith(
+        color: colors.textTertiary,
         letterSpacing: 0.6,
       ),
     );
@@ -288,13 +292,14 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
     );
@@ -308,18 +313,20 @@ class _Badge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.backgroundElevated,
+        color: colors.backgroundElevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: AppSpacing.iconSm, color: AppColors.primaryLight),
+          Icon(icon, size: AppSpacing.iconSm, color: colors.primaryLight),
           const SizedBox(width: 4),
-          Text(label, style: AppTypography.labelSmall),
+          Text(label, style: typography.labelSmall),
         ],
       ),
     );
@@ -333,11 +340,13 @@ class _IconLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Row(
       children: [
-        Icon(icon, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+        Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.bodySmall),
+        Text(label, style: typography.bodySmall),
       ],
     );
   }
@@ -349,14 +358,16 @@ class _TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.chipBackground,
+        color: colors.chipBackground,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-        border: Border.all(color: AppColors.chipBorder),
+        border: Border.all(color: colors.chipBorder),
       ),
-      child: Text(label, style: AppTypography.labelSmall),
+      child: Text(label, style: typography.labelSmall),
     );
   }
 }

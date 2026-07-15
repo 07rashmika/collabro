@@ -51,6 +51,7 @@ class NotePhotoGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photos.isEmpty && !editable) return const SizedBox.shrink();
+    final colors = AppColors.of(context);
 
     return GridView.builder(
       shrinkWrap: true,
@@ -77,9 +78,9 @@ class NotePhotoGallery extends StatelessWidget {
                 child: Image.network(
                   '${ApiConfig.baseUrl}${photo.url}',
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => const ColoredBox(
-                    color: AppColors.backgroundCard,
-                    child: Icon(Icons.broken_image_outlined, color: AppColors.textTertiary),
+                  errorBuilder: (context, error, stackTrace) => ColoredBox(
+                    color: colors.backgroundCard,
+                    child: Icon(Icons.broken_image_outlined, color: colors.textTertiary),
                   ),
                 ),
               ),
@@ -112,23 +113,24 @@ class _AddTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.backgroundCard,
+          color: colors.backgroundCard,
           borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Center(
           child: isBusy
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
+                  child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
                 )
-              : const Icon(Icons.add_photo_alternate_outlined, color: AppColors.textSecondary),
+              : Icon(Icons.add_photo_alternate_outlined, color: colors.textSecondary),
         ),
       ),
     );

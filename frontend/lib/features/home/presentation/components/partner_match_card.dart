@@ -16,13 +16,15 @@ class PartnerMatchCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       width: 220,
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,12 +37,12 @@ class PartnerMatchCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          Text(candidate.name, style: AppTypography.titleLarge),
+          Text(candidate.name, style: typography.titleLarge),
           if (candidate.topCategory != null) ...[
             const SizedBox(height: 2),
             Text(
               candidate.topCategory!,
-              style: AppTypography.bodySmall,
+              style: typography.bodySmall,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

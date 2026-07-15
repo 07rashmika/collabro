@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
@@ -12,8 +11,10 @@ class UserAvatar extends StatelessWidget {
 
   const UserAvatar({super.key, required this.name, this.size = AppSpacing.avatarLg});
 
+  // Fixed accent set for initials avatars — intentionally theme-independent,
+  // so it isn't sourced from AppColors.of(context).
   static const List<Color> _palette = [
-    AppColors.primary,
+    Color(0xFF7B5CF5),
     Color(0xFF06B6D4),
     Color(0xFFF59E0B),
     Color(0xFF22C55E),
@@ -50,7 +51,7 @@ class UserAvatar extends StatelessWidget {
       ),
       child: Text(
         _initialsOf(name),
-        style: AppTypography.titleMedium.copyWith(
+        style: AppTypography.of(context).titleMedium.copyWith(
           color: Colors.white,
           fontSize: size * 0.36,
         ),

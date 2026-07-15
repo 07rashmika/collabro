@@ -53,19 +53,21 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
   }
 
   void _confirmDelete(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     showDialog<void>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.backgroundCard,
-        title: Text('Delete note?', style: AppTypography.headlineSmall),
+        backgroundColor: colors.backgroundCard,
+        title: Text('Delete note?', style: typography.headlineSmall),
         content: Text(
           'This permanently deletes "${_note.title}". This can\'t be undone.',
-          style: AppTypography.bodyMedium,
+          style: typography.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => dialogContext.pop(),
-            child: Text('Cancel', style: AppTypography.labelMedium),
+            child: Text('Cancel', style: typography.labelMedium),
           ),
           DangerButton(
             label: 'Delete',
@@ -81,8 +83,10 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocConsumer<NotesCubit, NotesState>(
           listener: (context, state) {
@@ -94,7 +98,7 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
               setState(() => _note = state.note);
             } else if (state is NotesError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+                SnackBar(content: Text(state.message), backgroundColor: colors.error),
               );
             }
           },
@@ -110,7 +114,7 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                     children: [
                       IconButton(
                         onPressed: () => context.pop(),
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       ),
                       const Spacer(),
                       IconButton(
@@ -119,21 +123,21 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                             : () => context.read<NotesCubit>().toggleVisibility(_note.id),
                         icon: Icon(
                           _note.isPublic ? Icons.public : Icons.lock_outline,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                         tooltip: _note.isPublic ? 'Make private' : 'Make public',
                       ),
                       IconButton(
                         onPressed: isBusy ? null : () => _editNote(context),
-                        icon: const Icon(Icons.edit_outlined, color: AppColors.textPrimary),
+                        icon: Icon(Icons.edit_outlined, color: colors.textPrimary),
                       ),
                     ],
                   ),
-                  Text(_note.title, style: AppTypography.displayMedium),
+                  Text(_note.title, style: typography.displayMedium),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Updated ${timeAgo(_note.updatedAt)}',
-                    style: AppTypography.bodySmall,
+                    style: typography.bodySmall,
                   ),
                   if (_note.tags.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
@@ -148,15 +152,15 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(AppSpacing.cardPadding),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundCard,
+                      color: colors.backgroundCard,
                       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: colors.border),
                     ),
-                    child: Text(_note.content, style: AppTypography.bodyLarge),
+                    child: Text(_note.content, style: typography.bodyLarge),
                   ),
                   if (_note.photos.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.xl),
-                    Text('Photos', style: AppTypography.titleMedium),
+                    Text('Photos', style: typography.titleMedium),
                     const SizedBox(height: AppSpacing.sm),
                     NotePhotoGallery(photos: _note.photos),
                   ],

@@ -20,10 +20,12 @@ class RecommendedPartnersList extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<MatchingCubit, MatchingState>(
       builder: (context, state) {
+        final colors = AppColors.of(context);
+        final typography = AppTypography.of(context);
         if (state is MatchesInitial || state is MatchesLoading) {
-          return const SizedBox(
+          return SizedBox(
             height: _kListHeight,
-            child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+            child: Center(child: CircularProgressIndicator(color: colors.primary)),
           );
         }
 
@@ -36,7 +38,7 @@ class RecommendedPartnersList extends StatelessWidget {
                 child: Text(
                   state.message,
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodySmall,
+                  style: typography.bodySmall,
                 ),
               ),
             ),
@@ -45,13 +47,13 @@ class RecommendedPartnersList extends StatelessWidget {
 
         final matches = (state as MatchesLoaded).matches;
         if (matches.isEmpty) {
-          return const SizedBox(
+          return SizedBox(
             height: _kListHeight,
             child: Center(
               child: Text(
                 'No study partners found yet. Check back soon!',
                 textAlign: TextAlign.center,
-                style: AppTypography.bodySmall,
+                style: typography.bodySmall,
               ),
             ),
           );

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/secondary_button.dart';
@@ -14,10 +16,18 @@ class HomeDrawer extends StatelessWidget {
 
   const HomeDrawer({super.key, required this.user});
 
+  void _openSettings(BuildContext context) {
+    Navigator.pop(context);
+    context.push(AppRoutes.settings);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+
     return Drawer(
-      backgroundColor: AppColors.backgroundCard,
+      backgroundColor: colors.backgroundCard,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,15 +42,28 @@ class HomeDrawer extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(user.name, style: AppTypography.titleLarge),
-                        Text(user.email, style: AppTypography.bodySmall),
+                        Text(user.name, style: typography.titleLarge),
+                        Text(user.email, style: typography.bodySmall),
                       ],
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(color: AppColors.border, height: 1),
+            Divider(color: colors.border, height: 1),
+            ListTile(
+              leading: Icon(
+                Icons.settings_outlined,
+                color: colors.textSecondary,
+              ),
+              title: Text(
+                'Settings',
+                style: typography.bodyMedium.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+              onTap: () => _openSettings(context),
+            ),
             const Spacer(),
             Padding(
               padding: const EdgeInsets.all(AppSpacing.screenHorizontal),

@@ -19,25 +19,27 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return SizedBox(
       height: AppSpacing.buttonHeightMd,
       width: double.infinity,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          side: const BorderSide(color: AppColors.border),
+          foregroundColor: colors.textPrimary,
+          side: BorderSide(color: colors.border),
           shape: RoundedRectangleBorder(
             borderRadius: .circular(AppSpacing.radiusMd),
           ),
         ),
         child: isLoading
-            ? const SizedBox(
+            ? SizedBox(
                 width: 22,
                 height: 22,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                  valueColor: AlwaysStoppedAnimation(colors.primary),
                 ),
               )
             : Row(
@@ -47,7 +49,7 @@ class SecondaryButton extends StatelessWidget {
                     Icon(leadingIcon, size: AppSpacing.iconMd),
                     const SizedBox(width: AppSpacing.sm),
                   ],
-                  Text(label, style: AppTypography.labelLarge),
+                  Text(label, style: typography.labelLarge),
                 ],
               ),
       ),

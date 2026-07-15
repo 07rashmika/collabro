@@ -58,7 +58,11 @@ export class NotesService {
     };
   }
 
-  async getPublicNotes(query: NoteQueryDto) {
+  /// Public notes ranked by how many of a note's free-text tags match the
+  /// caller's own skill or study-area names (case-insensitive) — notes on
+  /// subjects the caller is actually studying surface before others, ahead
+  /// of raw recency.
+  async getPublicNotes(userId: string, query: NoteQueryDto) {
     const { search, tag, page, limit } = query;
     const skip = (page - 1) * limit;
 
@@ -73,16 +77,36 @@ export class NotesService {
       ...(tag && { tags: { has: tag } }),
     };
 
-    const [notes, total] = await Promise.all([
-      this.prisma.client.note.findMany({
-        where,
-        select: noteSelect,
-        orderBy: { updatedAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      this.prisma.client.note.count({ where }),
+    const myProfile = await this.prisma.client.profile.findUnique({
+      where:  { userId },
+      select: {
+        skills:     { select: { skill: { select: { name: true } } } },
+        studyAreas: { select: { studyArea: { select: { name: true } } } },
+      },
+    });
+    const myTerms = new Set([
+      ...(myProfile?.skills.map((s) => s.skill.name.toLowerCase()) ?? []),
+      ...(myProfile?.studyAreas.map((s) => s.studyArea.name.toLowerCase()) ?? []),
     ]);
+
+    // Ranking needs the full matching set scored before it can be paged, so
+    // this fetches everything the where-clause allows rather than a single
+    // DB page — fine at this app's scale (mirrors MatchingService).
+    const matches = await this.prisma.client.note.findMany({
+      where,
+      select:  noteSelect,
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const scored = matches
+      .map((note) => ({
+        note,
+        score: note.tags.filter((t) => myTerms.has(t.toLowerCase())).length,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const total = scored.length;
+    const notes = scored.slice(skip, skip + limit).map((s) => s.note);
 
     return {
       notes,

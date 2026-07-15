@@ -70,12 +70,14 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return PopScope(
       // Onboarding is mandatory — block back navigation (hardware back,
       // edge-swipe) so a user can't dodge it without finishing.
       canPop: false,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: colors.backgroundDark,
         body: SafeArea(
           child: BlocConsumer<ProfileSetupCubit, ProfileSetupState>(
             listener: (context, state) {
@@ -86,7 +88,7 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.submitError!),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: colors.error,
                   ),
                 );
               } else if (state is ProfileSetupReady &&
@@ -94,15 +96,15 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.catalogError!),
-                    backgroundColor: AppColors.error,
+                    backgroundColor: colors.error,
                   ),
                 );
               }
             },
             builder: (context, state) {
               if (state is ProfileSetupLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
+                return Center(
+                  child: CircularProgressIndicator(color: colors.primary),
                 );
               }
               if (state is ProfileSetupLoadError) {
@@ -114,7 +116,7 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
                       children: [
                         Text(
                           state.message,
-                          style: AppTypography.bodyMedium,
+                          style: typography.bodyMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: AppSpacing.lg),
@@ -139,6 +141,8 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
   }
 
   Widget _buildWizard(BuildContext context, ProfileSetupReady state) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final cubit = context.read<ProfileSetupCubit>();
     final isLastStep = state.currentStep == kAboutStep;
 
@@ -156,8 +160,8 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
             children: [
               Text(
                 'Step ${state.currentStep + 1} of $kProfileSetupStepCount · ${_stepTitles[state.currentStep]}',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                style: typography.labelSmall.copyWith(
+                  color: colors.textTertiary,
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
@@ -174,8 +178,8 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
                       height: 4,
                       decoration: BoxDecoration(
                         color: active
-                            ? AppColors.primary
-                            : AppColors.chipBackground,
+                            ? colors.primary
+                            : colors.chipBackground,
                         borderRadius: BorderRadius.circular(
                           AppSpacing.radiusFull,
                         ),
@@ -210,8 +214,8 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Text(
                     _missingHintFor(state.currentStep),
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.warning,
+                    style: typography.bodySmall.copyWith(
+                      color: colors.warning,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -272,6 +276,7 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
     ProfileSetupCubit cubit,
     ProfileSetupReady state,
   ) {
+    final typography = AppTypography.of(context);
     final suggestions = state.allSkills
         .where((s) => !state.selectedSkillLevels.containsKey(s.id))
         .toList();
@@ -281,11 +286,11 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('What are you good at?', style: AppTypography.headlineMedium),
+          Text('What are you good at?', style: typography.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             "Type any skill — not just tech. Add it, then tap the chip to set your level.",
-            style: AppTypography.bodySmall,
+            style: typography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           TypeaheadChipPicker<Skill>(
@@ -319,6 +324,7 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
     ProfileSetupCubit cubit,
     ProfileSetupReady state,
   ) {
+    final typography = AppTypography.of(context);
     final suggestions = state.allStudyAreas
         .where((a) => !state.selectedStudyAreaIds.contains(a.id))
         .toList();
@@ -328,11 +334,11 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('What do you study?', style: AppTypography.headlineMedium),
+          Text('What do you study?', style: typography.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Any field, any major — type it in.',
-            style: AppTypography.bodySmall,
+            style: typography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           TypeaheadChipPicker<StudyArea>(
@@ -362,16 +368,17 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
     ProfileSetupCubit cubit,
     ProfileSetupReady state,
   ) {
+    final typography = AppTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('What are you into?', style: AppTypography.headlineMedium),
+          Text('What are you into?', style: typography.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             "Hobbies, obsessions, anything — helps us match you beyond just coursework.",
-            style: AppTypography.bodySmall,
+            style: typography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           TagInput(
@@ -388,16 +395,17 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
   }
 
   Widget _buildAboutStep(BuildContext context, ProfileSetupReady state) {
+    final typography = AppTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Almost done', style: AppTypography.headlineMedium),
+          Text('Almost done', style: typography.headlineMedium),
           const SizedBox(height: AppSpacing.xs),
           Text(
             'A few optional details to help peers get to know you.',
-            style: AppTypography.bodySmall,
+            style: typography.bodySmall,
           ),
           const SizedBox(height: AppSpacing.xl),
           AppTextField(

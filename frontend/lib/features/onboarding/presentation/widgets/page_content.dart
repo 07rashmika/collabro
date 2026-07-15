@@ -11,6 +11,8 @@ class PageContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Column(
@@ -24,16 +26,16 @@ class PageContent extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: '${page.headline1}\n',
-                    style: AppTypography.headlineLarge,
+                    style: typography.headlineLarge,
                   ),
                   TextSpan(
                     text: '${page.headline2}\n',
-                    style: AppTypography.headlineLarge,
+                    style: typography.headlineLarge,
                   ),
                   TextSpan(
                     text: page.headline3,
-                    style: AppTypography.headlineLarge.copyWith(
-                      color: AppColors.primary,
+                    style: typography.headlineLarge.copyWith(
+                      color: colors.primary,
                     ),
                   ),
                 ],
@@ -43,23 +45,23 @@ class PageContent extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             page.body,
-            style: AppTypography.bodyMedium,
+            style: typography.bodyMedium,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.verified_outlined,
                 size: 13,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
                   page.badge,
-                  style: AppTypography.caption,
+                  style: typography.caption,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

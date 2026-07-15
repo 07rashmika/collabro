@@ -38,10 +38,12 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTypography.labelMedium),
+        Text(widget.label, style: typography.labelMedium),
         const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: widget.controller,
@@ -53,14 +55,14 @@ class _AppTextFieldState extends State<AppTextField> {
           validator: widget.validator,
           maxLines: widget.obscurable ? 1 : widget.maxLines,
           minLines: widget.maxLines > 1 ? widget.maxLines : null,
-          style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+          style: typography.bodyLarge.copyWith(color: colors.textPrimary),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textHint,
+            hintStyle: typography.bodyLarge.copyWith(
+              color: colors.textHint,
             ),
             filled: true,
-            fillColor: AppColors.backgroundInput,
+            fillColor: colors.backgroundInput,
             // A leading icon looks fine centered against one line, but
             // floats awkwardly in the middle of a tall multiline box.
             prefixIcon: widget.maxLines > 1
@@ -68,37 +70,37 @@ class _AppTextFieldState extends State<AppTextField> {
                 : Icon(
                     widget.icon,
                     size: AppSpacing.iconMd,
-                    color: AppColors.textTertiary,
+                    color: colors.textTertiary,
                   ),
             suffixIcon: widget.obscurable
                 ? IconButton(
                     icon: Icon(
                       _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
                       size: AppSpacing.iconMd,
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                     ),
                     onPressed: () => setState(() => _obscured = !_obscured),
                   )
                 : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.primary),
+              borderSide: BorderSide(color: colors.primary),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.error),
+              borderSide: BorderSide(color: colors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.error),
+              borderSide: BorderSide(color: colors.error),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,

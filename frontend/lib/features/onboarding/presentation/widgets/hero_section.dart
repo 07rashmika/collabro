@@ -9,6 +9,7 @@ class HeroSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       height: height,
       decoration: const BoxDecoration(
@@ -28,7 +29,7 @@ class HeroSection extends StatelessWidget {
               shape: .circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.primary.withValues(alpha: 0.22),
+                  colors.primary.withValues(alpha: 0.22),
                   Colors.transparent,
                 ],
               ),

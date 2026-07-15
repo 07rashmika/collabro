@@ -11,14 +11,16 @@ class SkillChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.chipBackground,
-        border: Border.all(color: AppColors.chipBorder),
+        color: colors.chipBackground,
+        border: Border.all(color: colors.chipBorder),
         borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
       ),
-      child: Text(label, style: AppTypography.labelSmall),
+      child: Text(label, style: typography.labelSmall),
     );
   }
 }

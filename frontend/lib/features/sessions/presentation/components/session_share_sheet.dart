@@ -13,9 +13,10 @@ import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 /// The app has no verified web domain yet, so this is a code the recipient
 /// pastes into "Join via Code" rather than a tap-to-open deep link.
 Future<void> showSessionShareSheet(BuildContext context, StudySession session) {
+  final colors = AppColors.of(context);
   return showModalBottomSheet<void>(
     context: context,
-    backgroundColor: AppColors.backgroundMedium,
+    backgroundColor: colors.backgroundMedium,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusLg)),
     ),
@@ -45,6 +46,8 @@ class _SessionShareSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Padding(
       padding: EdgeInsets.only(
         left: AppSpacing.screenHorizontal,
@@ -58,15 +61,15 @@ class _SessionShareSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.check_circle, color: AppColors.success),
+              Icon(Icons.check_circle, color: colors.success),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: Text('Session created', style: AppTypography.titleLarge)),
+              Expanded(child: Text('Session created', style: typography.titleLarge)),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Share this code so others can join "${session.title}".',
-            style: AppTypography.bodyMedium,
+            style: typography.bodyMedium,
           ),
           const SizedBox(height: AppSpacing.lg),
           Container(
@@ -75,21 +78,21 @@ class _SessionShareSheet extends StatelessWidget {
               vertical: AppSpacing.md,
             ),
             decoration: BoxDecoration(
-              color: AppColors.backgroundInput,
+              color: colors.backgroundInput,
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: colors.border),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: Text(
                     _joinCode,
-                    style: AppTypography.titleMedium.copyWith(letterSpacing: 1.1),
+                    style: typography.titleMedium.copyWith(letterSpacing: 1.1),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.copy_outlined, color: AppColors.textTertiary),
+                  icon: Icon(Icons.copy_outlined, color: colors.textTertiary),
                   tooltip: 'Copy code',
                   onPressed: () async {
                     await Clipboard.setData(ClipboardData(text: _joinCode));
@@ -107,13 +110,13 @@ class _SessionShareSheet extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.lock_outline,
                   size: AppSpacing.iconSm,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
                 const SizedBox(width: AppSpacing.xs),
-                Text('Password protected', style: AppTypography.bodySmall),
+                Text('Password protected', style: typography.bodySmall),
               ],
             ),
           ],
@@ -128,7 +131,7 @@ class _SessionShareSheet extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Done',
-              style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+              style: typography.bodyMedium.copyWith(color: colors.textSecondary),
             ),
           ),
         ],

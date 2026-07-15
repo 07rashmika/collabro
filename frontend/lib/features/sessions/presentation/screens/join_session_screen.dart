@@ -54,8 +54,10 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<SessionsCubit, SessionsState>(
           listener: (context, state) {
@@ -64,11 +66,11 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
             } else if (state is SessionPasswordRequired) {
               setState(() => _passwordRequired = true);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+                SnackBar(content: Text(state.message), backgroundColor: colors.error),
               );
             } else if (state is SessionsError) {
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
+                SnackBar(content: Text(state.message), backgroundColor: colors.error),
               );
             }
           },
@@ -84,13 +86,13 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
                     children: [
                       IconButton(
                         onPressed: () => context.pop(),
-                        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                        icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       ),
                       Expanded(
                         child: Text(
                           'Join Session',
                           textAlign: TextAlign.center,
-                          style: AppTypography.headlineMedium,
+                          style: typography.headlineMedium,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -99,7 +101,7 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
                   const SizedBox(height: AppSpacing.lg),
                   Text(
                     'Enter the code someone shared with you to join their session.',
-                    style: AppTypography.bodyMedium,
+                    style: typography.bodyMedium,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(

@@ -13,8 +13,10 @@ class ComingSoonScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -22,12 +24,12 @@ class ComingSoonScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 48, color: AppColors.textTertiary),
+                Icon(icon, size: 48, color: colors.textTertiary),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   '$title is coming soon.',
                   textAlign: TextAlign.center,
-                  style: AppTypography.bodySmall,
+                  style: typography.bodySmall,
                 ),
               ],
             ),

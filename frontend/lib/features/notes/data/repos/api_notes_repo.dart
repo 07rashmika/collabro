@@ -28,6 +28,25 @@ class ApiNotesRepo implements NotesRepo {
   }
 
   @override
+  Future<List<Note>> getPublicNotes({String? search, String? tag}) async {
+    try {
+      final response = await apiClient.get(
+        NotesEndpoints.public,
+        query: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (tag != null && tag.isNotEmpty) 'tag': tag,
+        },
+      );
+      final notes = (response.data['notes'] as List<dynamic>?) ?? [];
+      return notes.map((n) => Note.fromJson(n as Map<String, dynamic>)).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching public notes failed: $e');
+    }
+  }
+
+  @override
   Future<Note> getNoteById(String id) async {
     try {
       final response = await apiClient.get(NotesEndpoints.byId(id));

@@ -15,6 +15,8 @@ class ConnectButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return SizedBox(
       height: AppSpacing.buttonHeightSm,
       width: double.infinity,
@@ -22,8 +24,8 @@ class ConnectButton extends StatelessWidget {
           ? OutlinedButton(
               onPressed: null,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.success,
-                side: const BorderSide(color: AppColors.success),
+                foregroundColor: colors.success,
+                side: BorderSide(color: colors.success),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
@@ -36,8 +38,8 @@ class ConnectButton extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     'Connected',
-                    style: AppTypography.labelSmall.copyWith(
-                      color: AppColors.success,
+                    style: typography.labelSmall.copyWith(
+                      color: colors.success,
                     ),
                   ),
                 ],
@@ -46,13 +48,13 @@ class ConnectButton extends StatelessWidget {
           : ElevatedButton(
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
                 padding: EdgeInsets.zero,
-                textStyle: AppTypography.labelSmall,
+                textStyle: typography.labelSmall,
               ),
               child: const Text('Connect'),
             ),

@@ -129,52 +129,54 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label, style: AppTypography.labelLarge),
+        Text(widget.label, style: typography.labelLarge),
         const SizedBox(height: AppSpacing.sm),
         TextField(
           controller: _controller,
           enabled: !widget.isBusy,
-          style: AppTypography.bodyLarge.copyWith(color: AppColors.textPrimary),
+          style: typography.bodyLarge.copyWith(color: colors.textPrimary),
           textInputAction: TextInputAction.done,
           onChanged: _onChanged,
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: AppTypography.bodyLarge.copyWith(
-              color: AppColors.textHint,
+            hintStyle: typography.bodyLarge.copyWith(
+              color: colors.textHint,
             ),
             filled: true,
-            fillColor: AppColors.backgroundInput,
+            fillColor: colors.backgroundInput,
             suffixIcon: widget.isBusy
-                ? const Padding(
+                ? Padding(
                     padding: EdgeInsets.all(14),
                     child: SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primary,
+                        color: colors.primary,
                       ),
                     ),
                   )
                 : IconButton(
-                    icon: const Icon(Icons.add, color: AppColors.primary),
+                    icon: Icon(Icons.add, color: colors.primary),
                     onPressed: _submit,
                   ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-              borderSide: const BorderSide(color: AppColors.primary),
+              borderSide: BorderSide(color: colors.primary),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSpacing.lg,
@@ -191,10 +193,10 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
               return ActionChip(
                 label: Text(
                   widget.labelOf(item),
-                  style: AppTypography.labelSmall,
+                  style: typography.labelSmall,
                 ),
-                backgroundColor: AppColors.backgroundElevated,
-                side: const BorderSide(color: AppColors.chipBorder),
+                backgroundColor: colors.backgroundElevated,
+                side: BorderSide(color: colors.chipBorder),
                 onPressed: () => _selectExisting(item),
               );
             }).toList(),
@@ -205,17 +207,17 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Press enter to add "$_query" as new',
-            style: AppTypography.caption,
+            style: typography.caption,
           ),
         ],
         if (widget.remoteBusy) ...[
           const SizedBox(height: AppSpacing.sm),
-          const SizedBox(
+          SizedBox(
             width: 14,
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppColors.primary,
+              color: colors.primary,
             ),
           ),
         ] else if (_remoteOnly.isNotEmpty) ...[
@@ -225,14 +227,14 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
             runSpacing: AppSpacing.sm,
             children: _remoteOnly.map((name) {
               return ActionChip(
-                label: Text(name, style: AppTypography.labelSmall),
-                avatar: const Icon(
+                label: Text(name, style: typography.labelSmall),
+                avatar: Icon(
                   Icons.travel_explore,
                   size: 14,
-                  color: AppColors.primaryLight,
+                  color: colors.primaryLight,
                 ),
-                backgroundColor: AppColors.backgroundElevated,
-                side: const BorderSide(color: AppColors.chipBorder),
+                backgroundColor: colors.backgroundElevated,
+                side: BorderSide(color: colors.chipBorder),
                 onPressed: () => _selectRemote(name),
               );
             }).toList(),

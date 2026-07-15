@@ -67,8 +67,10 @@ class _SessionsListViewState extends State<_SessionsListView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -83,19 +85,19 @@ class _SessionsListViewState extends State<_SessionsListView> {
                   IconButton(
                     onPressed: _openJoinSession,
                     tooltip: 'Join via code',
-                    icon: const Icon(Icons.link, color: AppColors.textPrimary),
+                    icon: Icon(Icons.link, color: colors.textPrimary),
                   ),
                   Expanded(
                     child: Text(
                       'Study Sessions',
                       textAlign: TextAlign.center,
-                      style: AppTypography.headlineMedium,
+                      style: typography.headlineMedium,
                     ),
                   ),
                   IconButton(
                     onPressed: _openNewSession,
                     tooltip: 'New session',
-                    icon: const Icon(Icons.add, color: AppColors.textPrimary),
+                    icon: Icon(Icons.add, color: colors.textPrimary),
                   ),
                 ],
               ),
@@ -120,9 +122,9 @@ class _SessionsListViewState extends State<_SessionsListView> {
                 child: BlocBuilder<SessionsCubit, SessionsState>(
                   builder: (context, state) {
                     if (state is SessionsLoading || state is SessionsInitial) {
-                      return const Center(
+                      return Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                       );
                     }
@@ -132,7 +134,7 @@ class _SessionsListViewState extends State<_SessionsListView> {
                         child: Text(
                           state.message,
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }
@@ -147,7 +149,7 @@ class _SessionsListViewState extends State<_SessionsListView> {
                               ? 'No saved sessions yet. Bookmark one from Home to see it here.'
                               : 'No study sessions yet. Tap + to start one.',
                           textAlign: TextAlign.center,
-                          style: AppTypography.bodySmall,
+                          style: typography.bodySmall,
                         ),
                       );
                     }

@@ -20,15 +20,17 @@ class SessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     final isVirtual = session.type == SessionType.video;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,7 +44,7 @@ class SessionCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         session.title,
-                        style: AppTypography.titleLarge,
+                        style: typography.titleLarge,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -55,12 +57,12 @@ class SessionCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.chipBackground,
+                          color: colors.chipBackground,
                           borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
                         ),
                         child: Text(
                           'Public',
-                          style: AppTypography.caption.copyWith(color: AppColors.primaryLight),
+                          style: typography.caption.copyWith(color: colors.primaryLight),
                         ),
                       ),
                     ],
@@ -90,10 +92,10 @@ class SessionCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: AppColors.backgroundElevated,
+                          color: colors.backgroundElevated,
                           borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
                         ),
-                        child: Text(tag.name, style: AppTypography.caption),
+                        child: Text(tag.name, style: typography.caption),
                       );
                     }).toList(),
                   ),
@@ -113,7 +115,7 @@ class SessionCard extends StatelessWidget {
                   constraints: const BoxConstraints(),
                   icon: Icon(
                     session.savedByMe ? Icons.bookmark : Icons.bookmark_border,
-                    color: session.savedByMe ? AppColors.primary : AppColors.textTertiary,
+                    color: session.savedByMe ? colors.primary : colors.textTertiary,
                   ),
                   tooltip: session.savedByMe ? 'Remove from saved' : 'Save session',
                 ),
@@ -139,11 +141,13 @@ class _IconLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Row(
       children: [
-        Icon(icon, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+        Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
-        Text(label, style: AppTypography.bodySmall),
+        Text(label, style: typography.bodySmall),
       ],
     );
   }

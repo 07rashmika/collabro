@@ -29,7 +29,7 @@ export class UsersController {
   async getAllUsers(req: Request, res: Response) {
     try {
       const query = UserQuerySchema.parse(req.query);
-      const result = await this.usersService.getAllUsers(query);
+      const result = await this.usersService.getAllUsers(req.user!.sub, query);
       res.status(200).json(result);
     } catch (err) {
       res.status(500).json({ message: (err as Error).message });

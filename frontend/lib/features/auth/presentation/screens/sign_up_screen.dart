@@ -66,8 +66,10 @@ class _SignUpViewState extends State<_SignUpView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) {
@@ -77,7 +79,7 @@ class _SignUpViewState extends State<_SignUpView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.message),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             }
@@ -97,9 +99,9 @@ class _SignUpViewState extends State<_SignUpView> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.cardPaddingLarge),
                     decoration: BoxDecoration(
-                      color: AppColors.backgroundCard,
+                      color: colors.backgroundCard,
                       borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -163,7 +165,7 @@ class _SignUpViewState extends State<_SignUpView> {
                               height: 24,
                               child: Checkbox(
                                 value: _agreedToTerms,
-                                activeColor: AppColors.primary,
+                                activeColor: colors.primary,
                                 onChanged: (value) =>
                                     setState(() => _agreedToTerms = value ?? false),
                               ),
@@ -174,7 +176,7 @@ class _SignUpViewState extends State<_SignUpView> {
                                 padding: const EdgeInsets.only(top: AppSpacing.xs),
                                 child: Text(
                                   'I agree to the Terms of Service and Privacy Policy.',
-                                  style: AppTypography.bodySmall,
+                                  style: typography.bodySmall,
                                 ),
                               ),
                             ),
@@ -199,14 +201,14 @@ class _SignUpViewState extends State<_SignUpView> {
                     children: [
                       Text(
                         'Already have an account? ',
-                        style: AppTypography.bodySmall,
+                        style: typography.bodySmall,
                       ),
                       GestureDetector(
                         onTap: () => context.go(AppRoutes.signIn),
                         child: Text(
                           'Sign In',
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.primaryLight,
+                          style: typography.bodySmall.copyWith(
+                            color: colors.primaryLight,
                             fontWeight: FontWeight.w600,
                           ),
                         ),

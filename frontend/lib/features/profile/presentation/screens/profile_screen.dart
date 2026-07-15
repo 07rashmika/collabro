@@ -58,8 +58,10 @@ class _ProfileView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) {
@@ -81,16 +83,16 @@ class _ProfileView extends StatelessWidget {
                           child: Text(
                             'Profile',
                             textAlign: TextAlign.center,
-                            style: AppTypography.headlineMedium,
+                            style: typography.headlineMedium,
                           ),
                         ),
                         IconButton(
                           onPressed: state is ProfileLoaded
                               ? () => _openEdit(context)
                               : null,
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit_outlined,
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
                       ],
@@ -107,9 +109,11 @@ class _ProfileView extends StatelessWidget {
   }
 
   Widget _buildBody(BuildContext context, ProfileState state) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     if (state is ProfileLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+      return Center(
+        child: CircularProgressIndicator(color: colors.primary),
       );
     }
 
@@ -122,7 +126,7 @@ class _ProfileView extends StatelessWidget {
             children: [
               Text(
                 state.message,
-                style: AppTypography.bodyMedium,
+                style: typography.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -150,9 +154,9 @@ class _ProfileView extends StatelessWidget {
               children: [
                 UserAvatar(name: loaded.user.name, size: AppSpacing.avatarXxl),
                 const SizedBox(height: AppSpacing.md),
-                Text(loaded.user.name, style: AppTypography.headlineSmall),
+                Text(loaded.user.name, style: typography.headlineSmall),
                 const SizedBox(height: AppSpacing.xs),
-                Text(loaded.user.email, style: AppTypography.bodySmall),
+                Text(loaded.user.email, style: typography.bodySmall),
               ],
             ),
           ),
@@ -160,7 +164,7 @@ class _ProfileView extends StatelessWidget {
           if (loaded.profile == null)
             _buildNoProfile(context, loaded.user)
           else
-            ..._buildProfileSections(loaded.profile!),
+            ..._buildProfileSections(context, loaded.profile!),
           const SizedBox(height: AppSpacing.xxl),
           SecondaryButton(
             label: 'Log Out',
@@ -175,11 +179,12 @@ class _ProfileView extends StatelessWidget {
   }
 
   Widget _buildNoProfile(BuildContext context, AppUser user) {
+    final typography = AppTypography.of(context);
     return Column(
       children: [
         Text(
           "You haven't finished setting up your profile yet.",
-          style: AppTypography.bodyMedium,
+          style: typography.bodyMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -191,61 +196,69 @@ class _ProfileView extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildProfileSections(Profile profile) {
+  List<Widget> _buildProfileSections(BuildContext context, Profile profile) {
+    final typography = AppTypography.of(context);
     return [
       if (profile.bio != null && profile.bio!.isNotEmpty) ...[
         Text(
           profile.bio!,
-          style: AppTypography.bodyMedium,
+          style: typography.bodyMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xxl),
       ],
       if (profile.learningGoal != null && profile.learningGoal!.isNotEmpty)
         _buildDetailRow(
+          context,
           icon: Icons.flag_outlined,
           label: 'Wants to learn',
           value: profile.learningGoal!,
         ),
       if (profile.teachGoal != null && profile.teachGoal!.isNotEmpty)
         _buildDetailRow(
+          context,
           icon: Icons.school_outlined,
           label: 'Can teach',
           value: profile.teachGoal!,
         ),
       const SizedBox(height: AppSpacing.lg),
       _buildChipSection(
+        context,
         'Skills',
         profile.skills
             .map((s) => '${s.name} · ${_levelLabels[s.level] ?? s.level}')
             .toList(),
       ),
       _buildChipSection(
+        context,
         'Study Areas',
         profile.studyAreas.map((a) => a.name).toList(),
       ),
-      _buildChipSection('Interests', profile.interests),
+      _buildChipSection(context, 'Interests', profile.interests),
     ];
   }
 
-  Widget _buildDetailRow({
+  Widget _buildDetailRow(
+    BuildContext context, {
     required IconData icon,
     required String label,
     required String value,
   }) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: AppSpacing.iconMd, color: AppColors.textTertiary),
+          Icon(icon, size: AppSpacing.iconMd, color: colors.textTertiary),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: AppTypography.labelSmall),
-                Text(value, style: AppTypography.bodyMedium),
+                Text(label, style: typography.labelSmall),
+                Text(value, style: typography.bodyMedium),
               ],
             ),
           ),
@@ -254,14 +267,15 @@ class _ProfileView extends StatelessWidget {
     );
   }
 
-  Widget _buildChipSection(String title, List<String> items) {
+  Widget _buildChipSection(BuildContext context, String title, List<String> items) {
     if (items.isEmpty) return const SizedBox.shrink();
+    final typography = AppTypography.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTypography.headlineSmall),
+          Text(title, style: typography.headlineSmall),
           const SizedBox(height: AppSpacing.md),
           Wrap(
             spacing: AppSpacing.sm,

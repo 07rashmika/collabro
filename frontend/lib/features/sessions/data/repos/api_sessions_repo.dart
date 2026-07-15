@@ -125,11 +125,15 @@ class ApiSessionsRepo implements SessionsRepo {
   }
 
   @override
-  Future<List<StudySession>> discoverSessions({int page = 1, int limit = 10}) async {
+  Future<List<StudySession>> discoverSessions({String? search, int page = 1, int limit = 10}) async {
     try {
       final response = await apiClient.get(
         SessionsEndpoints.discover,
-        query: {'page': '$page', 'limit': '$limit'},
+        query: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          'page': '$page',
+          'limit': '$limit',
+        },
       );
       final sessions = (response.data['sessions'] as List<dynamic>?) ?? [];
       return sessions.map((s) => StudySession.fromJson(s as Map<String, dynamic>)).toList();

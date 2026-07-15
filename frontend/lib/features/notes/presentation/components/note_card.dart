@@ -14,6 +14,8 @@ class NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
@@ -21,9 +23,9 @@ class NoteCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.cardPadding),
         decoration: BoxDecoration(
-          color: AppColors.backgroundCard,
+          color: colors.backgroundCard,
           borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +35,7 @@ class NoteCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     note.title,
-                    style: AppTypography.titleLarge,
+                    style: typography.titleLarge,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -41,14 +43,14 @@ class NoteCard extends StatelessWidget {
                 Icon(
                   note.isPublic ? Icons.public : Icons.lock_outline,
                   size: AppSpacing.iconSm,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               note.content,
-              style: AppTypography.bodySmall,
+              style: typography.bodySmall,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -65,7 +67,7 @@ class NoteCard extends StatelessWidget {
                   )
                 else
                   const Spacer(),
-                Text(timeAgo(note.updatedAt), style: AppTypography.caption),
+                Text(timeAgo(note.updatedAt), style: typography.caption),
               ],
             ),
           ],

@@ -25,9 +25,11 @@ abstract class SessionsRepo {
   Future<StudySession> closeSession(String id);
   Future<void> deleteSession(String id);
 
-  /// Public sessions the caller hasn't joined, matching their own skills —
-  /// feeds the Home tab's Upcoming Sessions alongside their own sessions.
-  Future<List<StudySession>> discoverSessions({int page = 1, int limit = 10});
+  /// Public sessions the caller hasn't joined. With no [search] this
+  /// matches their own skills — feeds the Home tab's Upcoming Sessions
+  /// alongside their own sessions. With [search] it's a title search
+  /// instead, used by the Discovery tab.
+  Future<List<StudySession>> discoverSessions({String? search, int page = 1, int limit = 10});
   Future<List<StudySession>> getSavedSessions({int page = 1, int limit = 10});
   Future<void> saveSession(String id);
   Future<void> unsaveSession(String id);

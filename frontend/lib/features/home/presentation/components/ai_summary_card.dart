@@ -12,12 +12,14 @@ class AiSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Container(
       padding: const EdgeInsets.all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard,
+        color: colors.backgroundCard,
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -28,12 +30,12 @@ class AiSummaryCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: colors.primary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.description_outlined,
-                  color: AppColors.primary,
+                  color: colors.primary,
                   size: AppSpacing.iconMd,
                 ),
               ),
@@ -42,8 +44,8 @@ class AiSummaryCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(summary.title, style: AppTypography.titleMedium),
-                    Text(summary.generatedLabel, style: AppTypography.caption),
+                    Text(summary.title, style: typography.titleMedium),
+                    Text(summary.generatedLabel, style: typography.caption),
                   ],
                 ),
               ),
@@ -52,7 +54,7 @@ class AiSummaryCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.sm),
           Text(
             summary.snippet,
-            style: AppTypography.bodySmall,
+            style: typography.bodySmall,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -64,10 +66,10 @@ class AiSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   'Read Full Summary',
-                  style: AppTypography.labelSmall.copyWith(color: AppColors.primaryLight),
+                  style: typography.labelSmall.copyWith(color: colors.primaryLight),
                 ),
                 const SizedBox(width: 4),
-                const Icon(Icons.arrow_forward, size: 12, color: AppColors.primaryLight),
+                Icon(Icons.arrow_forward, size: 12, color: colors.primaryLight),
               ],
             ),
           ),

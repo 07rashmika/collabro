@@ -63,8 +63,10 @@ class _EditProfileViewState extends State<_EditProfileView> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocConsumer<EditProfileCubit, EditProfileState>(
           listener: (context, state) {
@@ -80,7 +82,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.submitError!),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             } else if (state is EditProfileReady &&
@@ -88,7 +90,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(state.catalogError!),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: colors.error,
                 ),
               );
             }
@@ -105,16 +107,16 @@ class _EditProfileViewState extends State<_EditProfileView> {
                     children: [
                       IconButton(
                         onPressed: () => context.pop(),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_back,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       Expanded(
                         child: Text(
                           'Edit Profile',
                           textAlign: TextAlign.center,
-                          style: AppTypography.headlineMedium,
+                          style: typography.headlineMedium,
                         ),
                       ),
                       const SizedBox(width: 48),
@@ -131,9 +133,11 @@ class _EditProfileViewState extends State<_EditProfileView> {
   }
 
   Widget _buildBody(BuildContext context, EditProfileState state) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     if (state is EditProfileLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+      return Center(
+        child: CircularProgressIndicator(color: colors.primary),
       );
     }
 
@@ -146,7 +150,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
             children: [
               Text(
                 state.message,
-                style: AppTypography.bodyMedium,
+                style: typography.bodyMedium,
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -223,8 +227,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Text(
                     'Keep at least one skill, study area, and interest.',
-                    style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.warning,
+                    style: typography.bodySmall.copyWith(
+                      color: colors.warning,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -8,12 +8,13 @@ class IllustrationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const .all(AppSpacing.sm + 2),
       decoration: BoxDecoration(
-        color: AppColors.backgroundCard.withValues(alpha: .92),
+        color: colors.backgroundCard.withValues(alpha: .92),
         borderRadius: .circular(AppSpacing.radiusMd),
-        border: .all(color: AppColors.border),
+        border: .all(color: colors.border),
       ),
       child: child,
     );

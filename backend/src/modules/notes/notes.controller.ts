@@ -37,7 +37,7 @@ export class NotesController {
   async getPublicNotes(req: Request, res: Response) {
     try {
       const query  = NoteQuerySchema.parse(req.query);
-      const result = await this.notesService.getPublicNotes(query);
+      const result = await this.notesService.getPublicNotes(req.user!.sub, query);
       res.status(200).json(result);
     } catch (err) { handleError(res, err); }
   }

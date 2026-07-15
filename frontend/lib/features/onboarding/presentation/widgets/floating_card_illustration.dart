@@ -8,6 +8,7 @@ class FloatingCardIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return SizedBox(
       width: 240,
       height: 240,
@@ -19,12 +20,12 @@ class FloatingCardIllustration extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: .3),
+                  color: colors.primary.withValues(alpha: .3),
                   borderRadius: .circular(AppSpacing.radiusSm),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.group,
-                  color: AppColors.primary,
+                  color: colors.primary,
                   size: 22,
                 ),
               ),
@@ -41,9 +42,9 @@ class FloatingCardIllustration extends StatelessWidget {
                     width: 72,
                     height: 7,
                     margin: const .only(bottom: 5),
-                    color: AppColors.primary.withValues(alpha: .5),
+                    color: colors.primary.withValues(alpha: .5),
                   ),
-                  Container(width: 50, height: 7, color: AppColors.border),
+                  Container(width: 50, height: 7, color: colors.border),
                 ],
               ),
             ),
@@ -58,14 +59,14 @@ class FloatingCardIllustration extends StatelessWidget {
                 shape: .circle,
                 gradient: RadialGradient(
                   colors: [
-                    AppColors.primary.withValues(alpha: 0.38),
+                    colors.primary.withValues(alpha: 0.38),
                     Colors.transparent,
                   ],
                 ),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.auto_awesome,
-                color: AppColors.primary,
+                color: colors.primary,
                 size: 32,
               ),
             ),

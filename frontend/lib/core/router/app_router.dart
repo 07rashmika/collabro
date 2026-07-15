@@ -15,6 +15,7 @@ import 'package:frontend/features/onboarding/presentation/screens/onboarding_scr
 import 'package:frontend/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:frontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:frontend/features/profile_setup/presentation/screens/profile_setup_screen.dart';
+import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/presentation/screens/join_session_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/new_session_screen.dart';
@@ -113,6 +114,10 @@ abstract class AppRouter {
       GoRoute(
         path: AppRoutes.editProfile,
         builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.settings,
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         path: AppRoutes.sessionDetail,

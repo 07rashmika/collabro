@@ -21,16 +21,18 @@ class DashboardSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
             if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: AppSpacing.iconMd, color: AppColors.primary),
+              Icon(leadingIcon, size: AppSpacing.iconMd, color: colors.primary),
               const SizedBox(width: AppSpacing.xs),
             ],
-            Text(title, style: AppTypography.headlineSmall),
+            Text(title, style: typography.headlineSmall),
           ],
         ),
         if (actionLabel != null)
@@ -38,7 +40,7 @@ class DashboardSectionHeader extends StatelessWidget {
             onTap: onActionTap,
             child: Text(
               actionLabel!,
-              style: AppTypography.bodySmall.copyWith(color: AppColors.primaryLight),
+              style: typography.bodySmall.copyWith(color: colors.primaryLight),
             ),
           ),
       ],
