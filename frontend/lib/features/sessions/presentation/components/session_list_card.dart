@@ -11,12 +11,14 @@ class SessionListCard extends StatelessWidget {
   final StudySession session;
   final VoidCallback onTap;
   final VoidCallback? onToggleSave;
+  final VoidCallback? onSummarize;
 
   const SessionListCard({
     super.key,
     required this.session,
     required this.onTap,
     this.onToggleSave,
+    this.onSummarize,
   });
 
   @override
@@ -27,7 +29,10 @@ class SessionListCard extends StatelessWidget {
     final isClosed = session.status == SessionStatus.closed;
 
     return InkWell(
-      onTap: onTap,
+      // Closed sessions have nothing left to open — the chat/call screen
+      // just errors out trying to join a room that no longer accepts
+      // connections. Summarizing (below) is the only action left for one.
+      onTap: isClosed ? null : onTap,
       borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
       child: Container(
         width: double.infinity,
@@ -81,6 +86,13 @@ class SessionListCard extends StatelessWidget {
                   color: session.savedByMe ? colors.primary : colors.textTertiary,
                 ),
                 tooltip: session.savedByMe ? 'Remove from saved' : 'Save session',
+              ),
+            if (isClosed && onSummarize != null)
+              IconButton(
+                onPressed: onSummarize,
+                visualDensity: VisualDensity.compact,
+                icon: Icon(Icons.auto_awesome, color: colors.primary),
+                tooltip: 'Get AI summary',
               ),
             const SizedBox(width: AppSpacing.sm),
             if (!isClosed)

@@ -14,6 +14,7 @@ import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/components/message_bubble.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_panel.dart';
+import 'package:frontend/features/sessions/presentation/components/session_summary_dialog.dart';
 import 'package:frontend/features/sessions/presentation/cubits/session_chat_cubit.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
 
@@ -168,8 +169,10 @@ class _SessionChatViewState extends State<_SessionChatView> {
       ),
       body: SafeArea(
         child: BlocListener<SessionsCubit, SessionsState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is SessionSaved) {
+              await maybeOfferSessionSummary(context, state.session);
+              if (!context.mounted) return;
               // Not context.pop(): the "End Session Permanently" button
               // lives inside the still-open end drawer at this point, and a
               // plain pop closes that drawer rather than the route, leaving
@@ -217,6 +220,19 @@ class _SessionChatViewState extends State<_SessionChatView> {
                         ],
                       ),
                     ),
+                    BlocBuilder<SessionChatCubit, SessionChatState>(
+                      builder: (context, state) {
+                        final currentUserId =
+                            state is ChatConnected ? state.currentUserId : null;
+                        final isCreator = currentUserId == widget.session.creatorId;
+                        if (!isCreator || _isClosed) return const SizedBox.shrink();
+                        return IconButton(
+                          onPressed: () => _confirmEndSession(context),
+                          tooltip: 'End session',
+                          icon: Icon(Icons.stop_circle_outlined, color: colors.error),
+                        );
+                      },
+                    ),
                     IconButton(
                       onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
                       tooltip: 'Session info',
@@ -231,7 +247,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
               Divider(height: AppSpacing.lg, color: colors.border),
               Expanded(
                 child: BlocConsumer<SessionChatCubit, SessionChatState>(
-                  listener: (context, state) {
+                  listener: (context, state) async {
                     if (state is ChatConnected) _scrollToBottom();
                     if (state is ChatError) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -250,6 +266,8 @@ class _SessionChatViewState extends State<_SessionChatView> {
                           backgroundColor: colors.warning,
                         ),
                       );
+                      await maybeOfferSessionSummary(context, widget.session);
+                      if (!context.mounted) return;
                       context.go(AppRoutes.sessions);
                     }
                   },

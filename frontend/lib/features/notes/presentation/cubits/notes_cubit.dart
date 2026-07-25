@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/note.dart';
 import '../../domain/repos/notes_repo.dart';
-import '../utils/hardcoded_summarizer.dart';
 
 part 'notes_state.dart';
 
@@ -84,12 +83,14 @@ class NotesCubit extends Cubit<NotesState> {
     }
   }
 
-  /// No backend call — see hardcoded_summarizer.dart. The short delay just
-  /// makes the "Generating..." state feel real.
   Future<void> summarizeNote(Note note) async {
     emit(const NoteSummarizing());
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    emit(NoteSummarized(note.copyWith(summary: generateHardcodedSummary(note.content))));
+    try {
+      final summarized = await notesRepo.requestSummary(note.id);
+      emit(NoteSummarized(summarized));
+    } catch (e) {
+      emit(NotesError(e.toString().replaceFirst('Exception: ', '')));
+    }
   }
 
   Future<void> uploadPhotos(String noteId, List<String> imagePaths) async {

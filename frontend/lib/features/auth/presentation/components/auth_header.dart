@@ -33,14 +33,10 @@ class AuthHeader extends StatelessWidget {
                   ),
                 ),
               ),
-              ShaderMask(
-                shaderCallback: (bounds) =>
-                    colors.primaryGradient.createShader(bounds),
-                child: Text(
-                  'Collabro',
-                  style: typography.displayLarge.copyWith(
-                    color: Colors.white,
-                  ),
+              Text(
+                'Collabro',
+                style: typography.displayLarge.copyWith(
+                  color: colors.primary,
                 ),
               ),
             ],

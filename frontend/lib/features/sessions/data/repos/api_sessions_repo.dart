@@ -249,4 +249,16 @@ class ApiSessionsRepo implements SessionsRepo {
       throw Exception('Fetching ICE servers failed: $e');
     }
   }
+
+  @override
+  Future<StudySession> generateSummary(String sessionId) async {
+    try {
+      final response = await apiClient.post(SessionsEndpoints.summary(sessionId));
+      return StudySession.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Generating session summary failed: $e');
+    }
+  }
 }

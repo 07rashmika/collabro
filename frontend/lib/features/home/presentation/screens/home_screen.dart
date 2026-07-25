@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +8,7 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/realtime/user_notifications_service.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/app_search_field.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
@@ -55,10 +58,36 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _HomeView extends StatelessWidget {
+class _HomeView extends StatefulWidget {
   final AppUser user;
 
   const _HomeView({required this.user});
+
+  @override
+  State<_HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<_HomeView> {
+  StreamSubscription? _sessionsChangedSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessionsChangedSubscription = context
+        .read<UserNotificationsService>()
+        .sessionsChanged
+        .listen((_) => _reloadUpcomingSessions());
+  }
+
+  @override
+  void dispose() {
+    _sessionsChangedSubscription?.cancel();
+    super.dispose();
+  }
+
+  void _reloadUpcomingSessions() {
+    context.read<SessionsCubit>().loadUpcomingSessions();
+  }
 
   /// A discovered public session the user hasn't joined yet needs a real
   /// join (adds them as a participant server-side) before the chat/video
@@ -66,7 +95,7 @@ class _HomeView extends StatelessWidget {
   /// the user already owns or participates in skip straight to navigation.
   Future<void> _openSession(BuildContext context, StudySession session) async {
     final colors = AppColors.of(context);
-    final alreadyJoined = session.participants.any((p) => p.userId == user.id);
+    final alreadyJoined = session.participants.any((p) => p.userId == widget.user.id);
     if (alreadyJoined) {
       context.push(AppRoutes.sessionDetail, extra: session);
       return;
@@ -143,7 +172,7 @@ class _HomeView extends StatelessWidget {
     final typography = AppTypography.of(context);
     return Scaffold(
       backgroundColor: colors.backgroundDark,
-      drawer: HomeDrawer(user: user),
+      drawer: HomeDrawer(user: widget.user),
       body: SafeArea(
         child: Builder(
           builder: (scaffoldContext) {
@@ -181,7 +210,7 @@ class _HomeView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const SizedBox(height: AppSpacing.xs),
-                            GreetingHeader(name: user.name.split(' ').first),
+                            GreetingHeader(name: widget.user.name.split(' ').first),
                             const SizedBox(height: AppSpacing.lg),
                             AppSearchField(
                               hint: 'Search for subjects, partners, or...',

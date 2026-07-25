@@ -129,7 +129,7 @@ class VideoCallCubit extends Cubit<VideoCallState> {
 
       case SessionEndedReceived():
         await webRTCService.hangUp();
-        emit(const CallDisconnected());
+        emit(const CallDisconnected(sessionEnded: true));
 
       case SignalingError():
         break; // non-fatal — the call continues, nothing to surface here

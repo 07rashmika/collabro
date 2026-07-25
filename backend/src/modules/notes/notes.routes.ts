@@ -8,11 +8,15 @@ import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
 import { studentDomainGuard } from "../../common/guards/student-domain.guard";
 import { AppError } from "../../common/errors/app-error";
+import { SummarizerClient } from "../summaries/summarizer.client";
+import { SummariesService } from "../summaries/summaries.service";
 
 const router = Router();
 
 const prisma = PrismaService.getInstance();
-const notesService = new NotesService(prisma);
+const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const summariesService = new SummariesService(summarizerClient);
+const notesService = new NotesService(prisma, summariesService);
 const notesController = new NotesController(notesService);
 
 const MAX_PHOTOS_PER_UPLOAD = 6;
@@ -77,6 +81,11 @@ router.delete("/:id", (req, res) => notesController.deleteNote(req, res));
 // Toggle public / private
 router.patch("/:id/visibility", (req, res) =>
   notesController.toggleVisibility(req, res)
+);
+
+// AI summary
+router.post("/:id/summary", (req, res) =>
+  notesController.generateSummary(req, res)
 );
 
 // Photos

@@ -14,9 +14,6 @@ class Note extends Equatable {
   final String authorName;
   final List<NotePhoto> photos;
 
-  /// Client-only field — never sent to or read from the backend. The real
-  /// FLAN-T5 summarization module (AGENT.md §3.2/§6) hasn't been built yet,
-  /// so this is filled in locally by the hardcoded summarizer.
   final String? summary;
 
   const Note({
@@ -43,6 +40,7 @@ class Note extends Equatable {
           .map((e) => e.toString())
           .toList(),
       isPublic: json['isPublic'] as bool? ?? false,
+      summary: json['summary'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       authorId: author?['id'] as String? ?? '',
@@ -59,6 +57,7 @@ class Note extends Equatable {
     'content': content,
     'tags': tags,
     'isPublic': isPublic,
+    'summary': summary,
     'createdAt': createdAt.toIso8601String(),
     'updatedAt': updatedAt.toIso8601String(),
     'author': {'id': authorId, 'name': authorName},

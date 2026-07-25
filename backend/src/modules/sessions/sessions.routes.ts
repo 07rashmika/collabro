@@ -4,12 +4,26 @@ import { SessionsService } from "./sessions.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
 import { studentDomainGuard } from "../../common/guards/student-domain.guard";
+import { SummarizerClient } from "../summaries/summarizer.client";
+import { SummariesService } from "../summaries/summaries.service";
 
 const router = Router();
 
 const prisma = PrismaService.getInstance();
-const sessionsService = new SessionsService(prisma);
+const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const summariesService = new SummariesService(summarizerClient);
+const sessionsService = new SessionsService(prisma, summariesService);
 const sessionsController = new SessionsController(sessionsService);
+
+// Sessions run for a fixed time window (2h video / 4h text, see
+// SESSION_TTL_MS in sessions.service.ts) — sweep for and auto-close any that
+// have run past it. This module is imported once at server startup, so the
+// interval lives for the process's lifetime.
+setInterval(() => {
+  sessionsService.expireStaleSessions().catch((err) => {
+    console.error("[Sessions] Failed to expire stale sessions", err);
+  });
+}, 60_000);
 
 router.use(jwtGuard, studentDomainGuard);
 
@@ -60,6 +74,11 @@ router.delete("/:id/messages/:messageId", (req, res) =>
 // Video calling (WebRTC ICE config)
 router.get("/:id/ice-servers", (req, res) =>
   sessionsController.getIceServers(req, res)
+);
+
+// AI summary
+router.post("/:id/summary", (req, res) =>
+  sessionsController.generateSummary(req, res)
 );
 
 export default router;

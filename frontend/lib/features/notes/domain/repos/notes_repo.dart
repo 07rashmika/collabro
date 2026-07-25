@@ -22,6 +22,7 @@ abstract class NotesRepo {
   });
   Future<void> deleteNote(String id);
   Future<Note> toggleVisibility(String id);
+  Future<Note> requestSummary(String id);
   Future<Note> uploadPhotos(String noteId, List<String> imagePaths);
   Future<Note> deletePhoto(String noteId, String photoId);
 }

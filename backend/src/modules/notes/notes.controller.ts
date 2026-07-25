@@ -65,6 +65,13 @@ export class NotesController {
     } catch (err) { handleError(res, err); }
   }
 
+  async generateSummary(req: Request, res: Response) {
+    try {
+      const note = await this.notesService.generateSummary(req.params.id as string, req.user!.sub);
+      res.status(200).json(note);
+    } catch (err) { handleError(res, err); }
+  }
+
   async deleteNote(req: Request, res: Response) {
     try {
       await this.notesService.deleteNote(req.params.id as string, req.user!.sub);

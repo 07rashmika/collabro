@@ -17,6 +17,13 @@ export const SignalingMessageType = {
   ERROR: "error",
 } as const;
 
+// Separate, payload-less protocol for the "/users/ws" channel (see
+// user-registry.ts) — clients just refetch their sessions on receipt rather
+// than the server shuttling session data through the socket.
+export const NotificationMessageType = {
+  SESSIONS_CHANGED: "sessions-changed",
+} as const;
+
 export interface CallParticipant {
   userId: string;
   name: string;

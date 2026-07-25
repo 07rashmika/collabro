@@ -5,6 +5,8 @@ import { TokenUtil } from "../../../common/utils/token.util";
 import { STUDENT_EMAIL_DOMAINS } from "../../../common/config/student-domains";
 import { PrismaService } from "../../../infrastructure/database/prisma.service";
 import { SessionsService } from "../sessions.service";
+import { SummarizerClient } from "../../summaries/summarizer.client";
+import { SummariesService } from "../../summaries/summaries.service";
 import { SignalingMessageType, InboundSignalingMessage } from "./signaling.types";
 import {
   ConnectedClient,
@@ -14,60 +16,91 @@ import {
   sendToUser,
   getClient,
 } from "./room-registry";
+import { registerUserSocket, unregisterUserSocket } from "./user-registry";
 
 const SIGNALING_PATH = "/sessions/ws";
+const NOTIFICATIONS_PATH = "/users/ws";
 
 const tokenUtil = new TokenUtil();
 const prisma = PrismaService.getInstance();
-const sessionsService = new SessionsService(prisma);
+const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const summariesService = new SummariesService(summarizerClient);
+const sessionsService = new SessionsService(prisma, summariesService);
 
 function rejectUpgrade(socket: Socket, statusLine: string) {
   socket.write(`HTTP/1.1 ${statusLine}\r\n\r\n`);
   socket.destroy();
 }
 
+// Both the per-session signaling socket and the per-user notifications
+// socket share the HTTP server's single "upgrade" event, so both live here
+// and are routed by pathname — two independent listeners would otherwise
+// race to call handleUpgrade on the same incoming request.
 export function attachSignalingServer(httpServer: HttpServer): void {
-  const wss = new WebSocketServer({ noServer: true });
+  const sessionsWss = new WebSocketServer({ noServer: true });
+  const notificationsWss = new WebSocketServer({ noServer: true });
 
   httpServer.on("upgrade", (req: IncomingMessage, socket: Socket, head: Buffer) => {
-    void handleUpgrade(wss, req, socket, head);
+    const url = new URL(req.url ?? "", "http://localhost");
+    if (url.pathname === SIGNALING_PATH) {
+      void handleSignalingUpgrade(sessionsWss, req, socket, head);
+    } else if (url.pathname === NOTIFICATIONS_PATH) {
+      void handleNotificationsUpgrade(notificationsWss, req, socket, head);
+    } else {
+      rejectUpgrade(socket, "404 Not Found");
+    }
   });
 
-  wss.on("connection", (ws: WebSocket, sessionId: string, client: ConnectedClient) => {
-    handleConnection(wss, ws, sessionId, client);
+  sessionsWss.on("connection", (ws: WebSocket, sessionId: string, client: ConnectedClient) => {
+    handleConnection(ws, sessionId, client);
+  });
+
+  notificationsWss.on("connection", (ws: WebSocket, userId: string) => {
+    registerUserSocket(userId, ws);
+    ws.on("close", () => unregisterUserSocket(userId, ws));
   });
 }
 
-async function handleUpgrade(
+/// Shared by both upgrade paths — verifies the access token and that the
+/// caller is a student, rejecting the upgrade otherwise. Returns null (after
+/// already rejecting) on any failure.
+async function authenticateUpgrade(
+  req: IncomingMessage,
+  socket: Socket,
+  token: string | null
+): Promise<{ sub: string; email: string } | null> {
+  if (!token) {
+    rejectUpgrade(socket, "400 Bad Request");
+    return null;
+  }
+  const payload = tokenUtil.verifyAccessToken(token);
+  if (!payload) {
+    rejectUpgrade(socket, "401 Unauthorized");
+    return null;
+  }
+  const isStudent = STUDENT_EMAIL_DOMAINS.some((d) => payload.email.endsWith(`@${d}`));
+  if (!isStudent) {
+    rejectUpgrade(socket, "403 Forbidden");
+    return null;
+  }
+  return payload;
+}
+
+async function handleSignalingUpgrade(
   wss: WebSocketServer,
   req: IncomingMessage,
   socket: Socket,
   head: Buffer
 ): Promise<void> {
   const url = new URL(req.url ?? "", "http://localhost");
-  if (url.pathname !== SIGNALING_PATH) {
-    rejectUpgrade(socket, "404 Not Found");
-    return;
-  }
-
   const sessionId = url.searchParams.get("sessionId");
-  const token = url.searchParams.get("token");
-  if (!sessionId || !token) {
+  if (!sessionId) {
     rejectUpgrade(socket, "400 Bad Request");
     return;
   }
 
-  const payload = tokenUtil.verifyAccessToken(token);
-  if (!payload) {
-    rejectUpgrade(socket, "401 Unauthorized");
-    return;
-  }
-
-  const isStudent = STUDENT_EMAIL_DOMAINS.some((d) => payload.email.endsWith(`@${d}`));
-  if (!isStudent) {
-    rejectUpgrade(socket, "403 Forbidden");
-    return;
-  }
+  const payload = await authenticateUpgrade(req, socket, url.searchParams.get("token"));
+  if (!payload) return;
 
   const membership = await prisma.client.sessionParticipant.findUnique({
     where: { sessionId_userId: { sessionId, userId: payload.sub } },
@@ -98,8 +131,24 @@ async function handleUpgrade(
   });
 }
 
-function handleConnection(
+/// The notifications channel needs no session/room membership check — it's
+/// a personal push channel any authenticated student can open.
+async function handleNotificationsUpgrade(
   wss: WebSocketServer,
+  req: IncomingMessage,
+  socket: Socket,
+  head: Buffer
+): Promise<void> {
+  const url = new URL(req.url ?? "", "http://localhost");
+  const payload = await authenticateUpgrade(req, socket, url.searchParams.get("token"));
+  if (!payload) return;
+
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit("connection", ws, payload.sub);
+  });
+}
+
+function handleConnection(
   ws: WebSocket,
   sessionId: string,
   client: ConnectedClient

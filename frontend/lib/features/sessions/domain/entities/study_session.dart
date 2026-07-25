@@ -67,6 +67,9 @@ class StudySession extends Equatable {
   final List<Skill> tags;
   final DateTime createdAt;
   final DateTime updatedAt;
+  // When this session auto-closes — 2h after start for video, 4h for text,
+  // counted from scheduledAt if set, otherwise createdAt. Server-computed.
+  final DateTime expiresAt;
 
   const StudySession({
     required this.id,
@@ -83,6 +86,7 @@ class StudySession extends Equatable {
     required this.tags,
     required this.createdAt,
     required this.updatedAt,
+    required this.expiresAt,
     this.summary,
     this.scheduledAt,
     this.joinCode,
@@ -104,6 +108,7 @@ class StudySession extends Equatable {
       tags: tags,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      expiresAt: expiresAt,
       summary: summary,
       scheduledAt: scheduledAt,
       joinCode: joinCode,
@@ -134,6 +139,7 @@ class StudySession extends Equatable {
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      expiresAt: DateTime.parse(json['expiresAt'] as String),
     );
   }
 
@@ -156,5 +162,6 @@ class StudySession extends Equatable {
     tags,
     createdAt,
     updatedAt,
+    expiresAt,
   ];
 }

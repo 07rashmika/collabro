@@ -30,8 +30,7 @@ class SelectableChip extends StatelessWidget {
         duration: AppDuration.fast,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
-          gradient: selected ? colors.primaryGradient : null,
-          color: selected ? null : colors.chipBackground,
+          color: selected ? colors.buttonPrimary : colors.chipBackground,
           border: Border.all(color: selected ? Colors.transparent : colors.chipBorder),
           borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
         ),

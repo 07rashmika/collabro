@@ -4,9 +4,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 
-/// Shows the (hardcoded) AI summary for a note, or a button to generate
-/// one. See notes/presentation/utils/hardcoded_summarizer.dart — there is
-/// no real summarization backend yet.
+/// Shows the AI-generated summary for a note, or a button to generate one.
 class AiSummarySection extends StatelessWidget {
   final String? summary;
   final bool isGenerating;
@@ -56,11 +54,6 @@ class AiSummarySection extends StatelessWidget {
             ),
           ] else ...[
             Text(summary!, style: typography.bodyMedium),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              "Placeholder summary — AI summarization isn't wired up yet.",
-              style: typography.caption,
-            ),
             const SizedBox(height: AppSpacing.sm),
             TextButton(
               onPressed: isGenerating ? null : onGenerate,

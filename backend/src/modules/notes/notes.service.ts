@@ -2,12 +2,14 @@ import fs from "fs/promises";
 import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
+import { SummariesService } from "../summaries/summaries.service";
 import { CreateNoteDto, UpdateNoteDto, NoteQueryDto } from "./notes.schema";
 
 const noteSelect = {
   id: true,
   title: true,
   content: true,
+  summary: true,
   tags: true,
   isPublic: true,
   createdAt: true,
@@ -24,7 +26,10 @@ const noteSelect = {
 const UPLOADS_ROOT = path.join(__dirname, "../../../uploads");
 
 export class NotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly summariesService: SummariesService
+  ) {}
 
   async getMyNotes(userId: string, query: NoteQueryDto) {
     const { search, tag, page, limit } = query;
@@ -165,6 +170,28 @@ export class NotesService {
         ...(dto.tags     !== undefined && { tags:     dto.tags }),
         ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       },
+      select: noteSelect,
+    });
+  }
+
+  async generateSummary(noteId: string, userId: string) {
+    const note = await this.prisma.client.note.findUnique({
+      where: { id: noteId },
+    });
+
+    if (!note) {
+      throw new AppError("Note not found", 404);
+    }
+
+    if (note.authorId !== userId) {
+      throw new AppError("You can only summarize your own notes", 403);
+    }
+
+    const summary = await this.summariesService.summarize(note.content, "notes");
+
+    return this.prisma.client.note.update({
+      where: { id: noteId },
+      data:  { summary },
       select: noteSelect,
     });
   }

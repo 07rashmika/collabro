@@ -75,8 +75,16 @@ final class ScreenShareStopped extends ActiveCallState {
   });
 }
 
+/// Emitted both when the local user just leaves the call (session stays open
+/// for everyone else) and when the session was actually ended (by its
+/// creator, or auto-expired) — [sessionEnded] tells the two apart so the UI
+/// only offers an AI summary in the latter case.
 final class CallDisconnected extends VideoCallState {
-  const CallDisconnected();
+  final bool sessionEnded;
+  const CallDisconnected({this.sessionEnded = false});
+
+  @override
+  List<Object?> get props => [sessionEnded];
 }
 
 final class CallError extends VideoCallState {

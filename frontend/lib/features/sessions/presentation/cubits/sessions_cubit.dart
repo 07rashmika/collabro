@@ -53,6 +53,16 @@ class SessionsCubit extends Cubit<SessionsState> {
     }
   }
 
+  Future<void> loadEndedSessions() async {
+    emit(const SessionsLoading());
+    try {
+      final sessions = await sessionsRepo.getMySessions(status: SessionStatus.closed);
+      emit(SessionsLoaded(sessions));
+    } catch (e) {
+      emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
   /// Optimistically flips `savedByMe` in the current list, then persists it;
   /// reverts the list back if the request fails.
   Future<void> toggleSaveSession(StudySession session) async {

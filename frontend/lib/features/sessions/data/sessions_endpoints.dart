@@ -11,6 +11,7 @@ abstract class SessionsEndpoints {
   static String messages(String id) => '/sessions/$id/messages';
   static String message(String id, String messageId) => '/sessions/$id/messages/$messageId';
   static String iceServers(String id) => '/sessions/$id/ice-servers';
+  static String summary(String id) => '/sessions/$id/summary';
 
   /// Builds the signaling WebSocket URL from the same base the REST client
   /// uses (swap http(s) -> ws(s)) rather than hardcoding a separate host.

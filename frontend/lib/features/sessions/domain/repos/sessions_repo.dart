@@ -42,4 +42,8 @@ abstract class SessionsRepo {
   Future<void> deleteMessage(String sessionId, String messageId);
 
   Future<IceServersResponse> getIceServers(String sessionId);
+
+  /// Generates (or regenerates) the AI summary for a session's message
+  /// transcript, persists it, and returns the updated session.
+  Future<StudySession> generateSummary(String sessionId);
 }

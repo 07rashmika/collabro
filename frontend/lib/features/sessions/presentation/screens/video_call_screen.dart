@@ -21,6 +21,7 @@ import 'package:frontend/features/sessions/domain/entities/session_message.dart'
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_panel.dart';
+import 'package:frontend/features/sessions/presentation/components/session_summary_dialog.dart';
 import 'package:frontend/features/sessions/presentation/cubits/session_chat_cubit.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
 import 'package:frontend/features/sessions/presentation/cubits/video_call_cubit.dart';
@@ -226,8 +227,10 @@ class _VideoCallViewState extends State<_VideoCallView> {
       ),
       body: SafeArea(
         child: BlocListener<SessionsCubit, SessionsState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is SessionSaved) {
+              await maybeOfferSessionSummary(context, state.session);
+              if (!context.mounted) return;
               context.read<VideoCallCubit>().hangUp();
             } else if (state is SessionsError) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -241,7 +244,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
           child: Stack(
             children: [
               BlocConsumer<VideoCallCubit, VideoCallState>(
-                listener: (context, state) {
+                listener: (context, state) async {
                   if (state is ActiveCallState) {
                     if (_localRendererReady &&
                         _localRenderer.srcObject != state.localStream) {
@@ -258,6 +261,10 @@ class _VideoCallViewState extends State<_VideoCallView> {
                     );
                   }
                   if (state is CallDisconnected) {
+                    if (state.sessionEnded) {
+                      await maybeOfferSessionSummary(context, widget.session);
+                      if (!context.mounted) return;
+                    }
                     // A plain pop isn't reliable here: this listener can fire
                     // while the session-info end drawer is still open (the
                     // "End Session Permanently" button lives inside it), and

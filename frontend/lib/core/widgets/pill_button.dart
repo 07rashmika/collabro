@@ -26,8 +26,7 @@ class PillButton extends StatelessWidget {
     final isPrimary = variant == PillButtonVariant.primary;
     return DecoratedBox(
       decoration: BoxDecoration(
-        gradient: isPrimary ? colors.primaryGradient : null,
-        color: isPrimary ? null : colors.backgroundElevated,
+        color: isPrimary ? colors.buttonPrimary : colors.backgroundElevated,
         borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
       ),
       child: TextButton(

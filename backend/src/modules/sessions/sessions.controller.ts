@@ -171,4 +171,11 @@ export class SessionsController {
       res.status(200).json(result);
     } catch (err) { handleError(res, err); }
   }
+
+  async generateSummary(req: Request, res: Response) {
+    try {
+      const session = await this.sessionsService.generateSummary(req.params.id as string, req.user!.sub);
+      res.status(200).json(session);
+    } catch (err) { handleError(res, err); }
+  }
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -6,11 +8,15 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/realtime/user_notifications_service.dart';
 import 'package:frontend/core/widgets/pill_button.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/components/session_list_card.dart';
+import 'package:frontend/features/sessions/presentation/components/session_summary_dialog.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+
+enum _SessionsTab { mine, ended, saved }
 
 class SessionsListScreen extends StatelessWidget {
   const SessionsListScreen({super.key});
@@ -34,19 +40,40 @@ class _SessionsListView extends StatefulWidget {
 }
 
 class _SessionsListViewState extends State<_SessionsListView> {
-  bool _showSaved = false;
+  _SessionsTab _tab = _SessionsTab.mine;
+  StreamSubscription? _sessionsChangedSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    // This screen's state is kept alive for the app's lifetime by the shell's
+    // IndexedStack, so this subscription effectively lasts the whole session.
+    _sessionsChangedSubscription = context
+        .read<UserNotificationsService>()
+        .sessionsChanged
+        .listen((_) => _reload());
+  }
+
+  @override
+  void dispose() {
+    _sessionsChangedSubscription?.cancel();
+    super.dispose();
+  }
 
   void _reload() {
-    if (_showSaved) {
-      context.read<SessionsCubit>().loadSavedSessions();
-    } else {
-      context.read<SessionsCubit>().loadSessions();
+    switch (_tab) {
+      case _SessionsTab.mine:
+        context.read<SessionsCubit>().loadSessions();
+      case _SessionsTab.ended:
+        context.read<SessionsCubit>().loadEndedSessions();
+      case _SessionsTab.saved:
+        context.read<SessionsCubit>().loadSavedSessions();
     }
   }
 
-  void _switchTab(bool showSaved) {
-    if (_showSaved == showSaved) return;
-    setState(() => _showSaved = showSaved);
+  void _switchTab(_SessionsTab tab) {
+    if (_tab == tab) return;
+    setState(() => _tab = tab);
     _reload();
   }
 
@@ -102,20 +129,35 @@ class _SessionsListViewState extends State<_SessionsListView> {
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  PillButton(
-                    label: 'My Sessions',
-                    variant: !_showSaved ? PillButtonVariant.primary : PillButtonVariant.muted,
-                    onPressed: () => _switchTab(false),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  PillButton(
-                    label: 'Saved',
-                    variant: _showSaved ? PillButtonVariant.primary : PillButtonVariant.muted,
-                    onPressed: () => _switchTab(true),
-                  ),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    PillButton(
+                      label: 'My Sessions',
+                      variant: _tab == _SessionsTab.mine
+                          ? PillButtonVariant.primary
+                          : PillButtonVariant.muted,
+                      onPressed: () => _switchTab(_SessionsTab.mine),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    PillButton(
+                      label: 'Ended',
+                      variant: _tab == _SessionsTab.ended
+                          ? PillButtonVariant.primary
+                          : PillButtonVariant.muted,
+                      onPressed: () => _switchTab(_SessionsTab.ended),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    PillButton(
+                      label: 'Saved',
+                      variant: _tab == _SessionsTab.saved
+                          ? PillButtonVariant.primary
+                          : PillButtonVariant.muted,
+                      onPressed: () => _switchTab(_SessionsTab.saved),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               Expanded(
@@ -145,9 +187,14 @@ class _SessionsListViewState extends State<_SessionsListView> {
                     if (sessions.isEmpty) {
                       return Center(
                         child: Text(
-                          _showSaved
-                              ? 'No saved sessions yet. Bookmark one from Home to see it here.'
-                              : 'No study sessions yet. Tap + to start one.',
+                          switch (_tab) {
+                            _SessionsTab.saved =>
+                              'No saved sessions yet. Bookmark one from Home to see it here.',
+                            _SessionsTab.ended =>
+                              'No ended sessions yet.',
+                            _SessionsTab.mine =>
+                              'No study sessions yet. Tap + to start one.',
+                          },
                           textAlign: TextAlign.center,
                           style: typography.bodySmall,
                         ),
@@ -168,8 +215,9 @@ class _SessionsListViewState extends State<_SessionsListView> {
                           // Unsaving in the Saved tab should drop it from
                           // view — the cubit's optimistic toggle only flips
                           // the flag, so re-fetch to prune it out here.
-                          if (_showSaved && mounted) _reload();
+                          if (_tab == _SessionsTab.saved && mounted) _reload();
                         },
+                        onSummarize: () => showSessionSummaryDialog(context, sessions[i]),
                       ),
                     );
                   },

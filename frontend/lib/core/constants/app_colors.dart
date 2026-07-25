@@ -7,8 +7,9 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color primary;
   final Color primaryLight;
   final Color primaryDark;
-  final Color primaryGradientStart;
-  final Color primaryGradientEnd;
+
+  // Flat light-blue fill for buttons — no gradient.
+  final Color buttonPrimary;
 
   //backgrounds
   final Color backgroundDark;
@@ -45,9 +46,6 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color chipBackground;
   final Color chipBorder;
 
-  //second stop for heroGradient
-  final Color heroGradientEnd;
-
   //transparent overlays
   final Color overlay;
   final Color overlayLight;
@@ -56,8 +54,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.primary,
     required this.primaryLight,
     required this.primaryDark,
-    required this.primaryGradientStart,
-    required this.primaryGradientEnd,
+    required this.buttonPrimary,
     required this.backgroundDark,
     required this.backgroundMedium,
     required this.backgroundCard,
@@ -79,7 +76,6 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.navInactive,
     required this.chipBackground,
     required this.chipBorder,
-    required this.heroGradientEnd,
     required this.overlay,
     required this.overlayLight,
   });
@@ -89,8 +85,7 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: Color(0xFF7B5CF5),
     primaryLight: Color(0xFF9D7FF8),
     primaryDark: Color(0xFF5A3DD4),
-    primaryGradientStart: Color(0xFF7B5CF5),
-    primaryGradientEnd: Color(0xFF06B6D4),
+    buttonPrimary: Color(0xFF60A5FA),
     backgroundDark: Color(0xFF0E0E14),
     backgroundMedium: Color(0xFF16161F),
     backgroundCard: Color(0xFF1C1C28),
@@ -112,7 +107,6 @@ class AppColors extends ThemeExtension<AppColors> {
     navInactive: Color(0xFF6B6B85),
     chipBackground: Color(0xFF2A2A3D),
     chipBorder: Color(0xFF3D3D55),
-    heroGradientEnd: Color(0xFF1A103A),
     overlay: Color(0x80000000),
     overlayLight: Color(0x40000000),
   );
@@ -123,8 +117,7 @@ class AppColors extends ThemeExtension<AppColors> {
     primary: Color(0xFF7B5CF5),
     primaryLight: Color(0xFF9D7FF8),
     primaryDark: Color(0xFF5A3DD4),
-    primaryGradientStart: Color(0xFF7B5CF5),
-    primaryGradientEnd: Color(0xFF06B6D4),
+    buttonPrimary: Color(0xFF3B82F6),
     backgroundDark: Color(0xFFF7F7FA),
     backgroundMedium: Color(0xFFFFFFFF),
     backgroundCard: Color(0xFFFFFFFF),
@@ -146,7 +139,6 @@ class AppColors extends ThemeExtension<AppColors> {
     navInactive: Color(0xFF9A9AB3),
     chipBackground: Color(0xFFF0F0F5),
     chipBorder: Color(0xFFDCDCE6),
-    heroGradientEnd: Color(0xFFEDE7FB),
     overlay: Color(0x80000000),
     overlayLight: Color(0x40000000),
   );
@@ -154,33 +146,12 @@ class AppColors extends ThemeExtension<AppColors> {
   static AppColors of(BuildContext context) =>
       Theme.of(context).extension<AppColors>() ?? dark;
 
-  LinearGradient get primaryGradient => LinearGradient(
-    colors: [primaryGradientStart, primaryGradientEnd],
-    begin: Alignment.centerLeft,
-    end: Alignment.centerRight,
-  );
-
-  LinearGradient get joinButtonGradient => primaryGradient;
-
-  LinearGradient get cardGradient => LinearGradient(
-    colors: [backgroundCard, backgroundElevated],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  LinearGradient get heroGradient => LinearGradient(
-    colors: [backgroundDark, heroGradientEnd],
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-  );
-
   @override
   AppColors copyWith({
     Color? primary,
     Color? primaryLight,
     Color? primaryDark,
-    Color? primaryGradientStart,
-    Color? primaryGradientEnd,
+    Color? buttonPrimary,
     Color? backgroundDark,
     Color? backgroundMedium,
     Color? backgroundCard,
@@ -202,7 +173,6 @@ class AppColors extends ThemeExtension<AppColors> {
     Color? navInactive,
     Color? chipBackground,
     Color? chipBorder,
-    Color? heroGradientEnd,
     Color? overlay,
     Color? overlayLight,
   }) {
@@ -210,8 +180,7 @@ class AppColors extends ThemeExtension<AppColors> {
       primary: primary ?? this.primary,
       primaryLight: primaryLight ?? this.primaryLight,
       primaryDark: primaryDark ?? this.primaryDark,
-      primaryGradientStart: primaryGradientStart ?? this.primaryGradientStart,
-      primaryGradientEnd: primaryGradientEnd ?? this.primaryGradientEnd,
+      buttonPrimary: buttonPrimary ?? this.buttonPrimary,
       backgroundDark: backgroundDark ?? this.backgroundDark,
       backgroundMedium: backgroundMedium ?? this.backgroundMedium,
       backgroundCard: backgroundCard ?? this.backgroundCard,
@@ -233,7 +202,6 @@ class AppColors extends ThemeExtension<AppColors> {
       navInactive: navInactive ?? this.navInactive,
       chipBackground: chipBackground ?? this.chipBackground,
       chipBorder: chipBorder ?? this.chipBorder,
-      heroGradientEnd: heroGradientEnd ?? this.heroGradientEnd,
       overlay: overlay ?? this.overlay,
       overlayLight: overlayLight ?? this.overlayLight,
     );

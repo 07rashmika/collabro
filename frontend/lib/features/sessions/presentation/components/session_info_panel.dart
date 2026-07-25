@@ -124,6 +124,13 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                     icon: Icons.schedule,
                     label: 'Created ${sessionTimeLabel(session.createdAt)}',
                   ),
+                  if (session.status == SessionStatus.active) ...[
+                    const SizedBox(height: AppSpacing.xs),
+                    _IconLabel(
+                      icon: Icons.timer_outlined,
+                      label: 'Expires ${sessionTimeLabel(session.expiresAt)}',
+                    ),
+                  ],
                   if (session.tags.isNotEmpty) ...[
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(

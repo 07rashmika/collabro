@@ -133,6 +133,18 @@ class ApiNotesRepo implements NotesRepo {
   }
 
   @override
+  Future<Note> requestSummary(String id) async {
+    try {
+      final response = await apiClient.post(NotesEndpoints.summary(id));
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Generating summary failed: $e');
+    }
+  }
+
+  @override
   Future<Note> uploadPhotos(String noteId, List<String> imagePaths) async {
     try {
       final formData = FormData.fromMap({

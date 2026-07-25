@@ -2,7 +2,9 @@ import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
 import { ICE_SERVERS }   from "./signaling/ice-servers.config";
 import { endRoom }       from "./signaling/room-registry";
-import { SignalingMessageType } from "./signaling/signaling.types";
+import { notifyUsers }   from "./signaling/user-registry";
+import { SignalingMessageType, NotificationMessageType } from "./signaling/signaling.types";
+import { SummariesService } from "../summaries/summaries.service";
 import {
   encryptSessionPassword,
   decryptSessionPassword,
@@ -16,6 +18,14 @@ import {
   JoinByCodeDto,
   PageQueryDto,
 } from "./sessions.schema";
+
+// Sessions auto-close once past their type's time limit, counted from
+// whichever of scheduledAt/createdAt marks when the session actually starts
+// (so a session scheduled for the future doesn't expire before it begins).
+const SESSION_TTL_MS: Record<"VIDEO" | "TEXT", number> = {
+  VIDEO: 2 * 60 * 60 * 1000,
+  TEXT:  4 * 60 * 60 * 1000,
+};
 
 const sessionSelect = {
   id: true,
@@ -47,6 +57,9 @@ const sessionSelect = {
 } as const;
 
 type SelectedSession = {
+  type: "VIDEO" | "TEXT";
+  scheduledAt: Date | null;
+  createdAt: Date;
   encryptedPassword: string | null;
   joinCode: string;
   isPublic: boolean;
@@ -57,16 +70,19 @@ type SelectedSession = {
 /// Strips the encrypted password before a session ever leaves the service
 /// layer (only `hasPassword` goes out — the ciphertext never does, and only
 /// the creator can decrypt it via `getSessionPassword`), flattens tags down
-/// to bare skills, and hides the join code from non-creators unless the
-/// session is public.
+/// to bare skills, hides the join code from non-creators unless the session
+/// is public, and adds the derived `expiresAt` (never stored — computed from
+/// type + scheduledAt/createdAt) so the client can display/enforce it.
 function toPublicSession<T extends SelectedSession>(session: T, viewerId: string) {
   const { encryptedPassword, joinCode, tags, ...rest } = session;
   const isCreator = session.creator.id === viewerId;
+  const anchor = session.scheduledAt ?? session.createdAt;
   return {
     ...rest,
     tags: tags.map((t) => t.skill),
     hasPassword: encryptedPassword !== null,
     joinCode: isCreator || session.isPublic ? joinCode : null,
+    expiresAt: new Date(anchor.getTime() + SESSION_TTL_MS[session.type]),
   };
 }
 
@@ -79,7 +95,10 @@ const messageSelect = {
 } as const;
 
 export class SessionsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly summariesService: SummariesService
+  ) {}
 
   /// Which of `sessionIds` the user has bookmarked — batched into one query
   /// per list response instead of N.
@@ -90,6 +109,55 @@ export class SessionsService {
       select: { sessionId: true },
     });
     return new Set(rows.map((r) => r.sessionId));
+  }
+
+  /// Auto-closes any ACTIVE session past its type's time limit (see
+  /// SESSION_TTL_MS), the same way `closeSession` does manually — flips it
+  /// to CLOSED and notifies any connected clients over the signaling socket
+  /// so they get kicked out exactly like a manual end. Run on a timer from
+  /// sessions.routes.ts rather than checked per-request, since expiry here
+  /// is on the order of hours, not something that needs sub-request latency.
+  async expireStaleSessions(): Promise<void> {
+    const now = Date.now();
+    const videoThreshold = new Date(now - SESSION_TTL_MS.VIDEO);
+    const textThreshold  = new Date(now - SESSION_TTL_MS.TEXT);
+
+    const expired = await this.prisma.client.session.findMany({
+      where: {
+        status: "ACTIVE",
+        OR: [
+          {
+            type: "VIDEO",
+            OR: [
+              { scheduledAt: null, createdAt: { lt: videoThreshold } },
+              { scheduledAt: { lt: videoThreshold } },
+            ],
+          },
+          {
+            type: "TEXT",
+            OR: [
+              { scheduledAt: null, createdAt: { lt: textThreshold } },
+              { scheduledAt: { lt: textThreshold } },
+            ],
+          },
+        ],
+      },
+      select: { id: true, participants: { select: { userId: true } } },
+    });
+    if (expired.length === 0) return;
+
+    const ids = expired.map((s) => s.id);
+    await this.prisma.client.session.updateMany({
+      where: { id: { in: ids } },
+      data:  { status: "CLOSED" },
+    });
+    for (const session of expired) {
+      endRoom(session.id, { type: SignalingMessageType.SESSION_ENDED });
+      notifyUsers(
+        session.participants.map((p) => p.userId),
+        { type: NotificationMessageType.SESSIONS_CHANGED }
+      );
+    }
   }
 
   async getMySessions(userId: string, query: SessionQueryDto) {
@@ -179,6 +247,10 @@ export class SessionsService {
       select: sessionSelect,
     });
 
+    // The creator already has this fresh state locally — only the invitees
+    // need telling that a session just appeared for them.
+    notifyUsers(dto.participantIds, { type: NotificationMessageType.SESSIONS_CHANGED });
+
     return { ...toPublicSession(session, userId), savedByMe: false };
   }
 
@@ -211,6 +283,12 @@ export class SessionsService {
       await this.prisma.client.sessionParticipant.create({
         data: { sessionId: session.id, userId },
       });
+      // Let everyone already in the session know its participant list
+      // changed (the joiner sees their own fresh state from this response).
+      notifyUsers(
+        session.participants.map((p) => p.user.id),
+        { type: NotificationMessageType.SESSIONS_CHANGED }
+      );
     }
 
     const joined = await this.prisma.client.session.findUnique({
@@ -242,7 +320,8 @@ export class SessionsService {
 
   async closeSession(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where: { id: sessionId },
+      where:   { id: sessionId },
+      include: { participants: true },
     });
 
     if (!session) throw new AppError("Session not found", 404);
@@ -260,6 +339,12 @@ export class SessionsService {
     });
 
     endRoom(sessionId, { type: SignalingMessageType.SESSION_ENDED });
+    // Moves the session from "My Sessions" to "Ended" live for everyone,
+    // not just whoever's actively connected to the session's room.
+    notifyUsers(
+      session.participants.map((p) => p.userId),
+      { type: NotificationMessageType.SESSIONS_CHANGED }
+    );
     return { ...toPublicSession(closed, userId), savedByMe: false };
   }
 
@@ -423,13 +508,16 @@ export class SessionsService {
     });
     if (existing) throw new AppError("User is already a participant", 409);
 
-    return this.prisma.client.sessionParticipant.create({
+    const created = await this.prisma.client.sessionParticipant.create({
       data:   { sessionId, userId: participantId },
       select: {
         joinedAt: true,
         user: { select: { id: true, name: true, email: true } },
       },
     });
+
+    notifyUsers([participantId], { type: NotificationMessageType.SESSIONS_CHANGED });
+    return created;
   }
 
   async removeParticipant(sessionId: string, userId: string, participantId: string) {
@@ -448,6 +536,7 @@ export class SessionsService {
     await this.prisma.client.sessionParticipant.delete({
       where: { sessionId_userId: { sessionId, userId: participantId } },
     });
+    notifyUsers([participantId], { type: NotificationMessageType.SESSIONS_CHANGED });
 
     // The creator can never remove themselves, so the count can only ever
     // bottom out at 1 (the creator, alone). Once no one else is left,
@@ -461,6 +550,7 @@ export class SessionsService {
         data:  { status: "CLOSED" },
       });
       endRoom(sessionId, { type: SignalingMessageType.SESSION_ENDED });
+      notifyUsers([session.createdBy], { type: NotificationMessageType.SESSIONS_CHANGED });
     }
   }
 
@@ -537,6 +627,44 @@ export class SessionsService {
     }
 
     await this.prisma.client.message.delete({ where: { id: messageId } });
+  }
+
+  /// Any participant (not just the creator) can request a recap — this is
+  /// what backs both the "want a summary?" end-of-session prompt and the
+  /// "Summary" button on ended sessions. Builds a transcript from the
+  /// session's messages and hands it to the same fine-tuned summarizer Notes
+  /// uses (see SummariesService / ml-service).
+  async generateSummary(sessionId: string, userId: string) {
+    const session = await this.prisma.client.session.findUnique({
+      where:   { id: sessionId },
+      include: { participants: true },
+    });
+
+    if (!session) throw new AppError("Session not found", 404);
+    if (!session.participants.some((p) => p.userId === userId)) {
+      throw new AppError("You are not a participant of this session", 403);
+    }
+
+    const messages = await this.prisma.client.message.findMany({
+      where:   { sessionId },
+      select:  messageSelect,
+      orderBy: { createdAt: "asc" },
+    });
+    if (messages.length === 0) {
+      throw new AppError("No messages to summarize yet", 400);
+    }
+
+    const transcript = messages.map((m) => `${m.sender.name}: ${m.content}`).join("\n");
+    const summary = await this.summariesService.summarize(transcript, "dialogue");
+
+    const updated = await this.prisma.client.session.update({
+      where:  { id: sessionId },
+      data:   { summary },
+      select: sessionSelect,
+    });
+
+    const saved = await this.savedSessionIds(userId, [sessionId]);
+    return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
   }
 
   // ── Video calling (WebRTC ICE config) ───────────────────────────────────

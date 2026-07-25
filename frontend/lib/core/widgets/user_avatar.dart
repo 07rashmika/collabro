@@ -43,11 +43,7 @@ class UserAvatar extends StatelessWidget {
       alignment: Alignment.center,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: LinearGradient(
-          colors: [color, color.withValues(alpha: 0.6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: color,
       ),
       child: Text(
         _initialsOf(name),
