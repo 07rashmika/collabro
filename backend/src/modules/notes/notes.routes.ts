@@ -72,6 +72,10 @@ router.get("/user/:userId", (req, res) =>
   notesController.getNotesByUser(req, res)
 );
 
+// Summarize freeform text before a note exists (used by the "summarize,
+// then post" note creation flow). Must stay ahead of `/:id` routes below.
+router.post("/summarize", (req, res) => notesController.summarizeText(req, res));
+
 // Single note
 router.get("/:id", (req, res) => notesController.getNoteById(req, res));
 router.post("/", (req, res) => notesController.createNote(req, res));

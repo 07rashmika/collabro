@@ -59,8 +59,25 @@ HF_TOKEN=<your-hf-read-token>
 The backend talks to this over `SUMMARIZER_URL` (see `backend/.env`), default
 `http://localhost:8000`.
 
+## Transcription (Whisper)
+
+Video-call recordings get transcribed with [faster-whisper](https://github.com/SYSTRAN/faster-whisper)
+(a CTranslate2 reimplementation of OpenAI's open-source Whisper — self-hosted, no API
+cost). `WHISPER_MODEL` picks the model size (`tiny`, `base`, `small`, `medium`, `large-v3`,
+...), defaults to `base` — a reasonable CPU speed/accuracy tradeoff. Runs on the same
+`device` (CPU/CUDA) the summarizer auto-detects; `compute_type` is `int8` on CPU,
+`float16` on GPU.
+
+```
+WHISPER_MODEL=base
+```
+
 ## API
 
 - `GET /health` -> `{"status": "ok"}`
 - `POST /summarize` `{"text": "...", "task": "dialogue" | "notes"}` -> `{"summary": "..."}`
   - `task` defaults to `"dialogue"` if omitted, but the backend always sends it explicitly.
+- `POST /transcribe` multipart file upload (field name `file`, any audio file
+  faster-whisper/ffmpeg can decode — e.g. the `.mp4`-muxed audio `flutter_webrtc`'s
+  `MediaRecorder` produces) -> `{"segments": [{"start": 0.0, "end": 2.4, "text": "..."}],
+  "language": "en"}`

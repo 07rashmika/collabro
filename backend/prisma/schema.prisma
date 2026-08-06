@@ -116,6 +116,7 @@ model Session {
   type        SessionType   @default(TEXT)
   status      SessionStatus @default(ACTIVE)
   summary     String?       // AI generated summary — filled later
+  transcript  String?       // merged, speaker-labeled transcript from a video call recording
   scheduledAt DateTime?     // set for sessions created to run at a future time
   joinCode    String        @unique @default(cuid())
   // Reversibly encrypted (AES-256-GCM, see common/utils/crypto.ts) rather

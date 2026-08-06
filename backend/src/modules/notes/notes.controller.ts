@@ -6,6 +6,7 @@ import {
   CreateNoteSchema,
   UpdateNoteSchema,
   NoteQuerySchema,
+  SummarizeTextSchema,
 } from "./notes.schema";
 
 function handleError(res: Response, err: unknown) {
@@ -54,6 +55,14 @@ export class NotesController {
       const dto  = CreateNoteSchema.parse(req.body);
       const note = await this.notesService.createNote(req.user!.sub, dto);
       res.status(201).json(note);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async summarizeText(req: Request, res: Response) {
+    try {
+      const dto     = SummarizeTextSchema.parse(req.body);
+      const summary = await this.notesService.summarizeText(dto.content);
+      res.status(200).json({ summary });
     } catch (err) { handleError(res, err); }
   }
 

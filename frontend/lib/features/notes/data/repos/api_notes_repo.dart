@@ -11,6 +11,14 @@ class ApiNotesRepo implements NotesRepo {
 
   ApiNotesRepo({required this.apiClient});
 
+  // AI summarization runs model inference on the ml-service (slow, CPU-bound
+  // on machines without a GPU) — well past the client's default 10s timeout,
+  // so these two calls get a longer allowance instead of failing spuriously.
+  static final _summaryRequestOptions = Options(
+    sendTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
+  );
+
   @override
   Future<List<Note>> getMyNotes({String? search}) async {
     try {
@@ -59,11 +67,28 @@ class ApiNotesRepo implements NotesRepo {
   }
 
   @override
+  Future<String> summarizeText(String content) async {
+    try {
+      final response = await apiClient.post(
+        NotesEndpoints.summarizeDraft,
+        data: {'content': content},
+        options: _summaryRequestOptions,
+      );
+      return response.data['summary'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Generating summary failed: $e');
+    }
+  }
+
+  @override
   Future<Note> createNote({
     required String title,
     required String content,
     List<String> tags = const [],
     bool isPublic = false,
+    String? summary,
   }) async {
     try {
       final response = await apiClient.post(
@@ -73,6 +98,7 @@ class ApiNotesRepo implements NotesRepo {
           'content': content,
           'tags': tags,
           'isPublic': isPublic,
+          if (summary != null) 'summary': summary,
         },
       );
       return Note.fromJson(response.data as Map<String, dynamic>);
@@ -135,7 +161,10 @@ class ApiNotesRepo implements NotesRepo {
   @override
   Future<Note> requestSummary(String id) async {
     try {
-      final response = await apiClient.post(NotesEndpoints.summary(id));
+      final response = await apiClient.post(
+        NotesEndpoints.summary(id),
+        options: _summaryRequestOptions,
+      );
       return Note.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

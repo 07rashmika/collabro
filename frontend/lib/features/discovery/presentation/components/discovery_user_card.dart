@@ -47,6 +47,7 @@ class DiscoveryUserCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    Text('User', style: typography.caption.copyWith(color: colors.textTertiary)),
                     Text(
                       '${user.notesCount} notes · ${user.sessionsCount} sessions',
                       style: typography.caption,

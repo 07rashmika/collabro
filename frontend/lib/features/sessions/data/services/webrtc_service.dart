@@ -1,18 +1,47 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:path_provider/path_provider.dart';
+
+/// A finished call recording track, ready to upload.
+class RecordedTrack {
+  final String path;
+  final String label;
+  final DateTime startedAt;
+
+  const RecordedTrack({required this.path, required this.label, required this.startedAt});
+}
 
 /// Wraps flutter_webrtc for a mesh-topology group call: one
 /// [RTCPeerConnection] per *other* participant (keyed by userId), all
 /// sharing the same local camera/mic [MediaStream]. Never constructed
 /// inside a widget or Cubit — only here, one instance per call.
+///
+/// When opted in via [enableRecording] (only the session creator's device
+/// should call it — see VideoCallScreen), records the call's audio to two
+/// local files via flutter_webrtc's native MediaRecorder: one tapping this
+/// device's mic (`INPUT`), one tapping the call's mixed playback of every
+/// other participant (`OUTPUT`). Together they cover both sides of the
+/// conversation without needing a recorder per remote peer. Recording spans
+/// the whole call — started as soon as both the local stream is up and
+/// recording has been enabled, stopped in [hangUp] — and is uploaded
+/// afterward for transcription (see SessionsRepo.uploadRecording).
 class WebRTCService {
   MediaStream? _localStream;
   MediaStream? _screenStream;
   MediaStreamTrack? _cameraTrack;
   List<Map<String, dynamic>> _iceServers = [];
   bool _isHungUp = false;
+  bool _recordingEnabled = false;
+
+  MediaRecorder? _inputRecorder;
+  MediaRecorder? _outputRecorder;
+  String? _inputRecordingPath;
+  String? _outputRecordingPath;
+  DateTime? _inputRecordingStartedAt;
+  DateTime? _outputRecordingStartedAt;
 
   final Map<String, RTCPeerConnection> _peerConnections = {};
   final Map<String, MediaStream> _remoteStreams = {};
@@ -41,6 +70,87 @@ class WebRTCService {
       'video': {'facingMode': 'user'},
     });
     _cameraTrack = _localStream!.getVideoTracks().first;
+
+    if (_recordingEnabled) {
+      await _startRecording();
+    }
+  }
+
+  /// Opts this device in as the call's recorder. Figuring out who the
+  /// recorder is requires knowing the current user's id, which the caller
+  /// only learns from an async `/auth/me` fetch that isn't guaranteed to
+  /// resolve before [initLocalMedia] does — so this is safe to call either
+  /// before or after: starts immediately if the local stream is already up,
+  /// otherwise [initLocalMedia] picks up the flag once it finishes.
+  Future<void> enableRecording() async {
+    if (_recordingEnabled || _isHungUp) return;
+    _recordingEnabled = true;
+    if (_localStream != null) {
+      await _startRecording();
+    }
+  }
+
+  Future<void> _startRecording() async {
+    final dir = await getTemporaryDirectory();
+
+    _inputRecordingPath = '${dir.path}/call_input_${DateTime.now().microsecondsSinceEpoch}.mp4';
+    _inputRecorder = MediaRecorder();
+    _inputRecordingStartedAt = DateTime.now();
+    await _inputRecorder!.start(_inputRecordingPath!, audioChannel: RecorderAudioChannel.INPUT);
+
+    _outputRecordingPath = '${dir.path}/call_output_${DateTime.now().microsecondsSinceEpoch}.mp4';
+    _outputRecorder = MediaRecorder();
+    _outputRecordingStartedAt = DateTime.now();
+    await _outputRecorder!.start(_outputRecordingPath!, audioChannel: RecorderAudioChannel.OUTPUT);
+  }
+
+  /// Populated once recording has been stopped (via [finishRecording] or
+  /// [hangUp]). Empty when this device wasn't the recorder, or recording
+  /// never started.
+  List<RecordedTrack> recordedTracks = [];
+
+  /// Stops both recorders (if running) without touching peer connections or
+  /// the local stream — call sites need the finished files before the call
+  /// is necessarily torn down (e.g. to upload while a "session ended"
+  /// dialog is being prepared). Safe to call more than once, and safe to
+  /// call before [hangUp] (which also stops recording, but is a no-op here
+  /// by then) or standalone.
+  Future<void> finishRecording() => _stopRecording();
+
+  Future<void> _stopRecording() async {
+    final inputRecorder = _inputRecorder;
+    if (inputRecorder != null && _inputRecordingPath != null && _inputRecordingStartedAt != null) {
+      _inputRecorder = null;
+      try {
+        await inputRecorder.stop();
+        if (await File(_inputRecordingPath!).exists()) {
+          recordedTracks.add(RecordedTrack(
+            path: _inputRecordingPath!,
+            label: 'me',
+            startedAt: _inputRecordingStartedAt!,
+          ));
+        }
+      } catch (_) {
+        // Best-effort — a failed recording shouldn't block hanging up.
+      }
+    }
+
+    final outputRecorder = _outputRecorder;
+    if (outputRecorder != null && _outputRecordingPath != null && _outputRecordingStartedAt != null) {
+      _outputRecorder = null;
+      try {
+        await outputRecorder.stop();
+        if (await File(_outputRecordingPath!).exists()) {
+          recordedTracks.add(RecordedTrack(
+            path: _outputRecordingPath!,
+            label: 'others',
+            startedAt: _outputRecordingStartedAt!,
+          ));
+        }
+      } catch (_) {
+        // Best-effort — a failed recording shouldn't block hanging up.
+      }
+    }
   }
 
   Future<RTCPeerConnection> _ensurePeerConnection(String userId) async {
@@ -189,6 +299,10 @@ class WebRTCService {
   Future<void> hangUp() async {
     if (_isHungUp) return;
     _isHungUp = true;
+
+    if (_recordingEnabled) {
+      await _stopRecording();
+    }
 
     for (final pc in _peerConnections.values) {
       await pc.close();

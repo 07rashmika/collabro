@@ -8,6 +8,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/time_ago.dart';
 import 'package:frontend/core/widgets/danger_button.dart';
+import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/skill_chip.dart';
 import 'package:frontend/features/notes/domain/entities/note.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
@@ -170,6 +171,20 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                     isGenerating: state is NoteSummarizing,
                     onGenerate: () => context.read<NotesCubit>().summarizeNote(_note),
                   ),
+                  // Once a summary exists, surface posting as a clear
+                  // primary action here too — not just the small
+                  // public/private icon up in the app bar.
+                  if (_note.summary != null && !_note.isPublic) ...[
+                    const SizedBox(height: AppSpacing.lg),
+                    PrimaryButton(
+                      label: 'Post Note',
+                      leadingIcon: Icons.publish_outlined,
+                      isLoading: isBusy,
+                      onPressed: isBusy
+                          ? null
+                          : () => context.read<NotesCubit>().toggleVisibility(_note.id),
+                    ),
+                  ],
                   const SizedBox(height: AppSpacing.xxl),
                   Center(
                     child: DangerButton(

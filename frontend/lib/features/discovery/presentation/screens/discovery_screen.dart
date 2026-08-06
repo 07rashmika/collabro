@@ -33,7 +33,7 @@ class DiscoveryScreen extends StatelessWidget {
         sessionsRepo: context.read<SessionsRepo>(),
         usersRepo: context.read<UsersRepo>(),
         notesRepo: context.read<NotesRepo>(),
-      )..search(DiscoveryTarget.sessions, ''),
+      ),
       child: const _DiscoveryView(),
     );
   }
@@ -48,7 +48,7 @@ class _DiscoveryView extends StatefulWidget {
 
 class _DiscoveryViewState extends State<_DiscoveryView> {
   final _searchController = TextEditingController();
-  DiscoveryTarget _target = DiscoveryTarget.sessions;
+  DiscoveryTarget _target = DiscoveryTarget.all;
   String? _currentUserId;
 
   @override
@@ -152,6 +152,8 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
 
   String get _hint {
     switch (_target) {
+      case DiscoveryTarget.all:
+        return 'Search sessions, students, and notes...';
       case DiscoveryTarget.sessions:
         return 'Search public sessions...';
       case DiscoveryTarget.users:
@@ -163,6 +165,8 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
 
   String get _emptyMessage {
     switch (_target) {
+      case DiscoveryTarget.all:
+        return 'No results found.';
       case DiscoveryTarget.sessions:
         return 'No public sessions found.';
       case DiscoveryTarget.users:
@@ -170,6 +174,58 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
       case DiscoveryTarget.notes:
         return 'No public notes found.';
     }
+  }
+
+  String get _placeholderMessage =>
+      'Search for public sessions, students, or notes to get started.';
+
+  Widget _buildResults(BuildContext context, DiscoveryState state) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+
+    if (state is DiscoveryLoading) {
+      return Center(child: CircularProgressIndicator(color: colors.primary));
+    }
+
+    if (state is DiscoveryAllLoaded) {
+      return _AllResults(
+        sessions: state.sessions,
+        users: state.users,
+        notes: state.notes,
+        currentUserId: _currentUserId,
+        emptyMessage: _emptyMessage,
+        onOpen: _openSession,
+      );
+    }
+
+    if (state is DiscoverySessionsLoaded) {
+      return _SessionsResults(
+        sessions: state.sessions,
+        emptyMessage: _emptyMessage,
+        onOpen: _openSession,
+      );
+    }
+
+    if (state is DiscoveryUsersLoaded) {
+      return _UsersResults(
+        users: state.users,
+        currentUserId: _currentUserId,
+        emptyMessage: _emptyMessage,
+      );
+    }
+
+    if (state is DiscoveryNotesLoaded) {
+      return _NotesResults(notes: state.notes, emptyMessage: _emptyMessage);
+    }
+
+    // DiscoveryError with a search already in flight/completed.
+    return Center(
+      child: Text(
+        (state as DiscoveryError).message,
+        textAlign: TextAlign.center,
+        style: typography.bodySmall,
+      ),
+    );
   }
 
   @override
@@ -197,34 +253,6 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
                 onSubmitted: _runSearch,
               ),
               const SizedBox(height: AppSpacing.md),
-              Row(
-                children: [
-                  PillButton(
-                    label: 'Sessions',
-                    variant: _target == DiscoveryTarget.sessions
-                        ? PillButtonVariant.primary
-                        : PillButtonVariant.muted,
-                    onPressed: () => _switchTarget(DiscoveryTarget.sessions),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  PillButton(
-                    label: 'Users',
-                    variant: _target == DiscoveryTarget.users
-                        ? PillButtonVariant.primary
-                        : PillButtonVariant.muted,
-                    onPressed: () => _switchTarget(DiscoveryTarget.users),
-                  ),
-                  const SizedBox(width: AppSpacing.sm),
-                  PillButton(
-                    label: 'Notes',
-                    variant: _target == DiscoveryTarget.notes
-                        ? PillButtonVariant.primary
-                        : PillButtonVariant.muted,
-                    onPressed: () => _switchTarget(DiscoveryTarget.notes),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: BlocConsumer<DiscoveryCubit, DiscoveryState>(
                   listener: (context, state) {
@@ -235,37 +263,57 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
                     }
                   },
                   builder: (context, state) {
-                    if (state is DiscoveryLoading || state is DiscoveryInitial) {
-                      return Center(child: CircularProgressIndicator(color: colors.primary));
+                    // Sessions/Users/Notes tabs and their results only
+                    // appear once the user has actually searched — nothing
+                    // to switch between or show before that.
+                    if (state is DiscoveryInitial) {
+                      return _DiscoveryPlaceholder(message: _placeholderMessage);
                     }
 
-                    if (state is DiscoverySessionsLoaded) {
-                      return _SessionsResults(
-                        sessions: state.sessions,
-                        emptyMessage: _emptyMessage,
-                        onOpen: _openSession,
-                      );
-                    }
-
-                    if (state is DiscoveryUsersLoaded) {
-                      return _UsersResults(
-                        users: state.users,
-                        currentUserId: _currentUserId,
-                        emptyMessage: _emptyMessage,
-                      );
-                    }
-
-                    if (state is DiscoveryNotesLoaded) {
-                      return _NotesResults(notes: state.notes, emptyMessage: _emptyMessage);
-                    }
-
-                    // DiscoveryError with nothing loaded yet.
-                    return Center(
-                      child: Text(
-                        (state as DiscoveryError).message,
-                        textAlign: TextAlign.center,
-                        style: typography.bodySmall,
-                      ),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              PillButton(
+                                label: 'All',
+                                variant: _target == DiscoveryTarget.all
+                                    ? PillButtonVariant.primary
+                                    : PillButtonVariant.muted,
+                                onPressed: () => _switchTarget(DiscoveryTarget.all),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              PillButton(
+                                label: 'Sessions',
+                                variant: _target == DiscoveryTarget.sessions
+                                    ? PillButtonVariant.primary
+                                    : PillButtonVariant.muted,
+                                onPressed: () => _switchTarget(DiscoveryTarget.sessions),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              PillButton(
+                                label: 'Users',
+                                variant: _target == DiscoveryTarget.users
+                                    ? PillButtonVariant.primary
+                                    : PillButtonVariant.muted,
+                                onPressed: () => _switchTarget(DiscoveryTarget.users),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              PillButton(
+                                label: 'Notes',
+                                variant: _target == DiscoveryTarget.notes
+                                    ? PillButtonVariant.primary
+                                    : PillButtonVariant.muted,
+                                onPressed: () => _switchTarget(DiscoveryTarget.notes),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Expanded(child: _buildResults(context, state)),
+                      ],
                     );
                   },
                 ),
@@ -273,6 +321,132 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _DiscoveryPlaceholder extends StatelessWidget {
+  final String message;
+
+  const _DiscoveryPlaceholder({required this.message});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search, size: AppSpacing.iconXl, color: colors.textTertiary),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: typography.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// The "All" tab — sessions, users, and notes matching the query grouped
+/// into labeled sections in a single scroll, mirroring how Facebook's "All"
+/// search tab groups People/Posts/etc. rather than picking just one type.
+class _AllResults extends StatelessWidget {
+  final List<StudySession> sessions;
+  final List<PublicUser> users;
+  final List<Note> notes;
+  final String? currentUserId;
+  final String emptyMessage;
+  final ValueChanged<StudySession> onOpen;
+
+  const _AllResults({
+    required this.sessions,
+    required this.users,
+    required this.notes,
+    required this.currentUserId,
+    required this.emptyMessage,
+    required this.onOpen,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = AppTypography.of(context);
+    final filteredUsers =
+        currentUserId == null ? users : users.where((u) => u.id != currentUserId).toList();
+
+    if (sessions.isEmpty && filteredUsers.isEmpty && notes.isEmpty) {
+      return Center(
+        child: Text(emptyMessage, textAlign: TextAlign.center, style: typography.bodySmall),
+      );
+    }
+
+    return ListView(
+      children: [
+        if (sessions.isNotEmpty)
+          _Section(
+            title: 'Sessions',
+            children: sessions
+                .map(
+                  (s) => SessionListCard(
+                    session: s,
+                    onTap: () => onOpen(s),
+                    onToggleSave: () => context.read<DiscoveryCubit>().toggleSaveSession(s),
+                  ),
+                )
+                .toList(),
+          ),
+        if (filteredUsers.isNotEmpty)
+          _Section(
+            title: 'Users',
+            children: filteredUsers
+                .map(
+                  (u) => DiscoveryUserCard(
+                    user: u,
+                    onConnect: () => showComingSoonSnackBar(context, 'Connect requests'),
+                  ),
+                )
+                .toList(),
+          ),
+        if (notes.isNotEmpty)
+          _Section(
+            title: 'Notes',
+            children: notes
+                .map((n) => NoteCard(note: n, onTap: () => showNotePreviewSheet(context, n)))
+                .toList(),
+          ),
+      ],
+    );
+  }
+}
+
+class _Section extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _Section({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    final typography = AppTypography.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: typography.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
+          for (final child in children) ...[
+            child,
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ],
       ),
     );
   }

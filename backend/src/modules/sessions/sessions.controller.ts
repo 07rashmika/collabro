@@ -10,6 +10,7 @@ import {
   MessageQuerySchema,
   JoinByCodeSchema,
   PageQuerySchema,
+  TrackMetaSchema,
 } from "./sessions.schema";
 
 function handleError(res: Response, err: unknown) {
@@ -175,6 +176,24 @@ export class SessionsController {
   async generateSummary(req: Request, res: Response) {
     try {
       const session = await this.sessionsService.generateSummary(req.params.id as string, req.user!.sub);
+      res.status(200).json(session);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async uploadRecording(req: Request, res: Response) {
+    try {
+      const files = (req.files as Express.Multer.File[]) || [];
+      if (files.length === 0) {
+        throw new AppError("At least one audio track is required", 400);
+      }
+      const trackMeta = TrackMetaSchema.parse(JSON.parse(req.body.trackMeta || "[]"));
+      if (trackMeta.length !== files.length) {
+        throw new AppError("trackMeta must have one entry per uploaded track", 400);
+      }
+
+      const session = await this.sessionsService.processRecording(
+        req.params.id as string, req.user!.sub, files, trackMeta
+      );
       res.status(200).json(session);
     } catch (err) { handleError(res, err); }
   }

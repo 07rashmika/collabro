@@ -248,12 +248,19 @@ class _HomeViewState extends State<_HomeView> {
                                 }
 
                                 if (state is SessionsError) {
+                                  // This is a small dashboard teaser with a
+                                  // "View All" link to the full sessions
+                                  // list — not the place to dump a raw
+                                  // backend error. Log it for developers and
+                                  // show the same calm copy as "no upcoming
+                                  // sessions" instead of alarming text.
+                                  debugPrint('[HomeScreen] Failed to load upcoming sessions: ${state.message}');
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
                                       vertical: AppSpacing.md,
                                     ),
                                     child: Text(
-                                      state.message,
+                                      'No upcoming sessions scheduled.',
                                       style: typography.bodySmall,
                                     ),
                                   );

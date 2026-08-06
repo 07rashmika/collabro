@@ -7,6 +7,7 @@ import { PrismaService } from "../../../infrastructure/database/prisma.service";
 import { SessionsService } from "../sessions.service";
 import { SummarizerClient } from "../../summaries/summarizer.client";
 import { SummariesService } from "../../summaries/summaries.service";
+import { TranscriptionClient } from "../transcription.client";
 import { SignalingMessageType, InboundSignalingMessage } from "./signaling.types";
 import {
   ConnectedClient,
@@ -24,8 +25,9 @@ const NOTIFICATIONS_PATH = "/users/ws";
 const tokenUtil = new TokenUtil();
 const prisma = PrismaService.getInstance();
 const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const transcriptionClient = new TranscriptionClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
 const summariesService = new SummariesService(summarizerClient);
-const sessionsService = new SessionsService(prisma, summariesService);
+const sessionsService = new SessionsService(prisma, summariesService, transcriptionClient);
 
 function rejectUpgrade(socket: Socket, statusLine: string) {
   socket.write(`HTTP/1.1 ${statusLine}\r\n\r\n`);

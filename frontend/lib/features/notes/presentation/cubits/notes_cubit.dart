@@ -26,6 +26,7 @@ class NotesCubit extends Cubit<NotesState> {
     required String content,
     List<String> tags = const [],
     bool isPublic = false,
+    String? summary,
   }) async {
     emit(const NoteSaving());
     try {
@@ -34,8 +35,48 @@ class NotesCubit extends Cubit<NotesState> {
         content: content,
         tags: tags,
         isPublic: isPublic,
+        summary: summary,
       );
       emit(NoteSaved(note));
+    } catch (e) {
+      emit(NotesError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  /// Summarizes a new note's content and immediately saves it (as a private
+  /// draft, unless [existingNoteId] already points at one from an earlier
+  /// call) — the note shows up in "My Notes" as soon as it's summarized,
+  /// whether or not the user goes on to post it publicly. Passing
+  /// [existingNoteId] (e.g. for "Regenerate") updates that same note instead
+  /// of creating a duplicate.
+  Future<void> summarizeAndSaveDraft({
+    String? existingNoteId,
+    required String title,
+    required String content,
+    List<String> tags = const [],
+  }) async {
+    emit(const DraftSummarizing());
+    try {
+      final Note note;
+      if (existingNoteId == null) {
+        final summary = await notesRepo.summarizeText(content);
+        note = await notesRepo.createNote(
+          title: title,
+          content: content,
+          tags: tags,
+          isPublic: false,
+          summary: summary,
+        );
+      } else {
+        await notesRepo.updateNote(
+          existingNoteId,
+          title: title,
+          content: content,
+          tags: tags,
+        );
+        note = await notesRepo.requestSummary(existingNoteId);
+      }
+      emit(DraftSaved(note));
     } catch (e) {
       emit(NotesError(e.toString().replaceFirst('Exception: ', '')));
     }

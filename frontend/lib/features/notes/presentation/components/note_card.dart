@@ -40,11 +40,8 @@ class NoteCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Icon(
-                  note.isPublic ? Icons.public : Icons.lock_outline,
-                  size: AppSpacing.iconSm,
-                  color: colors.textTertiary,
-                ),
+                const SizedBox(width: AppSpacing.xs),
+                _StatusBadge(isPosted: note.isPublic),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),
@@ -72,6 +69,40 @@ class NoteCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// "Posted" (public) vs "Draft" (private) indicator — a note exists here as
+/// soon as it's been summarized, whether or not it's actually been posted.
+class _StatusBadge extends StatelessWidget {
+  final bool isPosted;
+
+  const _StatusBadge({required this.isPosted});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+    final color = isPosted ? colors.success : colors.textTertiary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      decoration: BoxDecoration(
+        color: isPosted ? colors.success.withValues(alpha: 0.12) : colors.chipBackground,
+        border: Border.all(color: isPosted ? colors.success.withValues(alpha: 0.4) : colors.chipBorder),
+        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(isPosted ? Icons.public : Icons.lock_outline, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            isPosted ? 'Posted' : 'Draft',
+            style: typography.labelSmall.copyWith(color: color),
+          ),
+        ],
       ),
     );
   }

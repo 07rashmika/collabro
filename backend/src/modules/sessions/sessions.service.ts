@@ -1,3 +1,4 @@
+import fs from "fs";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
 import { ICE_SERVERS }   from "./signaling/ice-servers.config";
@@ -5,6 +6,7 @@ import { endRoom }       from "./signaling/room-registry";
 import { notifyUsers }   from "./signaling/user-registry";
 import { SignalingMessageType, NotificationMessageType } from "./signaling/signaling.types";
 import { SummariesService } from "../summaries/summaries.service";
+import { TranscriptionClient } from "./transcription.client";
 import {
   encryptSessionPassword,
   decryptSessionPassword,
@@ -17,6 +19,7 @@ import {
   MessageQueryDto,
   JoinByCodeDto,
   PageQueryDto,
+  TrackMetaDto,
 } from "./sessions.schema";
 
 // Sessions auto-close once past their type's time limit, counted from
@@ -33,6 +36,7 @@ const sessionSelect = {
   type: true,
   status: true,
   summary: true,
+  transcript: true,
   scheduledAt: true,
   joinCode: true,
   encryptedPassword: true,
@@ -97,7 +101,8 @@ const messageSelect = {
 export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly summariesService: SummariesService
+    private readonly summariesService: SummariesService,
+    private readonly transcriptionClient: TranscriptionClient
   ) {}
 
   /// Which of `sessionIds` the user has bookmarked — batched into one query
@@ -651,6 +656,13 @@ export class SessionsService {
       orderBy: { createdAt: "asc" },
     });
     if (messages.length === 0) {
+      // A VIDEO session has no chat to fall back to — its recap comes from
+      // processRecording() instead, kicked off by the call's recorder right
+      // after hangup. If someone opens the summary dialog before that
+      // upload finishes, say so rather than the generic "no messages".
+      if (session.type === "VIDEO") {
+        throw new AppError("The call recap is still processing — check back in a moment", 409);
+      }
       throw new AppError("No messages to summarize yet", 400);
     }
 
@@ -665,6 +677,76 @@ export class SessionsService {
 
     const saved = await this.savedSessionIds(userId, [sessionId]);
     return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
+  }
+
+  /// Only the creator's device records a video call (see WebRTCService in
+  /// the Flutter app) — this ingests those tracks once the call has ended,
+  /// transcribes each with Whisper (ml-service), merges them onto one
+  /// timeline using each track's recording-start time, and feeds the
+  /// resulting speaker-labeled dialogue into the same summarizer
+  /// generateSummary() uses for text sessions.
+  async processRecording(
+    sessionId: string,
+    userId: string,
+    files: Express.Multer.File[],
+    trackMeta: TrackMetaDto
+  ) {
+    const cleanup = () => {
+      for (const file of files) fs.unlink(file.path, () => {});
+    };
+
+    const session = await this.prisma.client.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      cleanup();
+      throw new AppError("Session not found", 404);
+    }
+    if (session.createdBy !== userId) {
+      cleanup();
+      throw new AppError("Only the session creator can upload the recording", 403);
+    }
+    if (session.status !== "CLOSED") {
+      cleanup();
+      throw new AppError("Session must be closed before uploading its recording", 400);
+    }
+
+    try {
+      const earliestStart = Math.min(...trackMeta.map((t) => new Date(t.startedAt).getTime()));
+
+      const labeledSegments = await Promise.all(
+        files.map(async (file, i) => {
+          const meta = trackMeta[i]!;
+          const offsetSeconds = (new Date(meta.startedAt).getTime() - earliestStart) / 1000;
+          const segments = await this.transcriptionClient.transcribe(file.path, file.mimetype);
+          return segments.map((s) => ({ start: s.start + offsetSeconds, label: meta.label, text: s.text.trim() }));
+        })
+      );
+
+      const merged = labeledSegments
+        .flat()
+        .filter((s) => s.text.length > 0)
+        .sort((a, b) => a.start - b.start);
+
+      if (merged.length === 0) {
+        throw new AppError("No speech detected in the recording", 400);
+      }
+
+      const transcript = merged.map((s) => `${s.label}: ${s.text}`).join("\n");
+      const summary = await this.summariesService.summarize(transcript, "dialogue");
+
+      const updated = await this.prisma.client.session.update({
+        where:  { id: sessionId },
+        data:   { transcript, summary },
+        select: sessionSelect,
+      });
+
+      const saved = await this.savedSessionIds(userId, [sessionId]);
+      return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
+    } finally {
+      cleanup();
+    }
   }
 
   // ── Video calling (WebRTC ICE config) ───────────────────────────────────

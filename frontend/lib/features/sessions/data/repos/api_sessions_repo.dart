@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -259,6 +261,42 @@ class ApiSessionsRepo implements SessionsRepo {
       throw ApiException.fromDioError(e);
     } catch (e) {
       throw Exception('Generating session summary failed: $e');
+    }
+  }
+
+  // Transcribing a call's audio with Whisper then summarizing it runs well
+  // past the client's default timeout — same reasoning as the notes
+  // summarizer's extended timeout, just longer given the larger input.
+  static final _recordingRequestOptions = Options(
+    sendTimeout: const Duration(minutes: 5),
+    receiveTimeout: const Duration(minutes: 5),
+  );
+
+  @override
+  Future<StudySession> uploadRecording(
+    String sessionId,
+    List<({String path, String label, DateTime startedAt})> tracks,
+  ) async {
+    try {
+      final formData = FormData.fromMap({
+        'tracks': [
+          for (final track in tracks) await MultipartFile.fromFile(track.path),
+        ],
+        'trackMeta': jsonEncode([
+          for (final track in tracks)
+            {'label': track.label, 'startedAt': track.startedAt.toIso8601String()},
+        ]),
+      });
+      final response = await apiClient.post(
+        SessionsEndpoints.recording(sessionId),
+        data: formData,
+        options: _recordingRequestOptions,
+      );
+      return StudySession.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Uploading call recording failed: $e');
     }
   }
 }

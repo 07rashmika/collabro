@@ -147,7 +147,14 @@ class _IconLabel extends StatelessWidget {
       children: [
         Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
         const SizedBox(width: AppSpacing.xs),
-        Text(label, style: typography.bodySmall),
+        Flexible(
+          child: Text(
+            label,
+            style: typography.bodySmall,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
       ],
     );
   }

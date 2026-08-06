@@ -1,4 +1,7 @@
 abstract class AppRoutes {
+  //splash
+  static const String splash = '/';
+
   //onboarding
   static const String onboarding = '/onboarding';
 

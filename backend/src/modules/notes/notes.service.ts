@@ -143,10 +143,17 @@ export class NotesService {
         content:  dto.content,
         tags:     dto.tags ?? [],
         isPublic: dto.isPublic,
+        summary:  dto.summary,
         authorId: userId,
       },
       select: noteSelect,
     });
+  }
+
+  /// Summarizes freeform text ahead of note creation — no note row exists
+  /// yet, so unlike [generateSummary] this doesn't touch the database.
+  async summarizeText(content: string) {
+    return this.summariesService.summarize(content, "notes");
   }
 
   async updateNote(noteId: string, userId: string, dto: UpdateNoteDto) {

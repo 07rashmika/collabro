@@ -46,4 +46,14 @@ abstract class SessionsRepo {
   /// Generates (or regenerates) the AI summary for a session's message
   /// transcript, persists it, and returns the updated session.
   Future<StudySession> generateSummary(String sessionId);
+
+  /// Uploads a video call's recorded audio tracks (see WebRTCService,
+  /// data/services/webrtc_service.dart) so the backend can transcribe them
+  /// with Whisper and generate an AI summary from the merged transcript.
+  /// Only the session creator's device records a call, so this is only
+  /// ever called from that device, once the session has ended.
+  Future<StudySession> uploadRecording(
+    String sessionId,
+    List<({String path, String label, DateTime startedAt})> tracks,
+  );
 }

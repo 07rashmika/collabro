@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show File, Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -79,6 +79,14 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
 
     context.read<AuthRepo>().getCurrentUser().then((user) {
       if (mounted) setState(() => _currentUserId = user?.id);
+      // Only the creator's device records the call (see WebRTCService) —
+      // avoids every participant uploading a duplicate of the same audio.
+      // This resolves after the call may already be connecting (it's a
+      // network fetch), which is fine: enableRecording() picks up local
+      // media whenever it's ready, in either order.
+      if (user?.id == widget.session.creatorId) {
+        _videoCallCubit.webRTCService.enableRecording();
+      }
     });
   }
 
@@ -122,6 +130,48 @@ class _VideoCallViewState extends State<_VideoCallView> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _localRendererReady = false;
   bool _showChat = false;
+
+  // The session-ended signal can reach this device two ways for the same
+  // close (the HTTP response to closeSession -> SessionsCubit's
+  // SessionSaved, and the signaling broadcast every room member gets ->
+  // VideoCallCubit's CallDisconnected(sessionEnded: true)) — whichever
+  // fires first stops the recording, uploads it (if this device recorded),
+  // and offers the summary; this guards the second firing into a no-op.
+  bool _summaryHandled = false;
+
+  Future<void> _handleSessionEndSummary(StudySession fallbackSession) async {
+    if (_summaryHandled) return;
+    _summaryHandled = true;
+
+    final webRTCService = context.read<VideoCallCubit>().webRTCService;
+    await webRTCService.finishRecording();
+    if (!mounted) return;
+
+    var session = fallbackSession;
+    if (webRTCService.recordedTracks.isNotEmpty) {
+      try {
+        session = await context.read<SessionsRepo>().uploadRecording(
+          fallbackSession.id,
+          [
+            for (final track in webRTCService.recordedTracks)
+              (path: track.path, label: track.label, startedAt: track.startedAt),
+          ],
+        );
+        // The backend deletes its copy once transcription finishes (see
+        // processRecording's cleanup()) — mirror that here so the raw audio
+        // doesn't linger in this device's temp dir once it's no longer
+        // needed. Left in place on a failed upload in case it's worth
+        // retrying later.
+        for (final track in webRTCService.recordedTracks) {
+          File(track.path).delete().ignore();
+        }
+      } catch (_) {
+        // Best-effort — fall back to showing whatever summary already exists.
+      }
+    }
+    if (!mounted) return;
+    await maybeOfferSessionSummary(context, session);
+  }
 
   @override
   void initState() {
@@ -229,7 +279,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
         child: BlocListener<SessionsCubit, SessionsState>(
           listener: (context, state) async {
             if (state is SessionSaved) {
-              await maybeOfferSessionSummary(context, state.session);
+              await _handleSessionEndSummary(state.session);
               if (!context.mounted) return;
               context.read<VideoCallCubit>().hangUp();
             } else if (state is SessionsError) {
@@ -262,7 +312,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
                   }
                   if (state is CallDisconnected) {
                     if (state.sessionEnded) {
-                      await maybeOfferSessionSummary(context, widget.session);
+                      await _handleSessionEndSummary(widget.session);
                       if (!context.mounted) return;
                     }
                     // A plain pop isn't reliable here: this listener can fire

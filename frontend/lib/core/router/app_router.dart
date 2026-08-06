@@ -16,6 +16,7 @@ import 'package:frontend/features/profile/presentation/screens/edit_profile_scre
 import 'package:frontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:frontend/features/profile_setup/presentation/screens/profile_setup_screen.dart';
 import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
+import 'package:frontend/features/splash/presentation/screens/splash_screen.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/presentation/screens/join_session_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/new_session_screen.dart';
@@ -25,8 +26,12 @@ import 'package:frontend/features/sessions/presentation/screens/video_call_scree
 
 abstract class AppRouter {
   static final GoRouter router = GoRouter(
-    initialLocation: AppRoutes.onboarding,
+    initialLocation: AppRoutes.splash,
     routes: [
+      GoRoute(
+        path: AppRoutes.splash,
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: AppRoutes.onboarding,
         builder: (context, state) => const OnboardingScreen(),

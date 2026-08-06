@@ -69,6 +69,17 @@ export const PageQuerySchema = z.object({
     .transform((v) => (v ? parseInt(v) : 10)),
 });
 
+// One entry per uploaded audio track, in the same order as the `tracks`
+// files array — tells the service who that track's audio belongs to and
+// when its recording started (used to align multiple tracks on one
+// timeline before merging their transcripts).
+export const TrackMetaSchema = z.array(
+  z.object({
+    label: z.string().min(1).max(100),
+    startedAt: z.string().datetime(),
+  })
+);
+
 export type CreateSessionDto = z.infer<typeof CreateSessionSchema>;
 export type UpdateSessionDto = z.infer<typeof UpdateSessionSchema>;
 export type SendMessageDto = z.infer<typeof SendMessageSchema>;
@@ -76,3 +87,4 @@ export type SessionQueryDto = z.infer<typeof SessionQuerySchema>;
 export type MessageQueryDto = z.infer<typeof MessageQuerySchema>;
 export type JoinByCodeDto = z.infer<typeof JoinByCodeSchema>;
 export type PageQueryDto = z.infer<typeof PageQuerySchema>;
+export type TrackMetaDto = z.infer<typeof TrackMetaSchema>;
