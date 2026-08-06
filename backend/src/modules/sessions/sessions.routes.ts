@@ -6,7 +6,6 @@ import { SessionsController } from "./sessions.controller";
 import { SessionsService } from "./sessions.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
-import { studentDomainGuard } from "../../common/guards/student-domain.guard";
 import { AppError } from "../../common/errors/app-error";
 import { SummarizerClient } from "../summaries/summarizer.client";
 import { SummariesService } from "../summaries/summaries.service";
@@ -70,7 +69,7 @@ setInterval(() => {
   });
 }, 60_000);
 
-router.use(jwtGuard, studentDomainGuard);
+router.use(jwtGuard);
 
 // Sessions
 router.get("/", (req, res) => sessionsController.getMySessions(req, res));

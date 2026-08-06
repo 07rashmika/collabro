@@ -1,15 +1,8 @@
 import { z } from "zod";
-import { STUDENT_EMAIL_DOMAINS } from "../../common/config/student-domains";
 
 export const RegisterSchema = z.object({
   name: z.string().min(2).max(100),
-  email: z
-    .string()
-    .email()
-    .refine(
-      (val) => STUDENT_EMAIL_DOMAINS.some((d) => val.endsWith(`@${d}`)),
-      { message: "Only student email addresses are allowed" }
-    ),
+  email: z.string().email(),
   password: z.string().min(8).max(64),
 });
 
@@ -22,6 +15,11 @@ export const RefreshSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
-export type RegisterDto = z.infer<typeof RegisterSchema>;
-export type LoginDto    = z.infer<typeof LoginSchema>;
-export type RefreshDto  = z.infer<typeof RefreshSchema>;
+export const GoogleAuthSchema = z.object({
+  idToken: z.string().min(1),
+});
+
+export type RegisterDto   = z.infer<typeof RegisterSchema>;
+export type LoginDto      = z.infer<typeof LoginSchema>;
+export type RefreshDto    = z.infer<typeof RefreshSchema>;
+export type GoogleAuthDto = z.infer<typeof GoogleAuthSchema>;

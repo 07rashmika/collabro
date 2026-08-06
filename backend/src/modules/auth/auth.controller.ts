@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { AuthService } from "./auth.service";
-import { RegisterSchema, LoginSchema, RefreshSchema } from "./auth.schema";
+import { RegisterSchema, LoginSchema, RefreshSchema, GoogleAuthSchema } from "./auth.schema";
 import { ZodError, z } from "zod";
 
 export class AuthController {
@@ -24,6 +24,20 @@ export class AuthController {
     try {
       const dto = LoginSchema.parse(req.body);
       const result = await this.authService.login(dto);
+      res.status(200).json(result);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res.status(400).json({ message: "Validation failed", errors: z.treeifyError(err) });
+        return;
+      }
+      res.status(401).json({ message: (err as Error).message });
+    }
+  }
+
+  async googleLogin(req: Request, res: Response) {
+    try {
+      const dto = GoogleAuthSchema.parse(req.body);
+      const result = await this.authService.loginWithGoogle(dto.idToken);
       res.status(200).json(result);
     } catch (err) {
       if (err instanceof ZodError) {

@@ -6,7 +6,6 @@ import { NotesController } from "./notes.controller";
 import { NotesService } from "./notes.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
-import { studentDomainGuard } from "../../common/guards/student-domain.guard";
 import { AppError } from "../../common/errors/app-error";
 import { SummarizerClient } from "../summaries/summarizer.client";
 import { SummariesService } from "../summaries/summaries.service";
@@ -58,7 +57,7 @@ function uploadPhotosMiddleware(req: Request, res: Response, next: NextFunction)
   });
 }
 
-router.use(jwtGuard, studentDomainGuard);
+router.use(jwtGuard);
 
 // My notes
 router.get("/me", (req, res) => notesController.getMyNotes(req, res));

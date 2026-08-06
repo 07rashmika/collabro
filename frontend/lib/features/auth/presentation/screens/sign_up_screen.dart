@@ -11,7 +11,10 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/auth/presentation/components/auth_header.dart';
 import 'package:frontend/features/auth/presentation/components/auth_tab_bar.dart';
+import 'package:frontend/features/auth/presentation/components/google_sign_in_button.dart';
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:frontend/features/profiles/domain/entities/profile.dart';
+import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -72,9 +75,23 @@ class _SignUpViewState extends State<_SignUpView> {
       backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: BlocListener<AuthCubit, AuthState>(
-          listener: (context, state) {
+          listener: (context, state) async {
             if (state is AuthSuccess) {
-              context.go(AppRoutes.profileSetup, extra: state.user);
+              // Google sign-in can resolve to an existing account even from
+              // this screen (find-or-create on the backend), so don't assume
+              // profile setup is still needed — check like sign-in does.
+              Profile? profile;
+              try {
+                profile = await context.read<ProfilesRepo>().getMyProfile();
+              } catch (_) {
+                profile = null;
+              }
+              if (!context.mounted) return;
+              if (profile != null && profile.isComplete) {
+                context.go(AppRoutes.home, extra: state.user);
+              } else {
+                context.go(AppRoutes.profileSetup, extra: state.user);
+              }
             } else if (state is AuthError) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -126,9 +143,9 @@ class _SignUpViewState extends State<_SignUpView> {
                         ),
                         const SizedBox(height: AppSpacing.lg),
                         AppTextField(
-                          label: 'University Email',
-                          hint: 'alex.j@university.edu',
-                          icon: Icons.school_outlined,
+                          label: 'Email',
+                          hint: 'alex.j@example.com',
+                          icon: Icons.email_outlined,
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -189,6 +206,29 @@ class _SignUpViewState extends State<_SignUpView> {
                               label: 'Create Account',
                               isLoading: state is AuthLoading,
                               onPressed: () => _submit(context),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: colors.border)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                              ),
+                              child: Text('or', style: typography.bodySmall),
+                            ),
+                            Expanded(child: Divider(color: colors.border)),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        BlocBuilder<AuthCubit, AuthState>(
+                          builder: (context, state) {
+                            return GoogleSignInButton(
+                              isLoading: state is AuthLoading,
+                              onPressed: () =>
+                                  context.read<AuthCubit>().loginWithGoogle(),
                             );
                           },
                         ),

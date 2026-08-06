@@ -7,7 +7,10 @@
       "type": "dart",
       "cwd": "frontend",
       "program": "lib/main.dart",
-      "args": ["--dart-define=API_BASE_URL=http://10.0.2.2:3000"]
+      "args": [
+        "--dart-define=API_BASE_URL=http://10.0.2.2:3000",
+        "--dart-define=GOOGLE_SERVER_CLIENT_ID=93808764268-6ict1s6g1er9ubktoogq3md53uc9pf9o.apps.googleusercontent.com"
+      ]
     },
     {
       "name": "Collabro (Chrome/Linux desktop, backend on localhost)",
@@ -15,7 +18,10 @@
       "type": "dart",
       "cwd": "frontend",
       "program": "lib/main.dart",
-      "args": ["--dart-define=API_BASE_URL=http://localhost:3000"]
+      "args": [
+        "--dart-define=API_BASE_URL=http://localhost:3000",
+        "--dart-define=GOOGLE_SERVER_CLIENT_ID=93808764268-6ict1s6g1er9ubktoogq3md53uc9pf9o.apps.googleusercontent.com"
+      ]
     },
     {
       "name": "Collabro (Physical device, backend on LAN)",
@@ -23,7 +29,10 @@
       "type": "dart",
       "cwd": "frontend",
       "program": "lib/main.dart",
-      "args": ["--dart-define=API_BASE_URL=http://192.168.1.4:3000"]
+      "args": [
+        "--dart-define=API_BASE_URL=http://192.168.1.4:3000",
+        "--dart-define=GOOGLE_SERVER_CLIENT_ID=93808764268-6ict1s6g1er9ubktoogq3md53uc9pf9o.apps.googleusercontent.com"
+      ]
     }
   ]
 }

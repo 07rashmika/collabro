@@ -11,6 +11,7 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/auth/presentation/components/auth_header.dart';
 import 'package:frontend/features/auth/presentation/components/auth_tab_bar.dart';
+import 'package:frontend/features/auth/presentation/components/google_sign_in_button.dart';
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:frontend/features/profiles/domain/entities/profile.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
@@ -117,9 +118,9 @@ class _SignInViewState extends State<_SignInView> {
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         AppTextField(
-                          label: 'University Email',
-                          hint: 'alex.j@university.edu',
-                          icon: Icons.school_outlined,
+                          label: 'Email',
+                          hint: 'alex.j@example.com',
+                          icon: Icons.email_outlined,
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           validator: (value) {
@@ -173,6 +174,29 @@ class _SignInViewState extends State<_SignInView> {
                               trailingIcon: Icons.arrow_forward,
                               isLoading: state is AuthLoading,
                               onPressed: () => _submit(context),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          children: [
+                            Expanded(child: Divider(color: colors.border)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AppSpacing.sm,
+                              ),
+                              child: Text('or', style: typography.bodySmall),
+                            ),
+                            Expanded(child: Divider(color: colors.border)),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        BlocBuilder<AuthCubit, AuthState>(
+                          builder: (context, state) {
+                            return GoogleSignInButton(
+                              isLoading: state is AuthLoading,
+                              onPressed: () =>
+                                  context.read<AuthCubit>().loginWithGoogle(),
                             );
                           },
                         ),

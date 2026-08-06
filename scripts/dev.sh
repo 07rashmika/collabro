@@ -72,6 +72,16 @@ if [ -z "$LAN_IP" ]; then
   echo "          cd frontend && flutter run -d <device_id> --dart-define=API_BASE_URL=http://<your-lan-ip>:3000" >&2
 fi
 
+# Google Sign-In needs the same OAuth Web client ID on both ends (it's what
+# makes the ID token the app gets verifiable by the backend) — read it out of
+# backend/.env instead of hardcoding it here a third time, so the two can't
+# drift out of sync.
+GOOGLE_CLIENT_ID="$(grep -E '^GOOGLE_CLIENT_ID=' "$BACKEND_DIR/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'"'"' \r')"
+if [ -z "$GOOGLE_CLIENT_ID" ] || [ "$GOOGLE_CLIENT_ID" = "REPLACE_WITH_GOOGLE_WEB_CLIENT_ID" ]; then
+  echo "[dev.sh] GOOGLE_CLIENT_ID not set in backend/.env — Google Sign-In will be unavailable this run." >&2
+  GOOGLE_CLIENT_ID=""
+fi
+
 # Only Android/iOS targets count as "the mobile app" here — `flutter
 # devices` also lists desktop/web targets (linux, chrome, ...) which this
 # script has no business auto-launching.
@@ -103,6 +113,9 @@ for d in devices:
     while IFS=$'\t' read -r device_id platform is_physical; do
       [ -z "$device_id" ] && continue
       run_args=(-d "$device_id")
+      if [ -n "$GOOGLE_CLIENT_ID" ]; then
+        run_args+=(--dart-define="GOOGLE_SERVER_CLIENT_ID=$GOOGLE_CLIENT_ID")
+      fi
       if [ "$is_physical" = "1" ] && [[ "$platform" == android* ]] && command -v adb >/dev/null 2>&1; then
         if adb -s "$device_id" reverse tcp:3000 tcp:3000 2>/dev/null; then
           reversed_serials+=("$device_id")

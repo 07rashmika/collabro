@@ -1,9 +1,11 @@
 import bcrypt from "bcrypt";
+import { OAuth2Client } from "google-auth-library";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { TokenUtil } from "../../common/utils/token.util";
 import { RegisterDto, LoginDto } from "./auth.schema";
 
 const SALT_ROUNDS = 12;
+const googleClient = new OAuth2Client();
 
 export class AuthService {
   constructor(
@@ -64,9 +66,69 @@ export class AuthService {
       throw new Error("Invalid email or password");
     }
 
+    if (!user.passwordHash) {
+      throw new Error("This account uses Google Sign-In. Please continue with Google.");
+    }
+
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) {
       throw new Error("Invalid email or password");
+    }
+
+    const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    // Rotate: invalidate all old refresh tokens for this user, issue new one
+    await this.prisma.client.refreshToken.deleteMany({
+      where: { userId: user.id },
+    });
+
+    await this.prisma.client.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: this.tokenUtil.refreshTokenExpiry(),
+      },
+    });
+
+    return {
+      user: { id: user.id, name: user.name, email: user.email },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async loginWithGoogle(idToken: string) {
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email || !payload.email_verified) {
+      throw new Error("Google account email is missing or unverified");
+    }
+
+    const googleId = payload.sub;
+    const email = payload.email;
+    const name = payload.name ?? email.split("@")[0];
+
+    let user = await this.prisma.client.user.findUnique({ where: { googleId } });
+
+    if (!user) {
+      const existingByEmail = await this.prisma.client.user.findUnique({ where: { email } });
+
+      user = existingByEmail
+        ? await this.prisma.client.user.update({
+            where: { id: existingByEmail.id },
+            data: { googleId },
+          })
+        : await this.prisma.client.user.create({
+            data: { name, email, googleId },
+          });
     }
 
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({

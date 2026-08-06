@@ -3,7 +3,6 @@ import { StudyAreasController } from "./study-areas.controller";
 import { StudyAreasService }    from "./study-areas.service";
 import { PrismaService }        from "../../infrastructure/database/prisma.service";
 import { jwtGuard }             from "../../common/guards/jwt.guard";
-import { studentDomainGuard }   from "../../common/guards/student-domain.guard";
 import { adminGuard }           from "../../common/guards/admin.guard";
 
 const router = Router();
@@ -13,7 +12,7 @@ const studyAreasService    = new StudyAreasService(prisma);
 const studyAreasController = new StudyAreasController(studyAreasService);
 
 // All routes require a valid JWT and a student email domain
-router.use(jwtGuard, studentDomainGuard);
+router.use(jwtGuard);
 
 // ── Read-only (all students) ──────────────────────────────────────────────────
 router.get("/",    (req, res) => studyAreasController.getAllStudyAreas(req, res));

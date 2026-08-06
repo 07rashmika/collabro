@@ -3,7 +3,6 @@ import { MatchingController } from "./matching.controller";
 import { MatchingService } from "./matching.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
-import { studentDomainGuard } from "../../common/guards/student-domain.guard";
 
 const router = Router();
 
@@ -11,7 +10,7 @@ const prisma = PrismaService.getInstance();
 const matchingService = new MatchingService(prisma);
 const matchingController = new MatchingController(matchingService);
 
-router.use(jwtGuard, studentDomainGuard);
+router.use(jwtGuard);
 
 // Get ranked study-partner match suggestions
 router.get("/suggestions", (req, res) =>

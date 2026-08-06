@@ -2,7 +2,6 @@ import { Server as HttpServer, IncomingMessage } from "http";
 import { Socket } from "net";
 import { WebSocket, WebSocketServer } from "ws";
 import { TokenUtil } from "../../../common/utils/token.util";
-import { STUDENT_EMAIL_DOMAINS } from "../../../common/config/student-domains";
 import { PrismaService } from "../../../infrastructure/database/prisma.service";
 import { SessionsService } from "../sessions.service";
 import { SummarizerClient } from "../../summaries/summarizer.client";
@@ -63,9 +62,8 @@ export function attachSignalingServer(httpServer: HttpServer): void {
   });
 }
 
-/// Shared by both upgrade paths — verifies the access token and that the
-/// caller is a student, rejecting the upgrade otherwise. Returns null (after
-/// already rejecting) on any failure.
+/// Shared by both upgrade paths — verifies the access token, rejecting the
+/// upgrade otherwise. Returns null (after already rejecting) on any failure.
 async function authenticateUpgrade(
   req: IncomingMessage,
   socket: Socket,
@@ -78,11 +76,6 @@ async function authenticateUpgrade(
   const payload = tokenUtil.verifyAccessToken(token);
   if (!payload) {
     rejectUpgrade(socket, "401 Unauthorized");
-    return null;
-  }
-  const isStudent = STUDENT_EMAIL_DOMAINS.some((d) => payload.email.endsWith(`@${d}`));
-  if (!isStudent) {
-    rejectUpgrade(socket, "403 Forbidden");
     return null;
   }
   return payload;

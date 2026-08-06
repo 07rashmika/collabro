@@ -35,6 +35,16 @@ class AuthCubit extends Cubit<AuthState> {
     }
   }
 
+  Future<void> loginWithGoogle() async {
+    emit(const AuthLoading());
+    try {
+      final user = await authRepo.loginWithGoogle();
+      emit(AuthSuccess(user));
+    } catch (e) {
+      emit(AuthError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
   Future<void> logout() async {
     emit(const AuthLoading());
     try {

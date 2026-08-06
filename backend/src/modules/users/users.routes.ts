@@ -3,7 +3,6 @@ import { UsersController } from "./users.controller";
 import { UsersService } from "./users.service";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { jwtGuard } from "../../common/guards/jwt.guard";
-import { studentDomainGuard } from "../../common/guards/student-domain.guard";
 import { adminGuard } from "../../common/guards/admin.guard";
 
 const router = Router();
@@ -12,7 +11,7 @@ const prisma = PrismaService.getInstance();
 const usersService = new UsersService(prisma);
 const usersController = new UsersController(usersService);
 
-router.use(jwtGuard, studentDomainGuard);
+router.use(jwtGuard);
 
 // Me
 router.get("/me", (req, res) => usersController.getMe(req, res));
