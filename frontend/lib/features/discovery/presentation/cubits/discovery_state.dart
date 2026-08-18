@@ -39,8 +39,6 @@ final class DiscoveryNotesLoaded extends DiscoveryState {
   List<Object?> get props => [notes];
 }
 
-/// Combined results for the "All" tab — sessions, users, and notes matching
-/// the query, all fetched together rather than one category at a time.
 final class DiscoveryAllLoaded extends DiscoveryState {
   final List<StudySession> sessions;
   final List<PublicUser> users;

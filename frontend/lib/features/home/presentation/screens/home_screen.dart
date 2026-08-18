@@ -2,24 +2,29 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/constants/error_messages.dart';
 import 'package:frontend/core/realtime/user_notifications_service.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
-import 'package:frontend/core/widgets/app_search_field.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
 import 'package:frontend/features/auth/domain/entities/app_user.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:frontend/features/connections/domain/repos/connections_repo.dart';
+import 'package:frontend/features/discovery/presentation/components/note_preview_sheet.dart';
+import 'package:frontend/features/matching/domain/entities/match_candidate.dart';
 import 'package:frontend/features/matching/domain/repos/matching_repo.dart';
 import 'package:frontend/features/matching/presentation/cubits/matching_cubit.dart';
+import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
+import 'package:frontend/features/notes/presentation/cubits/notes_cubit.dart';
+import 'package:frontend/features/notifications/domain/repos/notifications_repo.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 import '../components/ai_summary_card.dart';
 import '../components/dashboard_section_header.dart';
@@ -28,32 +33,110 @@ import '../components/home_drawer.dart';
 import '../components/home_top_bar.dart';
 import '../components/recommended_partners_list.dart';
 import '../components/session_card.dart';
-import '../models/mock_ai_summary.dart';
+import '../models/home_bootstrap.dart';
 
-class HomeScreen extends StatelessWidget {
-  final AppUser user;
+const _homeSummaryCount = 3;
 
-  const HomeScreen({super.key, required this.user});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late final Future<HomeBootstrap> _bootstrapFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapFuture = _bootstrap();
+  }
+
+  Future<HomeBootstrap> _bootstrap() async {
+    final authRepo = context.read<AuthRepo>();
+    final matchingRepo = context.read<MatchingRepo>();
+    final connectionsRepo = context.read<ConnectionsRepo>();
+
+    final user = await authRepo.getCurrentUser();
+
+    var matchedAuthorIds = const <String>[];
+    try {
+      final results = await Future.wait([
+        matchingRepo.getMatches(),
+        connectionsRepo.getConnectedUserIds(),
+      ]);
+      final matches = results[0] as List<MatchCandidate>;
+      final connectedUserIds = results[1] as List<String>;
+      matchedAuthorIds = {
+        ...matches.map((m) => m.userId),
+        ...connectedUserIds,
+      }.toList();
+    } catch (e) {
+      //fall back to the caller's own notes only.
+      print("Call error $e");
+    }
+
+    return HomeBootstrap(user: user, matchedAuthorIds: matchedAuthorIds);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) => AuthCubit(authRepo: context.read<AuthRepo>()),
-        ),
-        BlocProvider(
-          create: (context) =>
-              MatchingCubit(matchingRepo: context.read<MatchingRepo>())
-                ..loadMatches(),
-        ),
-        BlocProvider(
-          create: (context) =>
-              SessionsCubit(sessionsRepo: context.read<SessionsRepo>())
-                ..loadUpcomingSessions(),
-        ),
-      ],
-      child: _HomeView(user: user),
+    final colors = AppColors.of(context);
+    return FutureBuilder<HomeBootstrap>(
+      future: _bootstrapFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState != .done) {
+          return Scaffold(
+            backgroundColor: colors.backgroundDark,
+            body: Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            ),
+          );
+        }
+
+        final user = snapshot.data?.user;
+        if (user == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) context.go(AppRoutes.signIn);
+          });
+          return Scaffold(
+            backgroundColor: colors.backgroundDark,
+            body: Center(
+              child: CircularProgressIndicator(color: colors.primary),
+            ),
+          );
+        }
+
+        final matchedAuthorIds = snapshot.data!.matchedAuthorIds;
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider(
+              create: (context) =>
+                  AuthCubit(authRepo: context.read<AuthRepo>()),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  MatchingCubit(matchingRepo: context.read<MatchingRepo>())
+                    ..loadMatches(),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  SessionsCubit(sessionsRepo: context.read<SessionsRepo>())
+                    ..loadUpcomingSessions(),
+            ),
+            BlocProvider(
+              create: (context) =>
+                  NotesCubit(notesRepo: context.read<NotesRepo>())
+                    ..loadHomeSummaries(
+                      matchedAuthorIds: matchedAuthorIds,
+                      limit: _homeSummaryCount,
+                    ),
+            ),
+          ],
+          child: _HomeView(user: user),
+        );
+      },
     );
   }
 }
@@ -69,6 +152,8 @@ class _HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<_HomeView> {
   StreamSubscription? _sessionsChangedSubscription;
+  StreamSubscription? _notificationsChangedSubscription;
+  int _unreadCount = 0;
 
   @override
   void initState() {
@@ -77,11 +162,17 @@ class _HomeViewState extends State<_HomeView> {
         .read<UserNotificationsService>()
         .sessionsChanged
         .listen((_) => _reloadUpcomingSessions());
+    _notificationsChangedSubscription = context
+        .read<UserNotificationsService>()
+        .notificationsChanged
+        .listen((_) => _refreshUnreadCount());
+    _refreshUnreadCount();
   }
 
   @override
   void dispose() {
     _sessionsChangedSubscription?.cancel();
+    _notificationsChangedSubscription?.cancel();
     super.dispose();
   }
 
@@ -89,13 +180,19 @@ class _HomeViewState extends State<_HomeView> {
     context.read<SessionsCubit>().loadUpcomingSessions();
   }
 
-  /// A discovered public session the user hasn't joined yet needs a real
-  /// join (adds them as a participant server-side) before the chat/video
-  /// screen will let them in — tapping straight through would 403. Sessions
-  /// the user already owns or participates in skip straight to navigation.
+  Future<void> _refreshUnreadCount() async {
+    try {
+      final page = await context.read<NotificationsRepo>().getNotifications();
+      if (mounted) setState(() => _unreadCount = page.unreadCount);
+    } catch (_) {
+      // Badge just stays at its last known value — not worth surfacing.
+    }
+  }
+
   Future<void> _openSession(BuildContext context, StudySession session) async {
-    final colors = AppColors.of(context);
-    final alreadyJoined = session.participants.any((p) => p.userId == widget.user.id);
+    final alreadyJoined = session.participants.any(
+      (p) => p.userId == widget.user.id,
+    );
     if (alreadyJoined) {
       context.push(AppRoutes.sessionDetail, extra: session);
       return;
@@ -117,14 +214,7 @@ class _HomeViewState extends State<_HomeView> {
         context.push(AppRoutes.sessionDetail, extra: joined);
       }
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: colors.error,
-          ),
-        );
-      }
+      if (context.mounted) showErrorSnackBar(context);
     }
   }
 
@@ -138,10 +228,13 @@ class _HomeViewState extends State<_HomeView> {
         backgroundColor: colors.backgroundCard,
         title: Text('Password required', style: typography.titleMedium),
         content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: .min,
+          crossAxisAlignment: .start,
           children: [
-            Text('"$title" is password-protected.', style: typography.bodyMedium),
+            Text(
+              '"$title" is password-protected.',
+              style: typography.bodyMedium,
+            ),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               label: 'Password',
@@ -158,7 +251,8 @@ class _HomeViewState extends State<_HomeView> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()),
+            onPressed: () =>
+                Navigator.of(dialogContext).pop(controller.text.trim()),
             child: const Text('Join'),
           ),
         ],
@@ -183,15 +277,17 @@ class _HomeViewState extends State<_HomeView> {
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
+                    padding: const .symmetric(
                       horizontal: AppSpacing.screenHorizontal,
                       vertical: AppSpacing.sm,
                     ),
                     child: HomeTopBar(
                       onMenuTap: () =>
                           Scaffold.of(scaffoldContext).openDrawer(),
-                      onNotificationsTap: () =>
-                          showComingSoonSnackBar(context, 'Notifications'),
+                      onNotificationsTap: () => context
+                          .push(AppRoutes.notifications)
+                          .then((_) => _refreshUnreadCount()),
+                      hasUnreadNotifications: _unreadCount > 0,
                     ),
                   ),
                   Expanded(
@@ -200,27 +296,29 @@ class _HomeViewState extends State<_HomeView> {
                       onRefresh: () => Future.wait([
                         context.read<MatchingCubit>().loadMatches(),
                         context.read<SessionsCubit>().loadUpcomingSessions(),
+                        context.read<NotesCubit>().loadNotes(
+                          hasSummary: true,
+                          limit: _homeSummaryCount,
+                        ),
                       ]),
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(
+                        padding: const .symmetric(
                           horizontal: AppSpacing.screenHorizontal,
                         ),
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          crossAxisAlignment: .stretch,
                           children: [
                             const SizedBox(height: AppSpacing.xs),
-                            GreetingHeader(name: widget.user.name.split(' ').first),
-                            const SizedBox(height: AppSpacing.lg),
-                            AppSearchField(
-                              hint: 'Search for subjects, partners, or...',
-                              onTap: () => context.go(AppRoutes.discovery),
+                            GreetingHeader(
+                              name: widget.user.name.split(' ').first,
                             ),
                             const SizedBox(height: AppSpacing.xxl),
                             DashboardSectionHeader(
                               title: 'Recommended Partners',
                               actionLabel: 'View All',
-                              onActionTap: () => context.go(AppRoutes.discovery),
+                              onActionTap: () =>
+                                  context.go(AppRoutes.discovery),
                             ),
                             const SizedBox(height: AppSpacing.md),
                             const RecommendedPartnersList(),
@@ -236,7 +334,7 @@ class _HomeViewState extends State<_HomeView> {
                                 if (state is SessionsLoading ||
                                     state is SessionsInitial) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: const .symmetric(
                                       vertical: AppSpacing.lg,
                                     ),
                                     child: Center(
@@ -248,15 +346,11 @@ class _HomeViewState extends State<_HomeView> {
                                 }
 
                                 if (state is SessionsError) {
-                                  // This is a small dashboard teaser with a
-                                  // "View All" link to the full sessions
-                                  // list — not the place to dump a raw
-                                  // backend error. Log it for developers and
-                                  // show the same calm copy as "no upcoming
-                                  // sessions" instead of alarming text.
-                                  debugPrint('[HomeScreen] Failed to load upcoming sessions: ${state.message}');
+                                  debugPrint(
+                                    '[HomeScreen] Failed to load upcoming sessions: ${state.message}',
+                                  );
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: const .symmetric(
                                       vertical: AppSpacing.md,
                                     ),
                                     child: Text(
@@ -272,7 +366,7 @@ class _HomeViewState extends State<_HomeView> {
 
                                 if (sessions.isEmpty) {
                                   return Padding(
-                                    padding: const EdgeInsets.symmetric(
+                                    padding: const .symmetric(
                                       vertical: AppSpacing.md,
                                     ),
                                     child: Text(
@@ -287,7 +381,8 @@ class _HomeViewState extends State<_HomeView> {
                                     for (final session in sessions) ...[
                                       SessionCard(
                                         session: session,
-                                        onAction: () => _openSession(context, session),
+                                        onAction: () =>
+                                            _openSession(context, session),
                                         onToggleSave: () => context
                                             .read<SessionsCubit>()
                                             .toggleSaveSession(session),
@@ -304,13 +399,53 @@ class _HomeViewState extends State<_HomeView> {
                               leadingIcon: Icons.auto_awesome,
                             ),
                             const SizedBox(height: AppSpacing.md),
-                            for (final summary in mockAiSummaries) ...[
-                              AiSummaryCard(
-                                summary: summary,
-                                onReadMore: () => context.go(AppRoutes.notes),
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                            ],
+                            BlocBuilder<NotesCubit, NotesState>(
+                              builder: (context, state) {
+                                if (state is NotesInitial ||
+                                    state is NotesLoading) {
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      color: colors.primary,
+                                    ),
+                                  );
+                                }
+                                if (state is NotesError) {
+                                  return Text(
+                                    genericErrorMessage,
+                                    textAlign: .center,
+                                    style: typography.bodySmall,
+                                  );
+                                }
+                                final notes = (state as NotesLoaded).notes;
+                                if (notes.isEmpty) {
+                                  return Text(
+                                    'No summaries at the moment.',
+                                    textAlign: .center,
+                                    style: typography.bodySmall,
+                                  );
+                                }
+                                return Column(
+                                  children: [
+                                    for (final note in notes) ...[
+                                      AiSummaryCard(
+                                        note: note,
+                                        onReadMore:
+                                            note.authorId == widget.user.id
+                                            ? () => context.push(
+                                                AppRoutes.noteDetail,
+                                                extra: note,
+                                              )
+                                            : () => showNotePreviewSheet(
+                                                context,
+                                                note,
+                                              ),
+                                      ),
+                                      const SizedBox(height: AppSpacing.md),
+                                    ],
+                                  ],
+                                );
+                              },
+                            ),
                             const SizedBox(height: AppSpacing.xxl),
                           ],
                         ),

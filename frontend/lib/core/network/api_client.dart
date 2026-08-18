@@ -4,13 +4,15 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_config.dart';
 import 'secure_storage_keys.dart';
+import 'token_refresher.dart';
 
-/// Single networking chokepoint: owns the base URL, attaches the access
-/// token to every request, unwraps the backend's response envelope (if
-/// present), and transparently refreshes + retries on a 401.
+//single networking chokepoint: owns the base URL, attaches the access
+//token to every request, unwraps the backend's response envelope (if
+//present), and transparently refreshes + retries on a 401.
 class ApiClient {
   final Dio _dio;
   final FlutterSecureStorage _storage;
+  late final TokenRefresher _tokenRefresher;
   bool _isRefreshing = false;
 
   ApiClient({Dio? dio, FlutterSecureStorage? storage})
@@ -24,6 +26,7 @@ class ApiClient {
             ),
           ),
       _storage = storage ?? const FlutterSecureStorage() {
+    _tokenRefresher = TokenRefresher(storage: _storage);
     debugPrint('[ApiClient] baseUrl = ${ApiConfig.baseUrl}');
     if (kDebugMode) {
       _dio.interceptors.add(
@@ -40,9 +43,6 @@ class ApiClient {
           handler.next(options);
         },
         onResponse: (response, handler) {
-          // Some backend routes may wrap successful payloads in
-          // { success, data, timestamp }. Unwrap centrally so repos can
-          // always read the raw shape.
           final data = response.data;
           if (data is Map &&
               data['success'] == true &&
@@ -52,16 +52,14 @@ class ApiClient {
           handler.next(response);
         },
         onError: (error, handler) async {
-          // `_hasRetried` caps this at one refresh-and-retry per request.
-          // Without it, a 401 that isn't actually a stale token (a backend
-          // bug, or any endpoint reusing 401 for a non-auth reason) would
-          // refresh "successfully" every time and retry forever, since the
-          // retried request just 401s again and re-enters this branch.
-          final alreadyRetried = error.requestOptions.extra['_hasRetried'] == true;
-          if (error.response?.statusCode == 401 && !_isRefreshing && !alreadyRetried) {
+          final alreadyRetried =
+              error.requestOptions.extra['_hasRetried'] == true;
+          if (error.response?.statusCode == 401 &&
+              !_isRefreshing &&
+              !alreadyRetried) {
             _isRefreshing = true;
             try {
-              final refreshed = await _refreshToken();
+              final refreshed = await _tokenRefresher.refresh();
               _isRefreshing = false;
               if (refreshed) {
                 error.requestOptions.extra['_hasRetried'] = true;
@@ -77,32 +75,6 @@ class ApiClient {
         },
       ),
     );
-  }
-
-  Future<bool> _refreshToken() async {
-    final refreshToken = await _storage.read(
-      key: SecureStorageKeys.refreshToken,
-    );
-    if (refreshToken == null) return false;
-
-    try {
-      final response = await Dio(
-        BaseOptions(baseUrl: ApiConfig.baseUrl),
-      ).post('/auth/refresh', data: {'refreshToken': refreshToken});
-      final newAccess = response.data['accessToken'] as String;
-      final newRefresh = response.data['refreshToken'] as String;
-      await _storage.write(
-        key: SecureStorageKeys.accessToken,
-        value: newAccess,
-      );
-      await _storage.write(
-        key: SecureStorageKeys.refreshToken,
-        value: newRefresh,
-      );
-      return true;
-    } catch (_) {
-      return false;
-    }
   }
 
   Future<Response> get(String path, {Map<String, dynamic>? query}) =>

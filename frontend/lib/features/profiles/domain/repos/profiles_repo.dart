@@ -8,7 +8,6 @@ class ProfileSkillInput {
 }
 
 abstract class ProfilesRepo {
-  /// Returns null if the caller has no profile yet (fresh signup).
   Future<Profile?> getMyProfile();
 
   Future<Profile> createProfile({

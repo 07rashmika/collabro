@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
@@ -15,6 +14,7 @@ import 'package:frontend/features/auth/presentation/components/google_sign_in_bu
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:frontend/features/profiles/domain/entities/profile.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
+import 'package:go_router/go_router.dart';
 
 class SignUpScreen extends StatelessWidget {
   const SignUpScreen({super.key});
@@ -55,7 +55,9 @@ class _SignUpViewState extends State<_SignUpView> {
     if (!_agreedToTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please agree to the Terms of Service and Privacy Policy.'),
+          content: Text(
+            'Please agree to the Terms of Service and Privacy Policy.',
+          ),
         ),
       );
       return;
@@ -77,9 +79,6 @@ class _SignUpViewState extends State<_SignUpView> {
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) async {
             if (state is AuthSuccess) {
-              // Google sign-in can resolve to an existing account even from
-              // this screen (find-or-create on the backend), so don't assume
-              // profile setup is still needed — check like sign-in does.
               Profile? profile;
               try {
                 profile = await context.read<ProfilesRepo>().getMyProfile();
@@ -93,23 +92,18 @@ class _SignUpViewState extends State<_SignUpView> {
                 context.go(AppRoutes.profileSetup, extra: state.user);
               }
             } else if (state is AuthError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: colors.error,
-                ),
-              );
+              showErrorSnackBar(context);
             }
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
+            padding: const .symmetric(
               horizontal: AppSpacing.screenHorizontal,
               vertical: AppSpacing.xxl,
             ),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: .stretch,
                 children: [
                   const AuthHeader(tagline: 'ELEVATE YOUR STUDY SESSIONS'),
                   const SizedBox(height: AppSpacing.xxxl),
@@ -121,7 +115,7 @@ class _SignUpViewState extends State<_SignUpView> {
                       border: Border.all(color: colors.border),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: .stretch,
                       children: [
                         AuthTabBar(
                           active: AuthTab.createAccount,
@@ -165,7 +159,7 @@ class _SignUpViewState extends State<_SignUpView> {
                           icon: Icons.lock_outline,
                           controller: _passwordController,
                           obscurable: true,
-                          textInputAction: TextInputAction.done,
+                          textInputAction: .done,
                           validator: (value) {
                             if (value == null || value.length < 8) {
                               return 'Password must be at least 8 characters';
@@ -175,7 +169,7 @@ class _SignUpViewState extends State<_SignUpView> {
                         ),
                         const SizedBox(height: AppSpacing.md),
                         Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          crossAxisAlignment: .start,
                           children: [
                             SizedBox(
                               width: 24,
@@ -183,14 +177,15 @@ class _SignUpViewState extends State<_SignUpView> {
                               child: Checkbox(
                                 value: _agreedToTerms,
                                 activeColor: colors.primary,
-                                onChanged: (value) =>
-                                    setState(() => _agreedToTerms = value ?? false),
+                                onChanged: (value) => setState(
+                                  () => _agreedToTerms = value ?? false,
+                                ),
                               ),
                             ),
                             const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Padding(
-                                padding: const EdgeInsets.only(top: AppSpacing.xs),
+                                padding: const .only(top: AppSpacing.xs),
                                 child: Text(
                                   'I agree to the Terms of Service and Privacy Policy.',
                                   style: typography.bodySmall,
@@ -214,7 +209,7 @@ class _SignUpViewState extends State<_SignUpView> {
                           children: [
                             Expanded(child: Divider(color: colors.border)),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
+                              padding: const .symmetric(
                                 horizontal: AppSpacing.sm,
                               ),
                               child: Text('or', style: typography.bodySmall),
@@ -237,7 +232,7 @@ class _SignUpViewState extends State<_SignUpView> {
                   ),
                   const SizedBox(height: AppSpacing.xxl),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: .center,
                     children: [
                       Text(
                         'Already have an account? ',
@@ -249,7 +244,7 @@ class _SignUpViewState extends State<_SignUpView> {
                           'Sign In',
                           style: typography.bodySmall.copyWith(
                             color: colors.primaryLight,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: .w600,
                           ),
                         ),
                       ),

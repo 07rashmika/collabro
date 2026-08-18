@@ -51,9 +51,6 @@ final class SessionsError extends SessionsState {
   List<Object?> get props => [message];
 }
 
-/// A join-by-code attempt hit a password-protected session — the join code
-/// was valid, so this isn't a generic [SessionsError]: the UI should prompt
-/// for a password and retry rather than just showing a snackbar.
 final class SessionPasswordRequired extends SessionsState {
   final String message;
   const SessionPasswordRequired(this.message);
@@ -62,8 +59,6 @@ final class SessionPasswordRequired extends SessionsState {
   List<Object?> get props => [message];
 }
 
-/// The owner just fetched their session's decrypted password from the info
-/// panel — `password` is null if the session has none set.
 final class SessionPasswordViewed extends SessionsState {
   final String? password;
   const SessionPasswordViewed(this.password);

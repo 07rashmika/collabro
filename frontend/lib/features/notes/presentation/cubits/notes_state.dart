@@ -47,15 +47,10 @@ final class NoteSummarizing extends NotesState {
   const NoteSummarizing();
 }
 
-/// Summarizing text in the new-note "summarize, then post" flow, as opposed
-/// to [NoteSummarizing] which re-summarizes an existing, already-saved note.
 final class DraftSummarizing extends NotesState {
   const DraftSummarizing();
 }
 
-/// A new note has been summarized and auto-saved (as a private draft) so it
-/// already shows up in the notes list — "posting" it later just flips
-/// [Note.isPublic] on this same row rather than creating a new one.
 final class DraftSaved extends NotesState {
   final Note note;
   const DraftSaved(this.note);

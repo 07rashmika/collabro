@@ -12,7 +12,11 @@ class ApiUsersRepo implements UsersRepo {
   ApiUsersRepo({required this.apiClient});
 
   @override
-  Future<List<PublicUser>> searchUsers({String? search, int page = 1, int limit = 20}) async {
+  Future<List<PublicUser>> searchUsers({
+    String? search,
+    int page = 1,
+    int limit = 20,
+  }) async {
     try {
       final response = await apiClient.get(
         UsersEndpoints.base,
@@ -23,11 +27,25 @@ class ApiUsersRepo implements UsersRepo {
         },
       );
       final users = (response.data['users'] as List<dynamic>?) ?? [];
-      return users.map((u) => PublicUser.fromJson(u as Map<String, dynamic>)).toList();
+      return users
+          .map((u) => PublicUser.fromJson(u as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
       throw Exception('Fetching users failed: $e');
+    }
+  }
+
+  @override
+  Future<PublicUser> getUserById(String id) async {
+    try {
+      final response = await apiClient.get(UsersEndpoints.byId(id));
+      return PublicUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching user failed: $e');
     }
   }
 }

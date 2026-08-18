@@ -71,9 +71,6 @@ class EditProfileCubit extends Cubit<EditProfileState> {
 
   int _searchToken = 0;
 
-  /// Live suggestions from the external skills search API as the user
-  /// types. Guarded by [_searchToken] so a slow, stale request can't
-  /// overwrite results from whatever's typed by the time it resolves.
   Future<void> searchSkills(String query) async {
     final current = state;
     if (current is! EditProfileReady) return;
@@ -105,8 +102,7 @@ class EditProfileCubit extends Cubit<EditProfileState> {
       if (token != _searchToken) return;
       final latest = state;
       if (latest is! EditProfileReady) return;
-      // Best-effort — a failed remote search just means no bonus
-      // suggestions, not a blocking error like catalogError.
+
       emit(
         latest.copyWith(
           remoteSkillSuggestions: const [],
@@ -151,8 +147,6 @@ class EditProfileCubit extends Cubit<EditProfileState> {
     }
   }
 
-  /// Tapping an already-selected skill chip cycles its level: Beginner ->
-  /// Intermediate -> Advanced -> removed.
   void cycleSkillLevel(String skillId) {
     final current = state;
     if (current is! EditProfileReady) return;

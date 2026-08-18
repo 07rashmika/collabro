@@ -18,9 +18,6 @@ const List<_NavItem> _navItems = [
   _NavItem(Icons.person_outline, Icons.person, 'Profile'),
 ];
 
-/// Bottom tab bar rendered by [MainShell] for the app's main navigation
-/// branches. [currentIndex] mirrors the active [StatefulShellBranch] (0-4,
-/// see [_navItems]); [onTap] is wired to `navigationShell.goBranch`.
 class AppBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTap;
@@ -51,7 +48,7 @@ class AppBottomNavBar extends StatelessWidget {
             child: InkWell(
               onTap: () => onTap(i),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: .center,
                 children: [
                   Icon(isActive ? item.activeIcon : item.icon, color: color),
                   const SizedBox(height: 2),

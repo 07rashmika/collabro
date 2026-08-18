@@ -28,7 +28,9 @@ class PrimaryButton extends StatelessWidget {
       width: .infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: onPressed == null ? colors.backgroundElevated : colors.buttonPrimary,
+          color: onPressed == null
+              ? colors.backgroundElevated
+              : colors.buttonPrimary,
           borderRadius: .circular(AppSpacing.radiusMd),
         ),
         child: ElevatedButton(

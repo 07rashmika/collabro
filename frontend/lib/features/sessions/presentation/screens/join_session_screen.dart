@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 class JoinSessionScreen extends StatelessWidget {
   const JoinSessionScreen({super.key});
@@ -16,7 +16,8 @@ class JoinSessionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SessionsCubit(sessionsRepo: context.read<SessionsRepo>()),
+      create: (context) =>
+          SessionsCubit(sessionsRepo: context.read<SessionsRepo>()),
       child: const _JoinSessionView(),
     );
   }
@@ -66,20 +67,23 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
             } else if (state is SessionPasswordRequired) {
               setState(() => _passwordRequired = true);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: colors.error),
+                SnackBar(
+                  content: const Text('This session requires a password.'),
+                  backgroundColor: colors.error,
+                ),
               );
             } else if (state is SessionsError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: colors.error),
-              );
+              showErrorSnackBar(context);
             }
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
+            padding: const .symmetric(
+              horizontal: AppSpacing.screenHorizontal,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: .stretch,
                 children: [
                   const SizedBox(height: AppSpacing.sm),
                   Row(
@@ -91,7 +95,7 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
                       Expanded(
                         child: Text(
                           'Join Session',
-                          textAlign: TextAlign.center,
+                          textAlign: .center,
                           style: typography.headlineMedium,
                         ),
                       ),
@@ -109,19 +113,24 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
                     hint: 'e.g. cmrkispam0002n3jq8r1qi6n5',
                     icon: Icons.link,
                     controller: _codeController,
-                    textInputAction: TextInputAction.next,
+                    textInputAction: .next,
                     validator: (value) =>
-                        (value == null || value.trim().isEmpty) ? 'Join code is required' : null,
+                        (value == null || value.trim().isEmpty)
+                        ? 'Join code is required'
+                        : null,
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(
-                    label: _passwordRequired ? 'Password (required)' : 'Password (if any)',
+                    label: _passwordRequired
+                        ? 'Password (required)'
+                        : 'Password (if any)',
                     hint: 'Leave blank unless the host set one',
                     icon: Icons.lock_outline,
                     controller: _passwordController,
                     obscurable: true,
                     validator: (value) {
-                      if (_passwordRequired && (value == null || value.trim().isEmpty)) {
+                      if (_passwordRequired &&
+                          (value == null || value.trim().isEmpty)) {
                         return 'This session requires a password';
                       }
                       return null;

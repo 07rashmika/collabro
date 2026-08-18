@@ -22,9 +22,6 @@ class SessionsCubit extends Cubit<SessionsState> {
     }
   }
 
-  /// The user's own upcoming sessions, merged with public sessions from
-  /// other students that match the user's skills — this is what "Upcoming
-  /// Sessions" on the Home tab shows, sorted together by scheduled time.
   Future<void> loadUpcomingSessions() async {
     emit(const SessionsLoading());
     try {
@@ -32,11 +29,12 @@ class SessionsCubit extends Cubit<SessionsState> {
         sessionsRepo.getMySessions(upcoming: true),
         sessionsRepo.discoverSessions(),
       ]);
-      final merged = [...results[0], ...results[1]]..sort((a, b) {
-        final aTime = a.scheduledAt ?? DateTime(9999);
-        final bTime = b.scheduledAt ?? DateTime(9999);
-        return aTime.compareTo(bTime);
-      });
+      final merged = [...results[0], ...results[1]]
+        ..sort((a, b) {
+          final aTime = a.scheduledAt ?? DateTime(9999);
+          final bTime = b.scheduledAt ?? DateTime(9999);
+          return aTime.compareTo(bTime);
+        });
       emit(SessionsLoaded(merged));
     } catch (e) {
       emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
@@ -56,15 +54,15 @@ class SessionsCubit extends Cubit<SessionsState> {
   Future<void> loadEndedSessions() async {
     emit(const SessionsLoading());
     try {
-      final sessions = await sessionsRepo.getMySessions(status: SessionStatus.closed);
+      final sessions = await sessionsRepo.getMySessions(
+        status: SessionStatus.closed,
+      );
       emit(SessionsLoaded(sessions));
     } catch (e) {
       emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 
-  /// Optimistically flips `savedByMe` in the current list, then persists it;
-  /// reverts the list back if the request fails.
   Future<void> toggleSaveSession(StudySession session) async {
     final current = state;
     if (current is! SessionsLoaded) return;
@@ -73,7 +71,9 @@ class SessionsCubit extends Cubit<SessionsState> {
     emit(
       SessionsLoaded(
         current.sessions
-            .map((s) => s.id == session.id ? s.copyWith(savedByMe: !wasSaved) : s)
+            .map(
+              (s) => s.id == session.id ? s.copyWith(savedByMe: !wasSaved) : s,
+            )
             .toList(),
       ),
     );

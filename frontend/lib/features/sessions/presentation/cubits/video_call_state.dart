@@ -11,9 +11,6 @@ final class CallConnecting extends VideoCallState {
   const CallConnecting();
 }
 
-/// Shared data for every "call is up" state (normal, screen-sharing, or just
-/// stopped sharing) so the UI can keep rendering the video grid across those
-/// transitions without losing participant/stream data.
 sealed class ActiveCallState extends VideoCallState {
   final MediaStream localStream;
   final List<CallParticipant> participants;
@@ -75,10 +72,6 @@ final class ScreenShareStopped extends ActiveCallState {
   });
 }
 
-/// Emitted both when the local user just leaves the call (session stays open
-/// for everyone else) and when the session was actually ended (by its
-/// creator, or auto-expired) — [sessionEnded] tells the two apart so the UI
-/// only offers an AI summary in the latter case.
 final class CallDisconnected extends VideoCallState {
   final bool sessionEnded;
   const CallDisconnected({this.sessionEnded = false});

@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// A single STUN/TURN server entry as WebRTC's `RTCConfiguration` expects it.
 class IceServerConfig extends Equatable {
   final List<String> urls;
 
@@ -9,7 +8,9 @@ class IceServerConfig extends Equatable {
   factory IceServerConfig.fromJson(Map<String, dynamic> json) {
     final rawUrls = json['urls'];
     return IceServerConfig(
-      urls: rawUrls is List ? rawUrls.map((u) => u.toString()).toList() : [rawUrls.toString()],
+      urls: rawUrls is List
+          ? rawUrls.map((u) => u.toString()).toList()
+          : [rawUrls.toString()],
     );
   }
 
@@ -19,8 +20,6 @@ class IceServerConfig extends Equatable {
   List<Object?> get props => [urls];
 }
 
-/// ICE server list minted by the backend per video-session join request —
-/// never hardcoded client-side, so it can change without an app release.
 class IceServersResponse extends Equatable {
   final List<IceServerConfig> iceServers;
 
@@ -29,7 +28,9 @@ class IceServersResponse extends Equatable {
   factory IceServersResponse.fromJson(Map<String, dynamic> json) {
     final servers = (json['iceServers'] as List<dynamic>?) ?? [];
     return IceServersResponse(
-      iceServers: servers.map((s) => IceServerConfig.fromJson(s as Map<String, dynamic>)).toList(),
+      iceServers: servers
+          .map((s) => IceServerConfig.fromJson(s as Map<String, dynamic>))
+          .toList(),
     );
   }
 

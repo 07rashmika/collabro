@@ -15,6 +15,7 @@ import {
 
 function handleError(res: Response, err: unknown) {
   if (err instanceof ZodError) {
+    console.warn("[Sessions] Validation failed:", err.flatten().fieldErrors);
     res.status(400).json({
       message: "Validation failed",
       errors: err.flatten().fieldErrors,
@@ -22,9 +23,11 @@ function handleError(res: Response, err: unknown) {
     return;
   }
   if (err instanceof AppError) {
+    console.warn(`[Sessions] ${err.statusCode} ${err.message}`);
     res.status(err.statusCode).json({ message: err.message });
     return;
   }
+  console.error("[Sessions] Unexpected error:", err);
   res.status(500).json({ message: (err as Error).message });
 }
 
@@ -67,6 +70,16 @@ export class SessionsController {
       const query  = PageQuerySchema.parse(req.query);
       const result = await this.sessionsService.discoverPublicSessions(req.user!.sub, query);
       res.status(200).json(result);
+    } catch (err) { handleError(res, err); }
+  }
+
+  async getSessionsByUser(req: Request, res: Response) {
+    try {
+      const sessions = await this.sessionsService.getPublicSessionsByUser(
+        req.params.userId as string,
+        req.user!.sub
+      );
+      res.status(200).json(sessions);
     } catch (err) { handleError(res, err); }
   }
 
@@ -183,6 +196,10 @@ export class SessionsController {
   async uploadRecording(req: Request, res: Response) {
     try {
       const files = (req.files as Express.Multer.File[]) || [];
+      console.log(
+        `[Sessions] Recording upload for session ${req.params.id}: ${files.length} file(s)`,
+        files.map((f) => ({ name: f.originalname, size: f.size, mimetype: f.mimetype }))
+      );
       if (files.length === 0) {
         throw new AppError("At least one audio track is required", 400);
       }
@@ -194,6 +211,7 @@ export class SessionsController {
       const session = await this.sessionsService.processRecording(
         req.params.id as string, req.user!.sub, files, trackMeta
       );
+      console.log(`[Sessions] Recording processed successfully for session ${req.params.id}`);
       res.status(200).json(session);
     } catch (err) { handleError(res, err); }
   }

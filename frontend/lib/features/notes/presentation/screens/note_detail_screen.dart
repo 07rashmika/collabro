@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/utils/time_ago.dart';
 import 'package:frontend/core/widgets/danger_button.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
@@ -15,6 +14,7 @@ import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
 import 'package:frontend/features/notes/presentation/components/ai_summary_section.dart';
 import 'package:frontend/features/notes/presentation/components/note_photo_gallery.dart';
 import 'package:frontend/features/notes/presentation/cubits/notes_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 class NoteDetailScreen extends StatelessWidget {
   final Note note;
@@ -98,17 +98,17 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
             } else if (state is NoteSummarized) {
               setState(() => _note = state.note);
             } else if (state is NotesError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message), backgroundColor: colors.error),
-              );
+              showErrorSnackBar(context);
             }
           },
           builder: (context, state) {
             final isBusy = state is NoteSaving;
             return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
+              padding: const .symmetric(
+                horizontal: AppSpacing.screenHorizontal,
+              ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: .stretch,
                 children: [
                   const SizedBox(height: AppSpacing.sm),
                   Row(
@@ -121,16 +121,23 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                       IconButton(
                         onPressed: isBusy
                             ? null
-                            : () => context.read<NotesCubit>().toggleVisibility(_note.id),
+                            : () => context.read<NotesCubit>().toggleVisibility(
+                                _note.id,
+                              ),
                         icon: Icon(
                           _note.isPublic ? Icons.public : Icons.lock_outline,
                           color: colors.textPrimary,
                         ),
-                        tooltip: _note.isPublic ? 'Make private' : 'Make public',
+                        tooltip: _note.isPublic
+                            ? 'Make private'
+                            : 'Make public',
                       ),
                       IconButton(
                         onPressed: isBusy ? null : () => _editNote(context),
-                        icon: Icon(Icons.edit_outlined, color: colors.textPrimary),
+                        icon: Icon(
+                          Icons.edit_outlined,
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ],
                   ),
@@ -145,17 +152,19 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                     Wrap(
                       spacing: AppSpacing.xs,
                       runSpacing: AppSpacing.xs,
-                      children: _note.tags.map((t) => SkillChip(label: t)).toList(),
+                      children: _note.tags
+                          .map((t) => SkillChip(label: t))
+                          .toList(),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                    padding: const .all(AppSpacing.cardPadding),
                     decoration: BoxDecoration(
                       color: colors.backgroundCard,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-                      border: Border.all(color: colors.border),
+                      borderRadius: .circular(AppSpacing.radiusLg),
+                      border: .all(color: colors.border),
                     ),
                     child: Text(_note.content, style: typography.bodyLarge),
                   ),
@@ -169,11 +178,9 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                   AiSummarySection(
                     summary: _note.summary,
                     isGenerating: state is NoteSummarizing,
-                    onGenerate: () => context.read<NotesCubit>().summarizeNote(_note),
+                    onGenerate: () =>
+                        context.read<NotesCubit>().summarizeNote(_note),
                   ),
-                  // Once a summary exists, surface posting as a clear
-                  // primary action here too — not just the small
-                  // public/private icon up in the app bar.
                   if (_note.summary != null && !_note.isPublic) ...[
                     const SizedBox(height: AppSpacing.lg),
                     PrimaryButton(
@@ -182,7 +189,9 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                       isLoading: isBusy,
                       onPressed: isBusy
                           ? null
-                          : () => context.read<NotesCubit>().toggleVisibility(_note.id),
+                          : () => context.read<NotesCubit>().toggleVisibility(
+                              _note.id,
+                            ),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.xxl),

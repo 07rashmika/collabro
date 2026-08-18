@@ -8,10 +8,11 @@ class ApiException implements Exception {
 
   factory ApiException.fromDioError(DioException e) {
     if (e.response == null) {
-      final isTimeout = e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.connectionError;
+      final isTimeout =
+          e.type == .connectionTimeout ||
+          e.type == .receiveTimeout ||
+          e.type == .sendTimeout ||
+          e.type == .connectionError;
       return ApiException(
         isTimeout
             ? 'Could not connect to the server. Check your connection and try again.'
@@ -28,7 +29,6 @@ class ApiException implements Exception {
   static String _extractMessage(dynamic data) {
     if (data is! Map) return 'Something went wrong. Please try again.';
 
-    // Zod's z.treeifyError shape: { errors: [...], properties: { field: { errors: [...] } } }
     final errors = data['errors'];
     if (errors is Map) {
       final properties = errors['properties'];

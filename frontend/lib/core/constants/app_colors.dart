@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// App color palette, exposed as a [ThemeExtension] so it can vary between
-/// [AppColors.dark] (the original look) and [AppColors.light] based on the
-/// active [ThemeMode]. Access via `AppColors.of(context)` inside widgets.
 class AppColors extends ThemeExtension<AppColors> {
   final Color primary;
   final Color primaryLight;
   final Color primaryDark;
 
-  // Flat light-blue fill for buttons — no gradient.
+  //light blue fill for buttons
   final Color buttonPrimary;
 
   //backgrounds
@@ -80,7 +77,7 @@ class AppColors extends ThemeExtension<AppColors> {
     required this.overlayLight,
   });
 
-  /// Original dark palette — unchanged from before theming was introduced.
+  //dark palette
   static const AppColors dark = AppColors(
     primary: Color(0xFF7B5CF5),
     primaryLight: Color(0xFF9D7FF8),
@@ -111,8 +108,7 @@ class AppColors extends ThemeExtension<AppColors> {
     overlayLight: Color(0x40000000),
   );
 
-  /// Light palette — same brand accents as [dark], with backgrounds/text/
-  /// borders inverted for a light UI.
+  //light palette
   static const AppColors light = AppColors(
     primary: Color(0xFF7B5CF5),
     primaryLight: Color(0xFF9D7FF8),

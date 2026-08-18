@@ -14,10 +14,10 @@ class MatchScoreBadge extends StatelessWidget {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 3),
+      padding: const .symmetric(horizontal: AppSpacing.sm, vertical: 3),
       decoration: BoxDecoration(
         color: colors.success,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+        borderRadius: .circular(AppSpacing.radiusFull),
       ),
       child: Text(
         '$score% Match',

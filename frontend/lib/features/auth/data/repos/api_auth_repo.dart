@@ -13,7 +13,7 @@ import '../auth_endpoints.dart';
 class ApiAuthRepo implements AuthRepo {
   final ApiClient apiClient;
   final FlutterSecureStorage storage;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  final GoogleSignIn _googleSignIn = .instance;
   Future<void>? _googleSignInInit;
 
   ApiAuthRepo({required this.apiClient, required this.storage});
@@ -96,8 +96,9 @@ class ApiAuthRepo implements AuthRepo {
   Future<void> logout() async {
     try {
       await apiClient.post(AuthEndpoints.logout);
-    } catch (_) {
-      // Best-effort: even if the server call fails, clear local session.
+    } catch (e) {
+      //even if the server call fails, clear local session.
+      print("Logout error $e");
     } finally {
       await storage.deleteAll();
     }

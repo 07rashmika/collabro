@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/constants/error_messages.dart';
 import 'package:frontend/core/widgets/app_search_field.dart';
 import 'package:frontend/features/notes/domain/entities/note.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
 import 'package:frontend/features/notes/presentation/components/note_card.dart';
 import 'package:frontend/features/notes/presentation/cubits/notes_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 class NotesListScreen extends StatelessWidget {
   const NotesListScreen({super.key});
@@ -61,11 +61,9 @@ class _NotesListViewState extends State<_NotesListView> {
       backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenHorizontal,
-          ),
+          padding: const .symmetric(horizontal: AppSpacing.screenHorizontal),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: .stretch,
             children: [
               const SizedBox(height: AppSpacing.sm),
               Row(
@@ -74,7 +72,7 @@ class _NotesListViewState extends State<_NotesListView> {
                   Expanded(
                     child: Text(
                       'My Notes',
-                      textAlign: TextAlign.center,
+                      textAlign: .center,
                       style: typography.headlineMedium,
                     ),
                   ),
@@ -97,17 +95,15 @@ class _NotesListViewState extends State<_NotesListView> {
                   builder: (context, state) {
                     if (state is NotesLoading || state is NotesInitial) {
                       return Center(
-                        child: CircularProgressIndicator(
-                          color: colors.primary,
-                        ),
+                        child: CircularProgressIndicator(color: colors.primary),
                       );
                     }
 
                     if (state is NotesError) {
                       return Center(
                         child: Text(
-                          state.message,
-                          textAlign: TextAlign.center,
+                          genericErrorMessage,
+                          textAlign: .center,
                           style: typography.bodySmall,
                         ),
                       );
@@ -120,7 +116,7 @@ class _NotesListViewState extends State<_NotesListView> {
                       return Center(
                         child: Text(
                           'No notes yet. Tap + to create your first one.',
-                          textAlign: TextAlign.center,
+                          textAlign: .center,
                           style: typography.bodySmall,
                         ),
                       );

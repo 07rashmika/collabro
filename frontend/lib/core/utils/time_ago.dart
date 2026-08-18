@@ -1,5 +1,3 @@
-/// Short relative-time label, e.g. "5m ago", "3h ago", "2d ago".
-/// Falls back to a plain date once it's more than a week old.
 String timeAgo(DateTime dateTime) {
   final diff = DateTime.now().difference(dateTime);
 

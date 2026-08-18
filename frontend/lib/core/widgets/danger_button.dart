@@ -23,7 +23,7 @@ class DangerButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(foregroundColor: colors.error),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisSize: .min,
         mainAxisAlignment: .center,
         children: [
           if (icon != null) ...[

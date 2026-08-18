@@ -8,6 +8,7 @@ class MatchCandidate extends Equatable {
   final List<String> matchedSkills;
   final List<String> complementarySkills;
   final String reason;
+  final String connectionStatus;
 
   const MatchCandidate({
     required this.userId,
@@ -17,11 +18,9 @@ class MatchCandidate extends Equatable {
     required this.complementarySkills,
     required this.reason,
     this.topCategory,
+    this.connectionStatus = 'NONE',
   });
 
-  /// Skills worth showing as chips on a match card — prefers the ones that
-  /// actually drove the match (shared or complementary) over the candidate's
-  /// full skill list.
   List<String> get displaySkills {
     final combined = <String>{...matchedSkills, ...complementarySkills};
     return combined.take(2).toList();
@@ -35,9 +34,10 @@ class MatchCandidate extends Equatable {
     final matchedSkills = ((json['matchedSkills'] as List<dynamic>?) ?? [])
         .map((e) => e.toString())
         .toList();
-    final complementarySkills = ((json['complementarySkills'] as List<dynamic>?) ?? [])
-        .map((e) => e.toString())
-        .toList();
+    final complementarySkills =
+        ((json['complementarySkills'] as List<dynamic>?) ?? [])
+            .map((e) => e.toString())
+            .toList();
 
     String? topCategory;
     if (skills.isNotEmpty) {
@@ -47,10 +47,12 @@ class MatchCandidate extends Equatable {
       final match = relevantName == null
           ? skills.first
           : skills.firstWhere(
-              (s) => (s['skill'] as Map<String, dynamic>)['name'] == relevantName,
+              (s) =>
+                  (s['skill'] as Map<String, dynamic>)['name'] == relevantName,
               orElse: () => skills.first,
             );
-      topCategory = (match['skill'] as Map<String, dynamic>)['category'] as String?;
+      topCategory =
+          (match['skill'] as Map<String, dynamic>)['category'] as String?;
     }
 
     return MatchCandidate(
@@ -61,6 +63,7 @@ class MatchCandidate extends Equatable {
       complementarySkills: complementarySkills,
       reason: json['aiReason'] as String? ?? '',
       topCategory: topCategory,
+      connectionStatus: json['connectionStatus'] as String? ?? 'NONE',
     );
   }
 
@@ -73,5 +76,6 @@ class MatchCandidate extends Equatable {
     complementarySkills,
     reason,
     topCategory,
+    connectionStatus,
   ];
 }

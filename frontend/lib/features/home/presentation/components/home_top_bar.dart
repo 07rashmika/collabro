@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Custom top bar (not a Scaffold [AppBar]) — menu button, centered title,
-/// notification bell with an unread-dot indicator.
 class HomeTopBar extends StatelessWidget {
   final VoidCallback onMenuTap;
   final VoidCallback onNotificationsTap;
@@ -21,7 +19,7 @@ class HomeTopBar extends StatelessWidget {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: .spaceBetween,
       children: [
         IconButton(
           onPressed: onMenuTap,
@@ -31,7 +29,7 @@ class HomeTopBar extends StatelessWidget {
         IconButton(
           onPressed: onNotificationsTap,
           icon: Stack(
-            clipBehavior: Clip.none,
+            clipBehavior: .none,
             children: [
               Icon(Icons.notifications_outlined, color: colors.textPrimary),
               if (hasUnreadNotifications)
@@ -43,7 +41,7 @@ class HomeTopBar extends StatelessWidget {
                     height: 8,
                     decoration: BoxDecoration(
                       color: colors.error,
-                      shape: BoxShape.circle,
+                      shape: .circle,
                     ),
                   ),
                 ),

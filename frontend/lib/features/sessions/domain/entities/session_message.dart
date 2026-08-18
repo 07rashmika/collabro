@@ -17,10 +17,10 @@ class SessionMessage extends Equatable {
     required this.createdAt,
   });
 
-  /// REST shape: `{ id, content, createdAt, sender: { id, name, email } }`.
-  /// `sessionId` isn't present on this payload (it's implicit in the request
-  /// path), so it's passed in separately by the caller.
-  factory SessionMessage.fromJson(Map<String, dynamic> json, {required String sessionId}) {
+  factory SessionMessage.fromJson(
+    Map<String, dynamic> json, {
+    required String sessionId,
+  }) {
     final sender = json['sender'] as Map<String, dynamic>;
     return SessionMessage(
       id: json['id'] as String,
@@ -32,7 +32,6 @@ class SessionMessage extends Equatable {
     );
   }
 
-  /// WS broadcast shape: `{ id, sessionId, senderId, senderName, content, createdAt }`.
   factory SessionMessage.fromSignalingJson(Map<String, dynamic> json) {
     return SessionMessage(
       id: json['id'] as String,
@@ -45,5 +44,12 @@ class SessionMessage extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, sessionId, content, senderId, senderName, createdAt];
+  List<Object?> get props => [
+    id,
+    sessionId,
+    content,
+    senderId,
+    senderName,
+    createdAt,
+  ];
 }

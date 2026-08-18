@@ -78,6 +78,7 @@ router.get("/", (req, res) => sessionsController.getMySessions(req, res));
 // a session with id "discover").
 router.get("/discover", (req, res) => sessionsController.discoverSessions(req, res));
 router.get("/saved", (req, res) => sessionsController.getSavedSessions(req, res));
+router.get("/user/:userId", (req, res) => sessionsController.getSessionsByUser(req, res));
 router.get("/:id", (req, res) => sessionsController.getSessionById(req, res));
 router.post("/", (req, res) => sessionsController.createSession(req, res));
 router.post("/join", (req, res) => sessionsController.joinByCode(req, res));

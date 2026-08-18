@@ -15,14 +15,14 @@ class GoogleSignInButton extends StatelessWidget {
     final typography = AppTypography.of(context);
     return SizedBox(
       height: AppSpacing.buttonHeightMd,
-      width: double.infinity,
+      width: .infinity,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
           foregroundColor: colors.textPrimary,
           side: BorderSide(color: colors.border),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: .circular(AppSpacing.radiusMd),
           ),
         ),
         child: isLoading
@@ -35,7 +35,7 @@ class GoogleSignInButton extends StatelessWidget {
                 ),
               )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: .center,
                 children: [
                   Image.asset(
                     'assets/images/google.png',

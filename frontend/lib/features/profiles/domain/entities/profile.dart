@@ -62,8 +62,6 @@ class Profile extends Equatable {
     this.studyAreas = const [],
   });
 
-  /// Onboarding is mandatory: at least one skill, one study area, and one
-  /// interest must all be set before a profile counts as complete.
   bool get isComplete =>
       skills.isNotEmpty && studyAreas.isNotEmpty && interests.isNotEmpty;
 

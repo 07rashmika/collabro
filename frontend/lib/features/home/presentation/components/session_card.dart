@@ -4,6 +4,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/session_time_label.dart';
 import 'package:frontend/core/widgets/pill_button.dart';
+import 'package:frontend/features/home/presentation/components/session_card_icon_label.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 
 class SessionCard extends StatelessWidget {
@@ -22,22 +23,22 @@ class SessionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
-    final isVirtual = session.type == SessionType.video;
+    final isVirtual = session.type == .video;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      padding: const .all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: colors.backgroundCard,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: colors.border),
+        borderRadius: .circular(AppSpacing.radiusLg),
+        border: .all(color: colors.border),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: .start,
               children: [
                 Row(
                   children: [
@@ -46,38 +47,42 @@ class SessionCard extends StatelessWidget {
                         session.title,
                         style: typography.titleLarge,
                         maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        overflow: .ellipsis,
                       ),
                     ),
                     if (session.isPublic) ...[
                       const SizedBox(width: AppSpacing.xs),
                       Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: const .symmetric(
                           horizontal: AppSpacing.xs,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: colors.chipBackground,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                          borderRadius: .circular(AppSpacing.radiusXs),
                         ),
                         child: Text(
                           'Public',
-                          style: typography.caption.copyWith(color: colors.primaryLight),
+                          style: typography.caption.copyWith(
+                            color: colors.primaryLight,
+                          ),
                         ),
                       ),
                     ],
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                _IconLabel(
+                SessionCardIconLabel(
                   icon: Icons.access_time,
                   label: session.scheduledAt != null
                       ? sessionTimeLabel(session.scheduledAt!)
                       : 'Time TBD',
                 ),
                 const SizedBox(height: 2),
-                _IconLabel(
-                  icon: isVirtual ? Icons.videocam_outlined : Icons.chat_bubble_outline,
+                SessionCardIconLabel(
+                  icon: isVirtual
+                      ? Icons.videocam_outlined
+                      : Icons.chat_bubble_outline,
                   label: isVirtual ? 'Virtual Room' : 'Text Chat',
                 ),
                 if (session.tags.isNotEmpty) ...[
@@ -87,13 +92,13 @@ class SessionCard extends StatelessWidget {
                     runSpacing: AppSpacing.xs,
                     children: session.tags.map((tag) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding: const .symmetric(
                           horizontal: AppSpacing.xs,
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
                           color: colors.backgroundElevated,
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusXs),
+                          borderRadius: .circular(AppSpacing.radiusXs),
                         ),
                         child: Text(tag.name, style: typography.caption),
                       );
@@ -105,57 +110,34 @@ class SessionCard extends StatelessWidget {
           ),
           const SizedBox(width: AppSpacing.sm),
           Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: .min,
             children: [
               if (onToggleSave != null)
                 IconButton(
                   onPressed: onToggleSave,
-                  visualDensity: VisualDensity.compact,
-                  padding: EdgeInsets.zero,
+                  visualDensity: .compact,
+                  padding: .zero,
                   constraints: const BoxConstraints(),
                   icon: Icon(
                     session.savedByMe ? Icons.bookmark : Icons.bookmark_border,
-                    color: session.savedByMe ? colors.primary : colors.textTertiary,
+                    color: session.savedByMe
+                        ? colors.primary
+                        : colors.textTertiary,
                   ),
-                  tooltip: session.savedByMe ? 'Remove from saved' : 'Save session',
+                  tooltip: session.savedByMe
+                      ? 'Remove from saved'
+                      : 'Save session',
                 ),
               const SizedBox(height: AppSpacing.sm),
               PillButton(
                 label: isVirtual ? 'Join' : 'Open',
-                variant: PillButtonVariant.primary,
+                variant: .primary,
                 onPressed: onAction,
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-}
-
-class _IconLabel extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _IconLabel({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Flexible(
-          child: Text(
-            label,
-            style: typography.bodySmall,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
     );
   }
 }

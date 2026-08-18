@@ -5,8 +5,10 @@ abstract class NotesEndpoints {
   static const String summarizeDraft = '/notes/summarize';
 
   static String byId(String id) => '/notes/$id';
+  static String byUser(String userId) => '/notes/user/$userId';
   static String visibility(String id) => '/notes/$id/visibility';
   static String summary(String id) => '/notes/$id/summary';
   static String photos(String id) => '/notes/$id/photos';
-  static String photo(String id, String photoId) => '/notes/$id/photos/$photoId';
+  static String photo(String id, String photoId) =>
+      '/notes/$id/photos/$photoId';
 }

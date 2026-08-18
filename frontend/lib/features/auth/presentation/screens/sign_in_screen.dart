@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
@@ -15,6 +14,7 @@ import 'package:frontend/features/auth/presentation/components/google_sign_in_bu
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:frontend/features/profiles/domain/entities/profile.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
+import 'package:go_router/go_router.dart';
 
 class SignInScreen extends StatelessWidget {
   const SignInScreen({super.key});
@@ -65,9 +65,6 @@ class _SignInViewState extends State<_SignInView> {
         child: BlocListener<AuthCubit, AuthState>(
           listener: (context, state) async {
             if (state is AuthSuccess) {
-              // Onboarding is mandatory — send returning users who never
-              // finished it (or registered before this existed) back to
-              // profile setup instead of straight to home.
               Profile? profile;
               try {
                 profile = await context.read<ProfilesRepo>().getMyProfile();
@@ -81,40 +78,36 @@ class _SignInViewState extends State<_SignInView> {
                 context.go(AppRoutes.profileSetup, extra: state.user);
               }
             } else if (state is AuthError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: colors.error,
-                ),
-              );
+              showErrorSnackBar(context);
             }
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
+            padding: const .symmetric(
               horizontal: AppSpacing.screenHorizontal,
               vertical: AppSpacing.xxl,
             ),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: .stretch,
                 children: [
                   const AuthHeader(tagline: 'Focus together. Achieve more.'),
                   const SizedBox(height: AppSpacing.xxxl),
                   Container(
-                    padding: const EdgeInsets.all(AppSpacing.cardPaddingLarge),
+                    padding: const .all(AppSpacing.cardPaddingLarge),
                     decoration: BoxDecoration(
                       color: colors.backgroundCard,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusXl),
-                      border: Border.all(color: colors.border),
+                      borderRadius: .circular(AppSpacing.radiusXl),
+                      border: .all(color: colors.border),
                     ),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: .stretch,
                       children: [
                         AuthTabBar(
-                          active: AuthTab.signIn,
+                          active: .signIn,
                           onSignInTap: () {},
-                          onCreateAccountTap: () => context.go(AppRoutes.signUp),
+                          onCreateAccountTap: () =>
+                              context.go(AppRoutes.signUp),
                         ),
                         const SizedBox(height: AppSpacing.xl),
                         AppTextField(
@@ -122,7 +115,7 @@ class _SignInViewState extends State<_SignInView> {
                           hint: 'alex.j@example.com',
                           icon: Icons.email_outlined,
                           controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
+                          keyboardType: .emailAddress,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
                               return 'Email is required';
@@ -140,7 +133,7 @@ class _SignInViewState extends State<_SignInView> {
                           icon: Icons.lock_outline,
                           controller: _passwordController,
                           obscurable: true,
-                          textInputAction: TextInputAction.done,
+                          textInputAction: .done,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Password is required';
@@ -149,12 +142,14 @@ class _SignInViewState extends State<_SignInView> {
                           },
                         ),
                         Align(
-                          alignment: Alignment.centerRight,
+                          alignment: .centerRight,
                           child: TextButton(
                             onPressed: () {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Password reset is coming soon.'),
+                                  content: Text(
+                                    'Password reset is coming soon.',
+                                  ),
                                 ),
                               );
                             },
@@ -182,7 +177,7 @@ class _SignInViewState extends State<_SignInView> {
                           children: [
                             Expanded(child: Divider(color: colors.border)),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
+                              padding: const .symmetric(
                                 horizontal: AppSpacing.sm,
                               ),
                               child: Text('or', style: typography.bodySmall),

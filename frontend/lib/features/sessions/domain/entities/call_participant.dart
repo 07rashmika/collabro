@@ -1,10 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Live in-call presence for one participant of an active video call —
-/// distinct from [SessionParticipant] in study_session.dart, which is the
-/// static "added to this session" membership record. This entity tracks
-/// ephemeral per-connection state (mic/camera/screen-share flags) that only
-/// exists while the participant's signaling socket is open.
 class CallParticipant extends Equatable {
   final String userId;
   final String name;
@@ -45,5 +40,11 @@ class CallParticipant extends Equatable {
   }
 
   @override
-  List<Object?> get props => [userId, name, isMicMuted, isCameraOff, isScreenSharing];
+  List<Object?> get props => [
+    userId,
+    name,
+    isMicMuted,
+    isCameraOff,
+    isScreenSharing,
+  ];
 }

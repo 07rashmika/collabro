@@ -5,7 +5,11 @@ class NotePhoto extends Equatable {
   final String url;
   final DateTime createdAt;
 
-  const NotePhoto({required this.id, required this.url, required this.createdAt});
+  const NotePhoto({
+    required this.id,
+    required this.url,
+    required this.createdAt,
+  });
 
   factory NotePhoto.fromJson(Map<String, dynamic> json) {
     return NotePhoto(

@@ -50,7 +50,12 @@ class IceCandidateReceived extends SignalingMessage {
   final String candidate;
   final String? sdpMid;
   final int? sdpMLineIndex;
-  IceCandidateReceived(this.fromUserId, this.candidate, this.sdpMid, this.sdpMLineIndex);
+  IceCandidateReceived(
+    this.fromUserId,
+    this.candidate,
+    this.sdpMid,
+    this.sdpMLineIndex,
+  );
 }
 
 class ChatMessageReceived extends SignalingMessage {
@@ -90,10 +95,6 @@ class SignalingError extends SignalingMessage {
 const _initialBackoff = Duration(seconds: 1);
 const _maxBackoff = Duration(seconds: 15);
 
-/// Owns a single WebSocket connection per active session, carrying
-/// signaling (offer/answer/ICE), chat, and screen-share/mic/camera state
-/// together, multiplexed by a `type` field on each JSON message. Reconnects
-/// with backoff on an unexpected close; never silently drops the socket.
 class SignalingService {
   final FlutterSecureStorage storage;
   final String sessionId;
@@ -108,9 +109,6 @@ class SignalingService {
 
   Stream<SignalingMessage> get messages => _messageController.stream;
 
-  /// Idempotent — safe to call from more than one owner (a VideoCallCubit
-  /// and a SessionChatCubit may share one instance); only the first call
-  /// actually opens the socket.
   Future<void> connect() async {
     if (_channel != null) return;
     try {
@@ -118,7 +116,11 @@ class SignalingService {
       if (token == null) {
         throw Exception('Not signed in');
       }
-      final url = SessionsEndpoints.signalingWsUrl(ApiConfig.baseUrl, sessionId, token);
+      final url = SessionsEndpoints.signalingWsUrl(
+        ApiConfig.baseUrl,
+        sessionId,
+        token,
+      );
       final channel = WebSocketChannel.connect(Uri.parse(url));
       await channel.ready;
       _channel = channel;
@@ -142,8 +144,9 @@ class SignalingService {
       if (message != null) {
         _messageController.add(message);
       }
-    } catch (_) {
-      // Malformed frame from the server — ignore rather than crash the stream.
+    } catch (e) {
+      //malformed frame from the server — ignore rather than crash the stream.
+      print("handleRawMessage: $e");
     }
   }
 
@@ -160,9 +163,15 @@ class SignalingService {
       case SignalingMessageTypes.participantLeft:
         return ParticipantLeft(json['userId'] as String);
       case SignalingMessageTypes.offer:
-        return OfferReceived(json['fromUserId'] as String, json['sdp'] as String);
+        return OfferReceived(
+          json['fromUserId'] as String,
+          json['sdp'] as String,
+        );
       case SignalingMessageTypes.answer:
-        return AnswerReceived(json['fromUserId'] as String, json['sdp'] as String);
+        return AnswerReceived(
+          json['fromUserId'] as String,
+          json['sdp'] as String,
+        );
       case SignalingMessageTypes.iceCandidate:
         return IceCandidateReceived(
           json['fromUserId'] as String,
@@ -172,18 +181,31 @@ class SignalingService {
         );
       case SignalingMessageTypes.chatMessage:
         return ChatMessageReceived(
-          SessionMessage.fromSignalingJson(json['message'] as Map<String, dynamic>),
+          SessionMessage.fromSignalingJson(
+            json['message'] as Map<String, dynamic>,
+          ),
         );
       case SignalingMessageTypes.screenShareState:
-        return ScreenShareStateChanged(json['userId'] as String, json['isScreenSharing'] as bool);
+        return ScreenShareStateChanged(
+          json['userId'] as String,
+          json['isScreenSharing'] as bool,
+        );
       case SignalingMessageTypes.micState:
-        return MicStateChanged(json['userId'] as String, json['isMicMuted'] as bool);
+        return MicStateChanged(
+          json['userId'] as String,
+          json['isMicMuted'] as bool,
+        );
       case SignalingMessageTypes.cameraState:
-        return CameraStateChanged(json['userId'] as String, json['isCameraOff'] as bool);
+        return CameraStateChanged(
+          json['userId'] as String,
+          json['isCameraOff'] as bool,
+        );
       case SignalingMessageTypes.sessionEnded:
         return SessionEndedReceived();
       case SignalingMessageTypes.error:
-        return SignalingError(json['message'] as String? ?? 'Unknown signaling error');
+        return SignalingError(
+          json['message'] as String? ?? 'Unknown signaling error',
+        );
       default:
         return null;
     }
@@ -191,7 +213,9 @@ class SignalingService {
 
   List<CallParticipant> _parseParticipants(Map<String, dynamic> json) {
     final participants = (json['participants'] as List<dynamic>?) ?? [];
-    return participants.map((p) => CallParticipant.fromJson(p as Map<String, dynamic>)).toList();
+    return participants
+        .map((p) => CallParticipant.fromJson(p as Map<String, dynamic>))
+        .toList();
   }
 
   void _handleUnexpectedClose() {
@@ -201,7 +225,9 @@ class SignalingService {
 
     _messageController.add(SignalingReconnecting());
     Future.delayed(_backoff, _attemptReconnect);
-    _backoff = Duration(seconds: (_backoff.inSeconds * 2).clamp(1, _maxBackoff.inSeconds));
+    _backoff = Duration(
+      seconds: (_backoff.inSeconds * 2).clamp(1, _maxBackoff.inSeconds),
+    );
   }
 
   Future<void> _attemptReconnect() async {
@@ -218,11 +244,18 @@ class SignalingService {
     _channel?.sink.add(jsonEncode(message));
   }
 
-  void sendOffer({required String targetUserId, required String sdp}) =>
-      _send({'type': SignalingMessageTypes.offer, 'targetUserId': targetUserId, 'sdp': sdp});
+  void sendOffer({required String targetUserId, required String sdp}) => _send({
+    'type': SignalingMessageTypes.offer,
+    'targetUserId': targetUserId,
+    'sdp': sdp,
+  });
 
   void sendAnswer({required String targetUserId, required String sdp}) =>
-      _send({'type': SignalingMessageTypes.answer, 'targetUserId': targetUserId, 'sdp': sdp});
+      _send({
+        'type': SignalingMessageTypes.answer,
+        'targetUserId': targetUserId,
+        'sdp': sdp,
+      });
 
   void sendIceCandidate({
     required String targetUserId,
@@ -240,17 +273,19 @@ class SignalingService {
   void sendChatMessage(String content) =>
       _send({'type': SignalingMessageTypes.chatMessage, 'content': content});
 
-  void sendScreenShareState(bool isScreenSharing) =>
-      _send({'type': SignalingMessageTypes.screenShareState, 'isScreenSharing': isScreenSharing});
+  void sendScreenShareState(bool isScreenSharing) => _send({
+    'type': SignalingMessageTypes.screenShareState,
+    'isScreenSharing': isScreenSharing,
+  });
 
   void sendMicState(bool isMicMuted) =>
       _send({'type': SignalingMessageTypes.micState, 'isMicMuted': isMicMuted});
 
-  void sendCameraState(bool isCameraOff) =>
-      _send({'type': SignalingMessageTypes.cameraState, 'isCameraOff': isCameraOff});
+  void sendCameraState(bool isCameraOff) => _send({
+    'type': SignalingMessageTypes.cameraState,
+    'isCameraOff': isCameraOff,
+  });
 
-  /// Idempotent — safe to call more than once (e.g. from both a
-  /// VideoCallCubit and a SessionChatCubit sharing this instance).
   Future<void> dispose() async {
     if (_isDisposing) return;
     _isDisposing = true;

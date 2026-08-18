@@ -22,6 +22,7 @@ export const SignalingMessageType = {
 // than the server shuttling session data through the socket.
 export const NotificationMessageType = {
   SESSIONS_CHANGED: "sessions-changed",
+  NOTIFICATIONS_CHANGED: "notifications-changed",
 } as const;
 
 export interface CallParticipant {

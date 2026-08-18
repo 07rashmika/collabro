@@ -27,6 +27,10 @@ model User {
   sessionParticipants  SessionParticipant[]
   messages             Message[]
   savedSessions        SavedSession[]
+  sentConnections      Connection[]         @relation("SentConnections")
+  receivedConnections  Connection[]         @relation("ReceivedConnections")
+  sentNotifications    Notification[]       @relation("SentNotifications")
+  receivedNotifications Notification[]      @relation("ReceivedNotifications")
 }
 
 model RefreshToken {
@@ -133,6 +137,7 @@ model Session {
   participants SessionParticipant[]
   tags        SessionTag[]
   savedBy     SavedSession[]
+  notifications Notification[]
 }
 
 model SessionTag {
@@ -178,6 +183,52 @@ model Message {
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// A user's request to connect with another user, and its outcome —
+/// surfaced to the addressee as a Notification (see below) rather than a
+/// dedicated inbox screen.
+model Connection {
+  id            String           @id @default(cuid())
+  requesterId   String
+  requester     User             @relation("SentConnections", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId   String
+  addressee     User             @relation("ReceivedConnections", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status        ConnectionStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  notifications Notification[]
+
+  @@unique([requesterId, addresseeId])
+}
+
+/// Generic per-user notification feed — today only populated by the
+/// Connection request/accept flow, but shaped to hold other types later.
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  recipient    User             @relation("ReceivedNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  actorId      String
+  actor        User             @relation("SentNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  type         NotificationType
+  connectionId String?
+  connection   Connection?      @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  sessionId    String?
+  session      Session?         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  SESSION_INVITE
 }
 
 enum Level {

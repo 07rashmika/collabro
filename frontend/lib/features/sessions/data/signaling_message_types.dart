@@ -1,5 +1,3 @@
-/// Mirrors backend/src/modules/sessions/signaling/signaling.types.ts —
-/// keep the string values in sync between the two codebases.
 abstract class SignalingMessageTypes {
   static const String roomSnapshot = 'room-snapshot';
   static const String participantJoined = 'participant-joined';

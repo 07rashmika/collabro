@@ -25,13 +25,16 @@ class ApiSessionsRepo implements SessionsRepo {
       final response = await apiClient.get(
         SessionsEndpoints.base,
         query: {
-          if (status != null) 'status': status == SessionStatus.closed ? 'CLOSED' : 'ACTIVE',
+          if (status != null)
+            'status': status == SessionStatus.closed ? 'CLOSED' : 'ACTIVE',
           if (type != null) 'type': type.toJson(),
           if (upcoming) 'upcoming': 'true',
         },
       );
       final sessions = (response.data['sessions'] as List<dynamic>?) ?? [];
-      return sessions.map((s) => StudySession.fromJson(s as Map<String, dynamic>)).toList();
+      return sessions
+          .map((s) => StudySession.fromJson(s as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -68,7 +71,8 @@ class ApiSessionsRepo implements SessionsRepo {
           'title': title,
           'type': type.toJson(),
           'participantIds': participantIds,
-          if (scheduledAt != null) 'scheduledAt': scheduledAt.toUtc().toIso8601String(),
+          if (scheduledAt != null)
+            'scheduledAt': scheduledAt.toUtc().toIso8601String(),
           if (password != null && password.isNotEmpty) 'password': password,
           'tagIds': tagIds,
           'isPublic': isPublic,
@@ -127,7 +131,11 @@ class ApiSessionsRepo implements SessionsRepo {
   }
 
   @override
-  Future<List<StudySession>> discoverSessions({String? search, int page = 1, int limit = 10}) async {
+  Future<List<StudySession>> discoverSessions({
+    String? search,
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       final response = await apiClient.get(
         SessionsEndpoints.discover,
@@ -138,7 +146,9 @@ class ApiSessionsRepo implements SessionsRepo {
         },
       );
       final sessions = (response.data['sessions'] as List<dynamic>?) ?? [];
-      return sessions.map((s) => StudySession.fromJson(s as Map<String, dynamic>)).toList();
+      return sessions
+          .map((s) => StudySession.fromJson(s as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -147,14 +157,34 @@ class ApiSessionsRepo implements SessionsRepo {
   }
 
   @override
-  Future<List<StudySession>> getSavedSessions({int page = 1, int limit = 10}) async {
+  Future<List<StudySession>> getPublicSessionsByUser(String userId) async {
+    try {
+      final response = await apiClient.get(SessionsEndpoints.byUser(userId));
+      final sessions = (response.data as List<dynamic>?) ?? [];
+      return sessions
+          .map((s) => StudySession.fromJson(s as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching user sessions failed: $e');
+    }
+  }
+
+  @override
+  Future<List<StudySession>> getSavedSessions({
+    int page = 1,
+    int limit = 10,
+  }) async {
     try {
       final response = await apiClient.get(
         SessionsEndpoints.saved,
         query: {'page': '$page', 'limit': '$limit'},
       );
       final sessions = (response.data['sessions'] as List<dynamic>?) ?? [];
-      return sessions.map((s) => StudySession.fromJson(s as Map<String, dynamic>)).toList();
+      return sessions
+          .map((s) => StudySession.fromJson(s as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -205,7 +235,12 @@ class ApiSessionsRepo implements SessionsRepo {
       );
       final messages = (response.data['messages'] as List<dynamic>?) ?? [];
       return messages
-          .map((m) => SessionMessage.fromJson(m as Map<String, dynamic>, sessionId: sessionId))
+          .map(
+            (m) => SessionMessage.fromJson(
+              m as Map<String, dynamic>,
+              sessionId: sessionId,
+            ),
+          )
           .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -221,7 +256,10 @@ class ApiSessionsRepo implements SessionsRepo {
         SessionsEndpoints.messages(sessionId),
         data: {'content': content},
       );
-      return SessionMessage.fromJson(response.data as Map<String, dynamic>, sessionId: sessionId);
+      return SessionMessage.fromJson(
+        response.data as Map<String, dynamic>,
+        sessionId: sessionId,
+      );
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -243,7 +281,9 @@ class ApiSessionsRepo implements SessionsRepo {
   @override
   Future<IceServersResponse> getIceServers(String sessionId) async {
     try {
-      final response = await apiClient.get(SessionsEndpoints.iceServers(sessionId));
+      final response = await apiClient.get(
+        SessionsEndpoints.iceServers(sessionId),
+      );
       return IceServersResponse.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -255,7 +295,9 @@ class ApiSessionsRepo implements SessionsRepo {
   @override
   Future<StudySession> generateSummary(String sessionId) async {
     try {
-      final response = await apiClient.post(SessionsEndpoints.summary(sessionId));
+      final response = await apiClient.post(
+        SessionsEndpoints.summary(sessionId),
+      );
       return StudySession.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -264,9 +306,6 @@ class ApiSessionsRepo implements SessionsRepo {
     }
   }
 
-  // Transcribing a call's audio with Whisper then summarizing it runs well
-  // past the client's default timeout — same reasoning as the notes
-  // summarizer's extended timeout, just longer given the larger input.
   static final _recordingRequestOptions = Options(
     sendTimeout: const Duration(minutes: 5),
     receiveTimeout: const Duration(minutes: 5),
@@ -280,11 +319,18 @@ class ApiSessionsRepo implements SessionsRepo {
     try {
       final formData = FormData.fromMap({
         'tracks': [
-          for (final track in tracks) await MultipartFile.fromFile(track.path),
+          for (final track in tracks)
+            await MultipartFile.fromFile(
+              track.path,
+              contentType: DioMediaType('audio', 'mp4'),
+            ),
         ],
         'trackMeta': jsonEncode([
           for (final track in tracks)
-            {'label': track.label, 'startedAt': track.startedAt.toIso8601String()},
+            {
+              'label': track.label,
+              'startedAt': track.startedAt.toIso8601String(),
+            },
         ]),
       });
       final response = await apiClient.post(

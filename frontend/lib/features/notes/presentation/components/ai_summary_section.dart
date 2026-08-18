@@ -4,7 +4,6 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 
-/// Shows the AI-generated summary for a note, or a button to generate one.
 class AiSummarySection extends StatelessWidget {
   final String? summary;
   final bool isGenerating;
@@ -22,19 +21,23 @@ class AiSummarySection extends StatelessWidget {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+      width: .infinity,
+      padding: const .all(AppSpacing.cardPadding),
       decoration: BoxDecoration(
         color: colors.backgroundCard,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: colors.border),
+        borderRadius: .circular(AppSpacing.radiusLg),
+        border: .all(color: colors.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome, color: colors.primary, size: AppSpacing.iconMd),
+              Icon(
+                Icons.auto_awesome,
+                color: colors.primary,
+                size: AppSpacing.iconMd,
+              ),
               const SizedBox(width: AppSpacing.xs),
               Text('AI Summary', style: typography.headlineSmall),
             ],
@@ -57,10 +60,12 @@ class AiSummarySection extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             TextButton(
               onPressed: isGenerating ? null : onGenerate,
-              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              style: TextButton.styleFrom(padding: .zero),
               child: Text(
                 'Regenerate',
-                style: typography.labelSmall.copyWith(color: colors.primaryLight),
+                style: typography.labelSmall.copyWith(
+                  color: colors.primaryLight,
+                ),
               ),
             ),
           ],

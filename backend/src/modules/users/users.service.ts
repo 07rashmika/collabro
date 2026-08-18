@@ -1,5 +1,6 @@
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { UpdateUserDto, UserQueryDto } from "./users.schema";
+import { getConnectionStatuses } from "../connections/connections.service";
 
 const publicUserSelect = {
   id: true,
@@ -50,7 +51,7 @@ export class UsersService {
     return user;
   }
 
-  async getUserById(userId: string) {
+  async getUserById(userId: string, callerId: string) {
     const user = await this.prisma.client.user.findUnique({
       where: { id: userId },
       select: publicUserSelect,
@@ -60,7 +61,8 @@ export class UsersService {
       throw new Error("User not found");
     }
 
-    return user;
+    const connectionStatuses = await getConnectionStatuses(this.prisma, callerId, [userId]);
+    return { ...user, connectionStatus: connectionStatuses.get(userId) ?? "NONE" };
   }
 
   /// Other students ranked by shared profile skills (weighted 2x) plus
@@ -110,7 +112,17 @@ export class UsersService {
       .sort((a, b) => b.score - a.score);
 
     const total = scored.length;
-    const users = scored.slice(skip, skip + limit).map((s) => s.user);
+    const pageOfUsers = scored.slice(skip, skip + limit).map((s) => s.user);
+
+    const connectionStatuses = await getConnectionStatuses(
+      this.prisma,
+      userId,
+      pageOfUsers.map((u) => u.id)
+    );
+    const users = pageOfUsers.map((u) => ({
+      ...u,
+      connectionStatus: connectionStatuses.get(u.id) ?? "NONE",
+    }));
 
     return {
       users,

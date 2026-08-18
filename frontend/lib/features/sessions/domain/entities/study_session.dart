@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-
 import 'package:frontend/features/skills/domain/entities/skill.dart';
 
 enum SessionType {
@@ -58,8 +57,6 @@ class StudySession extends Equatable {
   final List<SessionParticipant> participants;
   final int messageCount;
   final DateTime? scheduledAt;
-  // Null for a private session viewed by a non-creator — the backend only
-  // sends the join code to the creator, or to anyone if the session is public.
   final String? joinCode;
   final bool hasPassword;
   final bool isPublic;
@@ -67,8 +64,6 @@ class StudySession extends Equatable {
   final List<Skill> tags;
   final DateTime createdAt;
   final DateTime updatedAt;
-  // When this session auto-closes — 2h after start for video, 4h for text,
-  // counted from scheduledAt if set, otherwise createdAt. Server-computed.
   final DateTime expiresAt;
 
   const StudySession({
@@ -128,8 +123,11 @@ class StudySession extends Equatable {
       participants: ((json['participants'] as List<dynamic>?) ?? [])
           .map((p) => SessionParticipant.fromJson(p as Map<String, dynamic>))
           .toList(),
-      messageCount: (json['_count'] as Map<String, dynamic>?)?['messages'] as int? ?? 0,
-      scheduledAt: json['scheduledAt'] != null ? DateTime.parse(json['scheduledAt'] as String) : null,
+      messageCount:
+          (json['_count'] as Map<String, dynamic>?)?['messages'] as int? ?? 0,
+      scheduledAt: json['scheduledAt'] != null
+          ? DateTime.parse(json['scheduledAt'] as String)
+          : null,
       joinCode: json['joinCode'] as String?,
       hasPassword: json['hasPassword'] as bool? ?? false,
       isPublic: json['isPublic'] as bool? ?? false,

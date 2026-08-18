@@ -3,9 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Tappable tag used for multi-select pickers (skills, study areas).
-/// Unlike [SkillChip] this responds to taps and reflects a selected state,
-/// optionally showing a trailing label (e.g. a skill's proficiency level).
 class SelectableChip extends StatelessWidget {
   final String label;
   final bool selected;
@@ -28,14 +25,19 @@ class SelectableChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: AppDuration.fast,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
+        padding: const .symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: selected ? colors.buttonPrimary : colors.chipBackground,
-          border: Border.all(color: selected ? Colors.transparent : colors.chipBorder),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+          border: .all(
+            color: selected ? Colors.transparent : colors.chipBorder,
+          ),
+          borderRadius: .circular(AppSpacing.radiusFull),
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: .min,
           children: [
             Text(
               label,

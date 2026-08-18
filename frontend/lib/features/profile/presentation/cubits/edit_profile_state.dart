@@ -23,15 +23,12 @@ final class EditProfileReady extends EditProfileState {
   final List<Skill> allSkills;
   final List<StudyArea> allStudyAreas;
 
-  /// skillId -> proficiency level; absence means not selected.
   final Map<String, String> selectedSkillLevels;
   final Map<String, String> originalSkillLevels;
   final Set<String> selectedStudyAreaIds;
   final Set<String> originalStudyAreaIds;
   final List<String> interests;
 
-  /// Seed values for the bio/goal text fields — read once by the screen to
-  /// populate its [TextEditingController]s, not written back to here.
   final String bio;
   final String learningGoal;
   final String teachGoal;
@@ -39,8 +36,6 @@ final class EditProfileReady extends EditProfileState {
   final bool catalogBusy;
   final String? catalogError;
 
-  /// Live results from the external skills search API for whatever's
-  /// currently typed in the skills picker.
   final List<String> remoteSkillSuggestions;
   final bool remoteSkillsBusy;
 

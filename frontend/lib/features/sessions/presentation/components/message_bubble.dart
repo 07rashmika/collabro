@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
@@ -23,35 +22,43 @@ class MessageBubble extends StatelessWidget {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Align(
-      alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
+      alignment: isMine ? .centerRight : .centerLeft,
       child: GestureDetector(
         onLongPress: onLongPress,
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          padding: const EdgeInsets.symmetric(
+          margin: const .symmetric(vertical: AppSpacing.xs),
+          padding: const .symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
-          constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75,
+          ),
           decoration: BoxDecoration(
             color: isMine ? colors.primary : colors.backgroundCard,
-            borderRadius: BorderRadius.only(
-              topLeft: const Radius.circular(AppSpacing.radiusMd),
-              topRight: const Radius.circular(AppSpacing.radiusMd),
-              bottomLeft: Radius.circular(isMine ? AppSpacing.radiusMd : AppSpacing.xs),
-              bottomRight: Radius.circular(isMine ? AppSpacing.xs : AppSpacing.radiusMd),
+            borderRadius: .only(
+              topLeft: const .circular(AppSpacing.radiusMd),
+              topRight: const .circular(AppSpacing.radiusMd),
+              bottomLeft: .circular(
+                isMine ? AppSpacing.radiusMd : AppSpacing.xs,
+              ),
+              bottomRight: .circular(
+                isMine ? AppSpacing.xs : AppSpacing.radiusMd,
+              ),
             ),
-            border: isMine ? null : Border.all(color: colors.border),
+            border: isMine ? null : .all(color: colors.border),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: .start,
             children: [
               if (!isMine)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
+                  padding: const .only(bottom: 2),
                   child: Text(
                     message.senderName,
-                    style: typography.labelSmall.copyWith(color: colors.primaryLight),
+                    style: typography.labelSmall.copyWith(
+                      color: colors.primaryLight,
+                    ),
                   ),
                 ),
               Text(

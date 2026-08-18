@@ -7,10 +7,15 @@ import 'package:frontend/core/router/app_router.dart';
 import 'package:frontend/core/theme/app_theme.dart';
 import 'package:frontend/features/auth/data/repos/api_auth_repo.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
+import 'package:frontend/features/connections/data/repos/api_connections_repo.dart';
+import 'package:frontend/features/connections/domain/repos/connections_repo.dart';
+import 'package:frontend/features/connections/presentation/cubits/connections_cubit.dart';
 import 'package:frontend/features/matching/data/repos/api_matching_repo.dart';
 import 'package:frontend/features/matching/domain/repos/matching_repo.dart';
 import 'package:frontend/features/notes/data/repos/api_notes_repo.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
+import 'package:frontend/features/notifications/data/repos/api_notifications_repo.dart';
+import 'package:frontend/features/notifications/domain/repos/notifications_repo.dart';
 import 'package:frontend/features/profiles/data/repos/api_profiles_repo.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 import 'package:frontend/features/sessions/data/repos/api_sessions_repo.dart';
@@ -42,28 +47,43 @@ class MyApp extends StatelessWidget {
     final skillsRepo = ApiSkillsRepo(apiClient: apiClient);
     final studyAreasRepo = ApiStudyAreasRepo(apiClient: apiClient);
     final usersRepo = ApiUsersRepo(apiClient: apiClient);
+    final connectionsRepo = ApiConnectionsRepo(apiClient: apiClient);
+    final notificationsRepo = ApiNotificationsRepo(apiClient: apiClient);
 
     return MultiRepositoryProvider(
       providers: [
-        RepositoryProvider<FlutterSecureStorage>(create: (_) => storage),
-        RepositoryProvider<AuthRepo>(create: (_) => authRepo),
-        RepositoryProvider<MatchingRepo>(create: (_) => matchingRepo),
-        RepositoryProvider<NotesRepo>(create: (_) => notesRepo),
-        RepositoryProvider<SessionsRepo>(create: (_) => sessionsRepo),
-        RepositoryProvider<ProfilesRepo>(create: (_) => profilesRepo),
-        RepositoryProvider<SkillsRepo>(create: (_) => skillsRepo),
-        RepositoryProvider<StudyAreasRepo>(create: (_) => studyAreasRepo),
-        RepositoryProvider<UsersRepo>(create: (_) => usersRepo),
+        RepositoryProvider<FlutterSecureStorage>(create: (context) => storage),
+        RepositoryProvider<AuthRepo>(create: (context) => authRepo),
+        RepositoryProvider<MatchingRepo>(create: (context) => matchingRepo),
+        RepositoryProvider<NotesRepo>(create: (context) => notesRepo),
+        RepositoryProvider<SessionsRepo>(create: (context) => sessionsRepo),
+        RepositoryProvider<ProfilesRepo>(create: (context) => profilesRepo),
+        RepositoryProvider<SkillsRepo>(create: (context) => skillsRepo),
+        RepositoryProvider<StudyAreasRepo>(create: (context) => studyAreasRepo),
+        RepositoryProvider<UsersRepo>(create: (context) => usersRepo),
+        RepositoryProvider<ConnectionsRepo>(
+          create: (context) => connectionsRepo,
+        ),
+        RepositoryProvider<NotificationsRepo>(
+          create: (context) => notificationsRepo,
+        ),
       ],
-      child: BlocProvider(
-        create: (_) => ThemeCubit(storage: storage),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => ThemeCubit(storage: storage)),
+          BlocProvider(
+            create: (context) => ConnectionsCubit(
+              connectionsRepo: context.read<ConnectionsRepo>(),
+            ),
+          ),
+        ],
         child: BlocBuilder<ThemeCubit, ThemeMode>(
           builder: (context, themeMode) {
             return MaterialApp.router(
               title: 'Collabro',
               debugShowCheckedModeBanner: false,
-              theme: buildAppTheme(AppColors.light, Brightness.light),
-              darkTheme: buildAppTheme(AppColors.dark, Brightness.dark),
+              theme: buildAppTheme(AppColors.light, .light),
+              darkTheme: buildAppTheme(AppColors.dark, .dark),
               themeMode: themeMode,
               routerConfig: AppRouter.router,
             );

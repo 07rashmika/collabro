@@ -11,23 +11,30 @@ class ApiNotesRepo implements NotesRepo {
 
   ApiNotesRepo({required this.apiClient});
 
-  // AI summarization runs model inference on the ml-service (slow, CPU-bound
-  // on machines without a GPU) — well past the client's default 10s timeout,
-  // so these two calls get a longer allowance instead of failing spuriously.
   static final _summaryRequestOptions = Options(
     sendTimeout: const Duration(seconds: 60),
     receiveTimeout: const Duration(seconds: 60),
   );
 
   @override
-  Future<List<Note>> getMyNotes({String? search}) async {
+  Future<List<Note>> getMyNotes({
+    String? search,
+    bool? hasSummary,
+    int? limit,
+  }) async {
     try {
       final response = await apiClient.get(
         NotesEndpoints.myNotes,
-        query: {if (search != null && search.isNotEmpty) 'search': search},
+        query: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (hasSummary != null) 'hasSummary': '$hasSummary',
+          if (limit != null) 'limit': '$limit',
+        },
       );
       final notes = (response.data['notes'] as List<dynamic>?) ?? [];
-      return notes.map((n) => Note.fromJson(n as Map<String, dynamic>)).toList();
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -36,17 +43,27 @@ class ApiNotesRepo implements NotesRepo {
   }
 
   @override
-  Future<List<Note>> getPublicNotes({String? search, String? tag}) async {
+  Future<List<Note>> getPublicNotes({
+    String? search,
+    String? tag,
+    List<String>? authorIds,
+    bool? hasSummary,
+  }) async {
     try {
       final response = await apiClient.get(
         NotesEndpoints.public,
         query: {
           if (search != null && search.isNotEmpty) 'search': search,
           if (tag != null && tag.isNotEmpty) 'tag': tag,
+          if (authorIds != null && authorIds.isNotEmpty)
+            'authorIds': authorIds.join(','),
+          if (hasSummary != null) 'hasSummary': '$hasSummary',
         },
       );
       final notes = (response.data['notes'] as List<dynamic>?) ?? [];
-      return notes.map((n) => Note.fromJson(n as Map<String, dynamic>)).toList();
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {
@@ -63,6 +80,21 @@ class ApiNotesRepo implements NotesRepo {
       throw ApiException.fromDioError(e);
     } catch (e) {
       throw Exception('Fetching note failed: $e');
+    }
+  }
+
+  @override
+  Future<List<Note>> getNotesByUser(String userId) async {
+    try {
+      final response = await apiClient.get(NotesEndpoints.byUser(userId));
+      final notes = (response.data as List<dynamic>?) ?? [];
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching user notes failed: $e');
     }
   }
 
@@ -98,7 +130,7 @@ class ApiNotesRepo implements NotesRepo {
           'content': content,
           'tags': tags,
           'isPublic': isPublic,
-          if (summary != null) 'summary': summary,
+          'summary': ?summary,
         },
       );
       return Note.fromJson(response.data as Map<String, dynamic>);
@@ -121,10 +153,10 @@ class ApiNotesRepo implements NotesRepo {
       final response = await apiClient.patch(
         NotesEndpoints.byId(id),
         data: {
-          if (title != null) 'title': title,
-          if (content != null) 'content': content,
-          if (tags != null) 'tags': tags,
-          if (isPublic != null) 'isPublic': isPublic,
+          'title': ?title,
+          'content': ?content,
+          'tags': ?tags,
+          'isPublic': ?isPublic,
         },
       );
       return Note.fromJson(response.data as Map<String, dynamic>);
@@ -181,7 +213,10 @@ class ApiNotesRepo implements NotesRepo {
           for (final path in imagePaths) await MultipartFile.fromFile(path),
         ],
       });
-      final response = await apiClient.post(NotesEndpoints.photos(noteId), data: formData);
+      final response = await apiClient.post(
+        NotesEndpoints.photos(noteId),
+        data: formData,
+      );
       return Note.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
@@ -193,7 +228,9 @@ class ApiNotesRepo implements NotesRepo {
   @override
   Future<Note> deletePhoto(String noteId, String photoId) async {
     try {
-      final response = await apiClient.delete(NotesEndpoints.photo(noteId, photoId));
+      final response = await apiClient.delete(
+        NotesEndpoints.photo(noteId, photoId),
+      );
       return Note.fromJson(response.data as Map<String, dynamic>);
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);

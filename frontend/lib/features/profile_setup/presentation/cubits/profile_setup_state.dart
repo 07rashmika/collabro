@@ -28,22 +28,16 @@ final class ProfileSetupLoadError extends ProfileSetupState {
 final class ProfileSetupReady extends ProfileSetupState {
   final int currentStep;
 
-  /// Grows as the student types skills/study areas that don't exist yet —
-  /// so they immediately show up as future suggestions too.
   final List<Skill> allSkills;
   final List<StudyArea> allStudyAreas;
 
-  /// skillId -> proficiency level; absence means not selected.
   final Map<String, String> selectedSkillLevels;
   final Set<String> selectedStudyAreaIds;
   final List<String> interests;
 
-  /// True while a find-or-create call for a typed skill/study area is in flight.
   final bool catalogBusy;
   final String? catalogError;
 
-  /// Live results from the external skills search API for whatever's
-  /// currently typed in the skills picker.
   final List<String> remoteSkillSuggestions;
   final bool remoteSkillsBusy;
 

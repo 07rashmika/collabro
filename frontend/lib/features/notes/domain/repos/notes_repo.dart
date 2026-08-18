@@ -1,15 +1,18 @@
 import '../entities/note.dart';
 
 abstract class NotesRepo {
-  Future<List<Note>> getMyNotes({String? search});
+  Future<List<Note>> getMyNotes({String? search, bool? hasSummary, int? limit});
 
-  /// Public notes across all students — feeds the Discovery tab's Notes
-  /// search, as distinct from [getMyNotes] which is scoped to the caller.
-  Future<List<Note>> getPublicNotes({String? search, String? tag});
+  Future<List<Note>> getPublicNotes({
+    String? search,
+    String? tag,
+    List<String>? authorIds,
+    bool? hasSummary,
+  });
   Future<Note> getNoteById(String id);
 
-  /// Summarizes freeform text before a note exists — used by the note
-  /// editor's "summarize, then post" flow. Doesn't persist anything.
+  Future<List<Note>> getNotesByUser(String userId);
+
   Future<String> summarizeText(String content);
 
   Future<Note> createNote({

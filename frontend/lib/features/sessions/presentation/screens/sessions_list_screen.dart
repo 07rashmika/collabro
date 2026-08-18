@@ -2,12 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/constants/error_messages.dart';
 import 'package:frontend/core/realtime/user_notifications_service.dart';
 import 'package:frontend/core/widgets/pill_button.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
@@ -15,6 +14,7 @@ import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/components/session_list_card.dart';
 import 'package:frontend/features/sessions/presentation/components/session_summary_dialog.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 enum _SessionsTab { mine, ended, saved }
 
@@ -46,8 +46,6 @@ class _SessionsListViewState extends State<_SessionsListView> {
   @override
   void initState() {
     super.initState();
-    // This screen's state is kept alive for the app's lifetime by the shell's
-    // IndexedStack, so this subscription effectively lasts the whole session.
     _sessionsChangedSubscription = context
         .read<UserNotificationsService>()
         .sessionsChanged
@@ -60,15 +58,12 @@ class _SessionsListViewState extends State<_SessionsListView> {
     super.dispose();
   }
 
-  void _reload() {
-    switch (_tab) {
-      case _SessionsTab.mine:
-        context.read<SessionsCubit>().loadSessions();
-      case _SessionsTab.ended:
-        context.read<SessionsCubit>().loadEndedSessions();
-      case _SessionsTab.saved:
-        context.read<SessionsCubit>().loadSavedSessions();
-    }
+  Future<void> _reload() {
+    return switch (_tab) {
+      _SessionsTab.mine => context.read<SessionsCubit>().loadSessions(),
+      _SessionsTab.ended => context.read<SessionsCubit>().loadEndedSessions(),
+      _SessionsTab.saved => context.read<SessionsCubit>().loadSavedSessions(),
+    };
   }
 
   void _switchTab(_SessionsTab tab) {
@@ -78,8 +73,11 @@ class _SessionsListViewState extends State<_SessionsListView> {
   }
 
   Future<void> _openNewSession() async {
-    final created = await context.push<bool>(AppRoutes.newSession);
-    if (created == true && mounted) _reload();
+    final created = await context.push<StudySession>(AppRoutes.newSession);
+    if (created == null || !mounted) return;
+    _reload();
+    await context.push(AppRoutes.sessionDetail, extra: created);
+    if (mounted) _reload();
   }
 
   Future<void> _openJoinSession() async {
@@ -100,11 +98,9 @@ class _SessionsListViewState extends State<_SessionsListView> {
       backgroundColor: colors.backgroundDark,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.screenHorizontal,
-          ),
+          padding: const .symmetric(horizontal: AppSpacing.screenHorizontal),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: .stretch,
             children: [
               const SizedBox(height: AppSpacing.sm),
               Row(
@@ -117,7 +113,7 @@ class _SessionsListViewState extends State<_SessionsListView> {
                   Expanded(
                     child: Text(
                       'Study Sessions',
-                      textAlign: TextAlign.center,
+                      textAlign: .center,
                       style: typography.headlineMedium,
                     ),
                   ),
@@ -130,31 +126,25 @@ class _SessionsListViewState extends State<_SessionsListView> {
               ),
               const SizedBox(height: AppSpacing.md),
               SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
+                scrollDirection: .horizontal,
                 child: Row(
                   children: [
                     PillButton(
                       label: 'My Sessions',
-                      variant: _tab == _SessionsTab.mine
-                          ? PillButtonVariant.primary
-                          : PillButtonVariant.muted,
-                      onPressed: () => _switchTab(_SessionsTab.mine),
+                      variant: _tab == .mine ? .primary : .muted,
+                      onPressed: () => _switchTab(.mine),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     PillButton(
                       label: 'Ended',
-                      variant: _tab == _SessionsTab.ended
-                          ? PillButtonVariant.primary
-                          : PillButtonVariant.muted,
-                      onPressed: () => _switchTab(_SessionsTab.ended),
+                      variant: _tab == .ended ? .primary : .muted,
+                      onPressed: () => _switchTab(.ended),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     PillButton(
                       label: 'Saved',
-                      variant: _tab == _SessionsTab.saved
-                          ? PillButtonVariant.primary
-                          : PillButtonVariant.muted,
-                      onPressed: () => _switchTab(_SessionsTab.saved),
+                      variant: _tab == .saved ? .primary : .muted,
+                      onPressed: () => _switchTab(.saved),
                     ),
                   ],
                 ),
@@ -165,17 +155,15 @@ class _SessionsListViewState extends State<_SessionsListView> {
                   builder: (context, state) {
                     if (state is SessionsLoading || state is SessionsInitial) {
                       return Center(
-                        child: CircularProgressIndicator(
-                          color: colors.primary,
-                        ),
+                        child: CircularProgressIndicator(color: colors.primary),
                       );
                     }
 
                     if (state is SessionsError) {
                       return Center(
                         child: Text(
-                          state.message,
-                          textAlign: TextAlign.center,
+                          genericErrorMessage,
+                          textAlign: .center,
                           style: typography.bodySmall,
                         ),
                       );
@@ -188,36 +176,42 @@ class _SessionsListViewState extends State<_SessionsListView> {
                       return Center(
                         child: Text(
                           switch (_tab) {
-                            _SessionsTab.saved =>
+                            .saved =>
                               'No saved sessions yet. Bookmark one from Home to see it here.',
-                            _SessionsTab.ended =>
-                              'No ended sessions yet.',
-                            _SessionsTab.mine =>
+                            .ended => 'No ended sessions yet.',
+                            .mine =>
                               'No study sessions yet. Tap + to start one.',
                           },
-                          textAlign: TextAlign.center,
+                          textAlign: .center,
                           style: typography.bodySmall,
                         ),
                       );
                     }
 
-                    return ListView.separated(
-                      itemCount: sessions.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: AppSpacing.md),
-                      itemBuilder: (context, i) => SessionListCard(
-                        session: sessions[i],
-                        onTap: () => _openSession(sessions[i]),
-                        onToggleSave: () async {
-                          await context
-                              .read<SessionsCubit>()
-                              .toggleSaveSession(sessions[i]);
-                          // Unsaving in the Saved tab should drop it from
-                          // view — the cubit's optimistic toggle only flips
-                          // the flag, so re-fetch to prune it out here.
-                          if (_tab == _SessionsTab.saved && mounted) _reload();
-                        },
-                        onSummarize: () => showSessionSummaryDialog(context, sessions[i]),
+                    return RefreshIndicator(
+                      color: colors.primary,
+                      onRefresh: _reload,
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        itemCount: sessions.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, index) => SessionListCard(
+                          session: sessions[index],
+                          onTap: () => _openSession(sessions[index]),
+                          onToggleSave: () async {
+                            await context
+                                .read<SessionsCubit>()
+                                .toggleSaveSession(sessions[index]);
+                            if (_tab == _SessionsTab.saved && mounted) {
+                              _reload();
+                            }
+                          },
+                          onSummarize: () => showSessionSummaryDialog(
+                            context,
+                            sessions[index],
+                          ),
+                        ),
                       ),
                     );
                   },

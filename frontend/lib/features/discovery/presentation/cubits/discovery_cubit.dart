@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:frontend/features/notes/domain/entities/note.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
@@ -27,9 +26,7 @@ class DiscoveryCubit extends Cubit<DiscoveryState> {
     emit(const DiscoveryLoading());
     try {
       switch (target) {
-        case DiscoveryTarget.all:
-          // Kick all three off before awaiting any of them so they run
-          // concurrently rather than one after another.
+        case .all:
           final sessionsFuture = sessionsRepo.discoverSessions(search: query);
           final usersFuture = usersRepo.searchUsers(search: query);
           final notesFuture = notesRepo.getPublicNotes(search: query);
@@ -40,13 +37,13 @@ class DiscoveryCubit extends Cubit<DiscoveryState> {
               notes: await notesFuture,
             ),
           );
-        case DiscoveryTarget.sessions:
+        case .sessions:
           final sessions = await sessionsRepo.discoverSessions(search: query);
           emit(DiscoverySessionsLoaded(sessions));
-        case DiscoveryTarget.users:
+        case .users:
           final users = await usersRepo.searchUsers(search: query);
           emit(DiscoveryUsersLoaded(users));
-        case DiscoveryTarget.notes:
+        case .notes:
           final notes = await notesRepo.getPublicNotes(search: query);
           emit(DiscoveryNotesLoaded(notes));
       }
@@ -55,13 +52,11 @@ class DiscoveryCubit extends Cubit<DiscoveryState> {
     }
   }
 
-  /// Optimistically flips `savedByMe` on a discovered session, then persists
-  /// it — mirrors [SessionsCubit.toggleSaveSession] since Discovery keeps
-  /// its own session list separate from the Sessions tab's. Works from
-  /// either the dedicated Sessions tab or the combined "All" tab.
   Future<void> toggleSaveSession(StudySession session) async {
     final current = state;
-    if (current is! DiscoverySessionsLoaded && current is! DiscoveryAllLoaded) return;
+    if (current is! DiscoverySessionsLoaded && current is! DiscoveryAllLoaded) {
+      return;
+    }
 
     final wasSaved = session.savedByMe;
     List<StudySession> flip(List<StudySession> sessions) => sessions
@@ -75,7 +70,9 @@ class DiscoveryCubit extends Cubit<DiscoveryState> {
               users: current.users,
               notes: current.notes,
             )
-          : DiscoverySessionsLoaded(flip((current as DiscoverySessionsLoaded).sessions)),
+          : DiscoverySessionsLoaded(
+              flip((current as DiscoverySessionsLoaded).sessions),
+            ),
     );
     try {
       if (wasSaved) {

@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Circular initials avatar with a deterministic color derived from [name] —
-/// used anywhere a user doesn't have a profile photo (which nothing in this
-/// app has yet, since the backend has no avatar field).
 class UserAvatar extends StatelessWidget {
   final String name;
   final double size;
 
-  const UserAvatar({super.key, required this.name, this.size = AppSpacing.avatarLg});
+  const UserAvatar({
+    super.key,
+    required this.name,
+    this.size = AppSpacing.avatarLg,
+  });
 
-  // Fixed accent set for initials avatars — intentionally theme-independent,
-  // so it isn't sourced from AppColors.of(context).
   static const List<Color> _palette = [
     Color(0xFF7B5CF5),
     Color(0xFF06B6D4),
@@ -23,10 +22,15 @@ class UserAvatar extends StatelessWidget {
   ];
 
   static String _initialsOf(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
-    return (parts.first.substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+    return (parts.first.substring(0, 1) + parts[1].substring(0, 1))
+        .toUpperCase();
   }
 
   static Color _colorOf(String seed) {
@@ -40,17 +44,13 @@ class UserAvatar extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      alignment: .center,
+      decoration: BoxDecoration(shape: .circle, color: color),
       child: Text(
         _initialsOf(name),
-        style: AppTypography.of(context).titleMedium.copyWith(
-          color: Colors.white,
-          fontSize: size * 0.36,
-        ),
+        style: AppTypography.of(
+          context,
+        ).titleMedium.copyWith(color: Colors.white, fontSize: size * 0.36),
       ),
     );
   }

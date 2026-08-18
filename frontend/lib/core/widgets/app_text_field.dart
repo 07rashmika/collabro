@@ -3,8 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Shared labeled text input matching the app's auth/onboarding card style:
-/// a small label above a rounded, icon-prefixed input field.
 class AppTextField extends StatefulWidget {
   final String label;
   final String hint;
@@ -23,9 +21,9 @@ class AppTextField extends StatefulWidget {
     required this.icon,
     required this.controller,
     this.obscurable = false,
-    this.keyboardType = TextInputType.text,
+    this.keyboardType = .text,
     this.validator,
-    this.textInputAction = TextInputAction.next,
+    this.textInputAction = .next,
     this.maxLines = 1,
   });
 
@@ -41,15 +39,15 @@ class _AppTextFieldState extends State<AppTextField> {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Text(widget.label, style: typography.labelMedium),
         const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: widget.controller,
           obscureText: widget.obscurable && _obscured,
-          keyboardType: widget.maxLines > 1 && widget.keyboardType == TextInputType.text
-              ? TextInputType.multiline
+          keyboardType: widget.maxLines > 1 && widget.keyboardType == .text
+              ? .multiline
               : widget.keyboardType,
           textInputAction: widget.textInputAction,
           validator: widget.validator,
@@ -58,13 +56,9 @@ class _AppTextFieldState extends State<AppTextField> {
           style: typography.bodyLarge.copyWith(color: colors.textPrimary),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: typography.bodyLarge.copyWith(
-              color: colors.textHint,
-            ),
+            hintStyle: typography.bodyLarge.copyWith(color: colors.textHint),
             filled: true,
             fillColor: colors.backgroundInput,
-            // A leading icon looks fine centered against one line, but
-            // floats awkwardly in the middle of a tall multiline box.
             prefixIcon: widget.maxLines > 1
                 ? null
                 : Icon(
@@ -75,7 +69,9 @@ class _AppTextFieldState extends State<AppTextField> {
             suffixIcon: widget.obscurable
                 ? IconButton(
                     icon: Icon(
-                      _obscured ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscured
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       size: AppSpacing.iconMd,
                       color: colors.textTertiary,
                     ),
@@ -83,26 +79,26 @@ class _AppTextFieldState extends State<AppTextField> {
                   )
                 : null,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.primary),
             ),
             errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.error),
             ),
             focusedErrorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.error),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: const .symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),

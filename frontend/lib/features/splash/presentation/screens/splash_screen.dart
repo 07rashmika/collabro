@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_typography.dart';
@@ -10,12 +8,8 @@ import 'package:frontend/core/network/secure_storage_keys.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/profiles/domain/entities/profile.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
+import 'package:go_router/go_router.dart';
 
-/// First screen the app renders. Decides, before showing any UI that
-/// assumes a particular auth state, whether a previously logged-in user
-/// still has a valid session (tokens live in secure storage and survive
-/// app restarts) and routes straight to the right place instead of
-/// forcing a fresh sign-in every launch.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -50,15 +44,11 @@ class _SplashScreenState extends State<SplashScreen> {
         return;
       }
 
-      // Onboarding is mandatory — send users who never finished it back to
-      // profile setup instead of straight to home, same as after login.
-      // Fetching the profile is best-effort here: a hiccup on this call
-      // shouldn't be treated as "the session is invalid".
       final profilesRepo = context.read<ProfilesRepo>();
       Profile? profile;
       try {
         profile = await profilesRepo.getMyProfile();
-      } catch (_) {
+      } catch (e) {
         profile = null;
       }
       if (!mounted) return;
@@ -67,8 +57,7 @@ class _SplashScreenState extends State<SplashScreen> {
       } else {
         context.go(AppRoutes.profileSetup, extra: user);
       }
-    } catch (_) {
-      // Stored session is no longer valid (expired refresh token, etc.).
+    } catch (e) {
       await storage.deleteAll();
       if (!mounted) return;
       context.go(AppRoutes.signIn);
@@ -83,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: colors.backgroundDark,
       body: Center(
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: .min,
           children: [
             Text('Collabro', style: typography.displayMedium),
             const SizedBox(height: 24),

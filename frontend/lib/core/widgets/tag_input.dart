@@ -3,9 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Free-text tag entry: a submit-on-enter text field that appends to
-/// [tags], rendered below as removable chips. Used for open-ended lists
-/// like interests where there's no catalog to pick from.
 class TagInput extends StatefulWidget {
   final String label;
   final String hint;
@@ -54,7 +51,7 @@ class _TagInputState extends State<TagInput> {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Text(widget.label, style: typography.labelMedium),
         const SizedBox(height: AppSpacing.sm),
@@ -73,18 +70,18 @@ class _TagInputState extends State<TagInput> {
               onPressed: _submit,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.primary),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: const .symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),
@@ -98,7 +95,7 @@ class _TagInputState extends State<TagInput> {
             children: widget.tags
                 .map(
                   (tag) => Container(
-                    padding: const EdgeInsets.only(
+                    padding: const .only(
                       left: AppSpacing.md,
                       right: AppSpacing.xs,
                       top: 4,
@@ -106,19 +103,23 @@ class _TagInputState extends State<TagInput> {
                     ),
                     decoration: BoxDecoration(
                       color: colors.chipBackground,
-                      border: Border.all(color: colors.chipBorder),
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                      border: .all(color: colors.chipBorder),
+                      borderRadius: .circular(AppSpacing.radiusFull),
                     ),
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      mainAxisSize: .min,
                       children: [
                         Text(tag, style: typography.labelSmall),
                         InkWell(
                           onTap: () => widget.onRemove(tag),
-                          borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                          borderRadius: .circular(AppSpacing.radiusFull),
                           child: Padding(
-                            padding: EdgeInsets.all(4),
-                            child: Icon(Icons.close, size: 14, color: colors.textTertiary),
+                            padding: .all(4),
+                            child: Icon(
+                              Icons.close,
+                              size: 14,
+                              color: colors.textTertiary,
+                            ),
                           ),
                         ),
                       ],

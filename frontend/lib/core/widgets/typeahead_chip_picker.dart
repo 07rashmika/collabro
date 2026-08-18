@@ -5,16 +5,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Type-to-add picker: as the user types, matching [suggestions] appear
-/// below the field; tapping one selects it. Submitting text that doesn't
-/// match anything calls [onCreateNew] instead — so the list isn't a fixed,
-/// pre-baked catalog the user is stuck choosing from.
-///
-/// [onQueryChanged], if given, fires debounced (300ms after typing pauses)
-/// so a caller can fetch live [remoteSuggestions] from an external catalog
-/// (e.g. a skills search API) — those render as an extra row below the
-/// local matches and, since they aren't in [suggestions] yet, always go
-/// through [onCreateNew] when tapped.
 class TypeaheadChipPicker<T> extends StatefulWidget {
   final String label;
   final String hint;
@@ -68,8 +58,6 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
         .toList();
   }
 
-  /// Remote results not already covered by a local match, so the same name
-  /// doesn't appear twice.
   List<String> get _remoteOnly {
     final localNames = _matches
         .map((s) => widget.labelOf(s).toLowerCase())
@@ -132,7 +120,7 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: .start,
       children: [
         Text(widget.label, style: typography.labelLarge),
         const SizedBox(height: AppSpacing.sm),
@@ -140,19 +128,17 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
           controller: _controller,
           enabled: !widget.isBusy,
           style: typography.bodyLarge.copyWith(color: colors.textPrimary),
-          textInputAction: TextInputAction.done,
+          textInputAction: .done,
           onChanged: _onChanged,
           onSubmitted: (_) => _submit(),
           decoration: InputDecoration(
             hintText: widget.hint,
-            hintStyle: typography.bodyLarge.copyWith(
-              color: colors.textHint,
-            ),
+            hintStyle: typography.bodyLarge.copyWith(color: colors.textHint),
             filled: true,
             fillColor: colors.backgroundInput,
             suffixIcon: widget.isBusy
                 ? Padding(
-                    padding: EdgeInsets.all(14),
+                    padding: .all(14),
                     child: SizedBox(
                       width: 18,
                       height: 18,
@@ -167,18 +153,18 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
                     onPressed: _submit,
                   ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+              borderRadius: .circular(AppSpacing.radiusMd),
               borderSide: BorderSide(color: colors.primary),
             ),
-            contentPadding: const EdgeInsets.symmetric(
+            contentPadding: const .symmetric(
               horizontal: AppSpacing.lg,
               vertical: AppSpacing.md,
             ),
@@ -191,10 +177,7 @@ class _TypeaheadChipPickerState<T> extends State<TypeaheadChipPicker<T>> {
             runSpacing: AppSpacing.sm,
             children: _matches.map((item) {
               return ActionChip(
-                label: Text(
-                  widget.labelOf(item),
-                  style: typography.labelSmall,
-                ),
+                label: Text(widget.labelOf(item), style: typography.labelSmall),
                 backgroundColor: colors.backgroundElevated,
                 side: BorderSide(color: colors.chipBorder),
                 onPressed: () => _selectExisting(item),

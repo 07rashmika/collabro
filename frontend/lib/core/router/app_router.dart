@@ -1,5 +1,3 @@
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/router/main_shell.dart';
 import 'package:frontend/features/auth/domain/entities/app_user.dart';
@@ -11,18 +9,21 @@ import 'package:frontend/features/notes/domain/entities/note.dart';
 import 'package:frontend/features/notes/presentation/screens/note_detail_screen.dart';
 import 'package:frontend/features/notes/presentation/screens/note_editor_screen.dart';
 import 'package:frontend/features/notes/presentation/screens/notes_list_screen.dart';
+import 'package:frontend/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:frontend/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:frontend/features/profile/presentation/screens/edit_profile_screen.dart';
 import 'package:frontend/features/profile/presentation/screens/profile_screen.dart';
 import 'package:frontend/features/profile_setup/presentation/screens/profile_setup_screen.dart';
-import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
-import 'package:frontend/features/splash/presentation/screens/splash_screen.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/presentation/screens/join_session_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/new_session_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/session_chat_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/sessions_list_screen.dart';
 import 'package:frontend/features/sessions/presentation/screens/video_call_screen.dart';
+import 'package:frontend/features/settings/presentation/screens/settings_screen.dart';
+import 'package:frontend/features/splash/presentation/screens/splash_screen.dart';
+import 'package:frontend/features/users/presentation/screens/user_profile_screen.dart';
+import 'package:go_router/go_router.dart';
 
 abstract class AppRouter {
   static final GoRouter router = GoRouter(
@@ -57,8 +58,7 @@ abstract class AppRouter {
             routes: [
               GoRoute(
                 path: AppRoutes.home,
-                builder: (context, state) =>
-                    HomeScreen(user: state.extra as AppUser),
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
@@ -96,8 +96,6 @@ abstract class AppRouter {
           ),
         ],
       ),
-      // Detail screens are pushed on top of the shell, so they cover the
-      // bottom nav bar instead of living inside a tab's own stack.
       GoRoute(
         path: AppRoutes.noteDetail,
         builder: (context, state) =>
@@ -125,10 +123,19 @@ abstract class AppRouter {
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
+        path: AppRoutes.notifications,
+        builder: (context, state) => const NotificationsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.userProfile,
+        builder: (context, state) =>
+            UserProfileScreen(userId: state.extra as String),
+      ),
+      GoRoute(
         path: AppRoutes.sessionDetail,
         builder: (context, state) {
           final session = state.extra as StudySession;
-          return session.type == SessionType.video
+          return session.type == .video
               ? VideoCallScreen(session: session)
               : SessionChatScreen(session: session);
         },

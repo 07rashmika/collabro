@@ -11,11 +11,38 @@ class NotesCubit extends Cubit<NotesState> {
 
   NotesCubit({required this.notesRepo}) : super(const NotesInitial());
 
-  Future<void> loadNotes({String? search}) async {
+  Future<void> loadNotes({String? search, bool? hasSummary, int? limit}) async {
     emit(const NotesLoading());
     try {
-      final notes = await notesRepo.getMyNotes(search: search);
+      final notes = await notesRepo.getMyNotes(
+        search: search,
+        hasSummary: hasSummary,
+        limit: limit,
+      );
       emit(NotesLoaded(notes));
+    } catch (e) {
+      emit(NotesError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> loadHomeSummaries({
+    required List<String> matchedAuthorIds,
+    int limit = 3,
+  }) async {
+    emit(const NotesLoading());
+    try {
+      final results = await Future.wait([
+        notesRepo.getMyNotes(hasSummary: true, limit: limit),
+        matchedAuthorIds.isEmpty
+            ? Future.value(const <Note>[])
+            : notesRepo.getPublicNotes(
+                authorIds: matchedAuthorIds,
+                hasSummary: true,
+              ),
+      ]);
+      final merged = [...results[0], ...results[1]]
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+      emit(NotesLoaded(merged.take(limit).toList()));
     } catch (e) {
       emit(NotesError(e.toString().replaceFirst('Exception: ', '')));
     }
@@ -43,12 +70,6 @@ class NotesCubit extends Cubit<NotesState> {
     }
   }
 
-  /// Summarizes a new note's content and immediately saves it (as a private
-  /// draft, unless [existingNoteId] already points at one from an earlier
-  /// call) — the note shows up in "My Notes" as soon as it's summarized,
-  /// whether or not the user goes on to post it publicly. Passing
-  /// [existingNoteId] (e.g. for "Regenerate") updates that same note instead
-  /// of creating a duplicate.
   Future<void> summarizeAndSaveDraft({
     String? existingNoteId,
     required String title,

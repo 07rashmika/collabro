@@ -11,9 +11,6 @@ import '../../domain/repos/sessions_repo.dart';
 
 part 'video_call_state.dart';
 
-/// In-call state for one video session. Depends on [WebRTCService] (mesh
-/// peer connections) + [SignalingService] (join/offer/answer/ICE/state
-/// relay) — never constructs either itself.
 class VideoCallCubit extends Cubit<VideoCallState> {
   final WebRTCService webRTCService;
   final SignalingService signalingService;
@@ -41,7 +38,9 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     emit(const CallConnecting());
     try {
       final iceServersResponse = await sessionsRepo.getIceServers(sessionId);
-      final iceServers = iceServersResponse.iceServers.map((s) => s.toRtcConfig()).toList();
+      final iceServers = iceServersResponse.iceServers
+          .map((s) => s.toRtcConfig())
+          .toList();
 
       await webRTCService.initLocalMedia(iceServers);
 
@@ -66,7 +65,9 @@ class VideoCallCubit extends Cubit<VideoCallState> {
       });
 
       await signalingService.connect();
-      _signalingSubscription = signalingService.messages.listen(_handleSignalingMessage);
+      _signalingSubscription = signalingService.messages.listen(
+        _handleSignalingMessage,
+      );
     } catch (e) {
       emit(CallError(e.toString().replaceFirst('Exception: ', '')));
     }
@@ -76,7 +77,6 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     switch (message) {
       case RoomSnapshotReceived(:final participants):
         _participants = participants;
-        // Joiner offers to every participant already present.
         for (final p in participants) {
           final sdp = await webRTCService.createOfferFor(p.userId);
           signalingService.sendOffer(targetUserId: p.userId, sdp: sdp);
@@ -104,14 +104,27 @@ class VideoCallCubit extends Cubit<VideoCallState> {
       case AnswerReceived(:final fromUserId, :final sdp):
         await webRTCService.setRemoteAnswerFor(fromUserId, sdp);
 
-      case IceCandidateReceived(:final fromUserId, :final candidate, :final sdpMid, :final sdpMLineIndex):
-        await webRTCService.addIceCandidateFor(fromUserId, candidate, sdpMid, sdpMLineIndex);
+      case IceCandidateReceived(
+        :final fromUserId,
+        :final candidate,
+        :final sdpMid,
+        :final sdpMLineIndex,
+      ):
+        await webRTCService.addIceCandidateFor(
+          fromUserId,
+          candidate,
+          sdpMid,
+          sdpMLineIndex,
+        );
 
       case ChatMessageReceived():
-        break; // consumed by SessionChatCubit via ChatSocketService, not here
+        break;
 
       case ScreenShareStateChanged(:final userId, :final isScreenSharing):
-        _updateParticipant(userId, (p) => p.copyWith(isScreenSharing: isScreenSharing));
+        _updateParticipant(
+          userId,
+          (p) => p.copyWith(isScreenSharing: isScreenSharing),
+        );
 
       case MicStateChanged(:final userId, :final isMicMuted):
         _updateParticipant(userId, (p) => p.copyWith(isMicMuted: isMicMuted));
@@ -132,12 +145,17 @@ class VideoCallCubit extends Cubit<VideoCallState> {
         emit(const CallDisconnected(sessionEnded: true));
 
       case SignalingError():
-        break; // non-fatal — the call continues, nothing to surface here
+        break;
     }
   }
 
-  void _updateParticipant(String userId, CallParticipant Function(CallParticipant) update) {
-    _participants = _participants.map((p) => p.userId == userId ? update(p) : p).toList();
+  void _updateParticipant(
+    String userId,
+    CallParticipant Function(CallParticipant) update,
+  ) {
+    _participants = _participants
+        .map((p) => p.userId == userId ? update(p) : p)
+        .toList();
     _emitActiveState();
   }
 
@@ -160,36 +178,37 @@ class VideoCallCubit extends Cubit<VideoCallState> {
       signalingService.sendScreenShareState(true);
       final localStream = webRTCService.activeLocalStream;
       if (localStream == null) return;
-      emit(ScreenSharing(
-        localStream: localStream,
-        participants: _participants,
-        remoteStreams: _remoteStreams,
-        isMicMuted: _isMicMuted,
-        isCameraOff: _isCameraOff,
-        isReconnecting: _isReconnecting,
-      ));
+      emit(
+        ScreenSharing(
+          localStream: localStream,
+          participants: _participants,
+          remoteStreams: _remoteStreams,
+          isMicMuted: _isMicMuted,
+          isCameraOff: _isCameraOff,
+          isReconnecting: _isReconnecting,
+        ),
+      );
     } catch (e) {
       emit(CallError(e.toString().replaceFirst('Exception: ', '')));
     }
   }
 
-  /// Emits a one-shot [ScreenShareStopped] acknowledgement; the next
-  /// `_emitActiveState()` call (from any subsequent signaling event) settles
-  /// back into ordinary [CallConnected] since `_isScreenSharing` is false.
   Future<void> stopScreenShare() async {
     await webRTCService.stopScreenShare();
     _isScreenSharing = false;
     signalingService.sendScreenShareState(false);
     final localStream = webRTCService.activeLocalStream;
     if (localStream == null) return;
-    emit(ScreenShareStopped(
-      localStream: localStream,
-      participants: _participants,
-      remoteStreams: _remoteStreams,
-      isMicMuted: _isMicMuted,
-      isCameraOff: _isCameraOff,
-      isReconnecting: _isReconnecting,
-    ));
+    emit(
+      ScreenShareStopped(
+        localStream: localStream,
+        participants: _participants,
+        remoteStreams: _remoteStreams,
+        isMicMuted: _isMicMuted,
+        isCameraOff: _isCameraOff,
+        isReconnecting: _isReconnecting,
+      ),
+    );
   }
 
   Future<void> hangUp() async {
@@ -202,23 +221,27 @@ class VideoCallCubit extends Cubit<VideoCallState> {
     if (localStream == null) return;
 
     if (_isScreenSharing) {
-      emit(ScreenSharing(
-        localStream: localStream,
-        participants: _participants,
-        remoteStreams: _remoteStreams,
-        isMicMuted: _isMicMuted,
-        isCameraOff: _isCameraOff,
-        isReconnecting: _isReconnecting,
-      ));
+      emit(
+        ScreenSharing(
+          localStream: localStream,
+          participants: _participants,
+          remoteStreams: _remoteStreams,
+          isMicMuted: _isMicMuted,
+          isCameraOff: _isCameraOff,
+          isReconnecting: _isReconnecting,
+        ),
+      );
     } else {
-      emit(CallConnected(
-        localStream: localStream,
-        participants: _participants,
-        remoteStreams: _remoteStreams,
-        isMicMuted: _isMicMuted,
-        isCameraOff: _isCameraOff,
-        isReconnecting: _isReconnecting,
-      ));
+      emit(
+        CallConnected(
+          localStream: localStream,
+          participants: _participants,
+          remoteStreams: _remoteStreams,
+          isMicMuted: _isMicMuted,
+          isCameraOff: _isCameraOff,
+          isReconnecting: _isReconnecting,
+        ),
+      );
     }
   }
 

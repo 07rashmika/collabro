@@ -1,6 +1,7 @@
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { MatchingQueryDto } from "./matching.schema";
 import { StudentProfile, MatchScore, SkillWithLevel, StudyAreaRef } from "./matching.types";
+import { getConnectionStatuses } from "../connections/connections.service";
 
 const LEVEL_WEIGHT = { BEGINNER: 1, INTERMEDIATE: 2, ADVANCED: 3 };
 
@@ -60,16 +61,37 @@ export class MatchingService {
       return { suggestions: [], total: 0 };
     }
 
+    // Already-connected students aren't "recommendations" anymore — filter
+    // them out before scoring/limiting rather than after, so a page of
+    // results isn't shrunk by candidates that get dropped downstream.
+    const connectionStatuses = await getConnectionStatuses(
+      this.prisma,
+      userId,
+      otherProfiles.map((p) => p.userId)
+    );
+    const candidateProfiles = otherProfiles.filter(
+      (p) => connectionStatuses.get(p.userId) !== "CONNECTED"
+    );
+
+    if (candidateProfiles.length === 0) {
+      return { suggestions: [], total: 0 };
+    }
+
     const me = this.toStudentProfile(myProfile);
 
     // score + rank every candidate, then attach a human-readable reason
     // built directly from the score breakdown (see buildReason below)
-    const suggestions: MatchScore[] = otherProfiles
+    const scored: MatchScore[] = candidateProfiles
       .map((p) => this.scoreCandidate(me, this.toStudentProfile(p)))
       .filter((s) => s.totalScore >= minScore)
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, limit)
       .map((s) => ({ ...s, aiReason: this.buildReason(s) }));
+
+    const suggestions = scored.map((s) => ({
+      ...s,
+      connectionStatus: connectionStatuses.get(s.student.userId) ?? "NONE",
+    }));
 
     return { suggestions, total: suggestions.length };
   }

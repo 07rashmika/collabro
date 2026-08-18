@@ -31,7 +31,7 @@ class BottomCard extends StatelessWidget {
     final bottomPad = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(
+      padding: .fromLTRB(
         AppSpacing.screenHorizontal,
         AppSpacing.xl,
         AppSpacing.screenHorizontal,
@@ -39,14 +39,14 @@ class BottomCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: colors.backgroundCard,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(AppSpacing.radiusXxl),
-          topRight: Radius.circular(AppSpacing.radiusXxl),
+        borderRadius: .only(
+          topLeft: .circular(AppSpacing.radiusXxl),
+          topRight: .circular(AppSpacing.radiusXxl),
         ),
         border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.max,
+        mainAxisSize: .max,
         children: [
           SmoothPageIndicator(
             controller: pageController,
@@ -65,7 +65,8 @@ class BottomCard extends StatelessWidget {
               controller: pageController,
               onPageChanged: onPageChanged,
               itemCount: onboardingPages.length,
-              itemBuilder: (_, i) => PageContent(page: onboardingPages[i]),
+              itemBuilder: (context, index) =>
+                  PageContent(page: onboardingPages[index]),
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
@@ -81,7 +82,7 @@ class BottomCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: .center,
             children: [
               Text(
                 'Already have an account? ',
@@ -95,7 +96,7 @@ class BottomCard extends StatelessWidget {
                   'Sign In',
                   style: typography.bodySmall.copyWith(
                     color: colors.primary,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: .w600,
                   ),
                 ),
               ),

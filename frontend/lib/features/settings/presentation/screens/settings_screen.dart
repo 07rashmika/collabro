@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
+import 'package:go_router/go_router.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -21,7 +20,7 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(
+              padding: const .symmetric(
                 horizontal: AppSpacing.screenHorizontal,
                 vertical: AppSpacing.sm,
               ),
@@ -34,7 +33,7 @@ class SettingsScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'Settings',
-                      textAlign: TextAlign.center,
+                      textAlign: .center,
                       style: typography.headlineMedium,
                     ),
                   ),
@@ -44,7 +43,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(
+                padding: const .symmetric(
                   horizontal: AppSpacing.screenHorizontal,
                 ),
                 children: [
@@ -57,23 +56,19 @@ class SettingsScreen extends StatelessWidget {
                   const SizedBox(height: AppSpacing.sm),
                   Material(
                     color: colors.backgroundCard,
-                    borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-                    clipBehavior: Clip.antiAlias,
+                    borderRadius: .circular(AppSpacing.radiusMd),
+                    clipBehavior: .antiAlias,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                      ),
+                      padding: const .symmetric(horizontal: AppSpacing.md),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.radiusMd,
-                        ),
+                        borderRadius: .circular(AppSpacing.radiusMd),
                         border: Border.all(color: colors.border),
                       ),
                       child: BlocBuilder<ThemeCubit, ThemeMode>(
                         builder: (context, mode) {
-                          final isLight = mode == ThemeMode.light;
+                          final isLight = mode == .light;
                           return SwitchListTile(
-                            contentPadding: EdgeInsets.zero,
+                            contentPadding: .zero,
                             title: Text(
                               'Light Mode',
                               style: typography.bodyLarge.copyWith(
@@ -88,9 +83,8 @@ class SettingsScreen extends StatelessWidget {
                             ),
                             value: isLight,
                             activeThumbColor: colors.primary,
-                            onChanged: (value) => context
-                                .read<ThemeCubit>()
-                                .setLightMode(value),
+                            onChanged: (value) =>
+                                context.read<ThemeCubit>().setLightMode(value),
                           );
                         },
                       ),

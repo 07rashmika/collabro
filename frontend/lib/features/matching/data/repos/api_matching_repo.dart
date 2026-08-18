@@ -19,7 +19,8 @@ class ApiMatchingRepo implements MatchingRepo {
         query: {'limit': limit.toString()},
       );
 
-      final suggestions = (response.data['suggestions'] as List<dynamic>?) ?? [];
+      final suggestions =
+          (response.data['suggestions'] as List<dynamic>?) ?? [];
       return suggestions
           .map((s) => MatchCandidate.fromJson(s as Map<String, dynamic>))
           .toList();

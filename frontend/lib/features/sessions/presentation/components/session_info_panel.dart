@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/session_time_label.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
+import 'package:frontend/features/sessions/presentation/components/session_info_badge.dart';
+import 'package:frontend/features/sessions/presentation/components/session_info_card.dart';
+import 'package:frontend/features/sessions/presentation/components/session_info_icon_label.dart';
+import 'package:frontend/features/sessions/presentation/components/session_info_section_label.dart';
+import 'package:frontend/features/sessions/presentation/components/session_tag_chip.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
 
-/// Session details side panel, opened from the 3-dot menu on both the chat
-/// and video call screens. Categorized top to bottom: Overview (topic, type,
-/// visibility, created time, tags), Access (join code / password — gated by
-/// who's allowed to see what), Participants, and — creator only — Owner
-/// Actions. Reads the [SessionsCubit] already provided by the host screen
-/// rather than owning one, so "reveal password" shares the same instance.
 class SessionInfoPanel extends StatefulWidget {
   final StudySession session;
   final String? currentUserId;
@@ -38,7 +37,8 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
   bool _loadingPassword = false;
 
   bool get _isCreator =>
-      widget.currentUserId != null && widget.currentUserId == widget.session.creatorId;
+      widget.currentUserId != null &&
+      widget.currentUserId == widget.session.creatorId;
   bool get _canSeeCode => _isCreator || widget.session.isPublic;
 
   void _revealPassword() {
@@ -51,7 +51,9 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
     if (code == null) return;
     await Clipboard.setData(ClipboardData(text: code));
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Code copied')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Code copied')));
     }
   }
 
@@ -75,19 +77,20 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
             });
           } else if (state is SessionsError && _loadingPassword) {
             setState(() => _loadingPassword = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message), backgroundColor: colors.error),
-            );
+            showErrorSnackBar(context);
           }
         },
         child: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
+            padding: const .all(AppSpacing.screenHorizontal),
             children: [
               Row(
                 children: [
                   Expanded(
-                    child: Text('Session Info', style: typography.headlineSmall),
+                    child: Text(
+                      'Session Info',
+                      style: typography.headlineSmall,
+                    ),
                   ),
                   IconButton(
                     onPressed: () => Navigator.of(context).pop(),
@@ -97,9 +100,9 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               ),
               const SizedBox(height: AppSpacing.sm),
 
-              _SectionLabel('Overview'),
+              SessionInfoSectionLabel('Overview'),
               const SizedBox(height: AppSpacing.sm),
-              _InfoCard(
+              SessionInfoCard(
                 children: [
                   Text(session.title, style: typography.titleLarge),
                   const SizedBox(height: AppSpacing.sm),
@@ -107,26 +110,30 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
                     children: [
-                      _Badge(
-                        icon: session.type == SessionType.video
+                      SessionInfoBadge(
+                        icon: session.type == .video
                             ? Icons.videocam_outlined
                             : Icons.chat_bubble_outline,
-                        label: session.type == SessionType.video ? 'Video Call' : 'Text Chat',
+                        label: session.type == .video
+                            ? 'Video Call'
+                            : 'Text Chat',
                       ),
-                      _Badge(
-                        icon: session.isPublic ? Icons.public : Icons.lock_outline,
+                      SessionInfoBadge(
+                        icon: session.isPublic
+                            ? Icons.public
+                            : Icons.lock_outline,
                         label: session.isPublic ? 'Public' : 'Private',
                       ),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _IconLabel(
+                  SessionInfoIconLabel(
                     icon: Icons.schedule,
                     label: 'Created ${sessionTimeLabel(session.createdAt)}',
                   ),
-                  if (session.status == SessionStatus.active) ...[
+                  if (session.status == .active) ...[
                     const SizedBox(height: AppSpacing.xs),
-                    _IconLabel(
+                    SessionInfoIconLabel(
                       icon: Icons.timer_outlined,
                       label: 'Expires ${sessionTimeLabel(session.expiresAt)}',
                     ),
@@ -136,7 +143,9 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                     Wrap(
                       spacing: AppSpacing.xs,
                       runSpacing: AppSpacing.xs,
-                      children: session.tags.map((t) => _TagChip(t.name)).toList(),
+                      children: session.tags
+                          .map((t) => SessionTagChip(t.name))
+                          .toList(),
                     ),
                   ],
                 ],
@@ -144,9 +153,9 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
 
               if (showAccessSection) ...[
                 const SizedBox(height: AppSpacing.lg),
-                _SectionLabel('Access'),
+                SessionInfoSectionLabel('Access'),
                 const SizedBox(height: AppSpacing.sm),
-                _InfoCard(
+                SessionInfoCard(
                   children: [
                     if (_canSeeCode) ...[
                       Text('Join Code', style: typography.labelMedium),
@@ -156,8 +165,10 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                           Expanded(
                             child: Text(
                               session.joinCode!,
-                              style: typography.bodyMedium.copyWith(letterSpacing: 1.1),
-                              overflow: TextOverflow.ellipsis,
+                              style: typography.bodyMedium.copyWith(
+                                letterSpacing: 1.1,
+                              ),
+                              overflow: .ellipsis,
                             ),
                           ),
                           IconButton(
@@ -166,7 +177,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                               size: AppSpacing.iconSm,
                               color: colors.textTertiary,
                             ),
-                            visualDensity: VisualDensity.compact,
+                            visualDensity: .compact,
                             onPressed: _copyCode,
                           ),
                         ],
@@ -182,15 +193,17 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                       else if (_passwordRevealed)
                         Text(
                           _revealedPassword ?? '—',
-                          style: typography.bodyMedium.copyWith(letterSpacing: 1.1),
+                          style: typography.bodyMedium.copyWith(
+                            letterSpacing: 1.1,
+                          ),
                         )
                       else
                         TextButton.icon(
                           onPressed: _loadingPassword ? null : _revealPassword,
                           style: TextButton.styleFrom(
-                            padding: EdgeInsets.zero,
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: .zero,
+                            minimumSize: .zero,
+                            tapTargetSize: .shrinkWrap,
                           ),
                           icon: _loadingPassword
                               ? SizedBox(
@@ -208,7 +221,9 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                                 ),
                           label: Text(
                             'Reveal password',
-                            style: typography.bodyMedium.copyWith(color: colors.primary),
+                            style: typography.bodyMedium.copyWith(
+                              color: colors.primary,
+                            ),
                           ),
                         ),
                     ],
@@ -217,13 +232,15 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               ],
 
               const SizedBox(height: AppSpacing.lg),
-              _SectionLabel('Participants (${session.participants.length})'),
+              SessionInfoSectionLabel(
+                'Participants (${session.participants.length})',
+              ),
               const SizedBox(height: AppSpacing.sm),
-              _InfoCard(
+              SessionInfoCard(
                 children: [
                   for (final p in session.participants) ...[
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+                      padding: const .symmetric(vertical: AppSpacing.xs),
                       child: Row(
                         children: [
                           UserAvatar(name: p.name, size: AppSpacing.avatarSm),
@@ -232,11 +249,14 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                             child: Text(
                               p.name,
                               style: typography.bodyMedium,
-                              overflow: TextOverflow.ellipsis,
+                              overflow: .ellipsis,
                             ),
                           ),
                           if (p.userId == session.creatorId)
-                            const _Badge(icon: Icons.star, label: 'Host'),
+                            const SessionInfoBadge(
+                              icon: Icons.star,
+                              label: 'Host',
+                            ),
                         ],
                       ),
                     ),
@@ -246,21 +266,26 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
 
               if (_isCreator && widget.onEndSession != null) ...[
                 const SizedBox(height: AppSpacing.lg),
-                _SectionLabel('Owner Actions'),
+                SessionInfoSectionLabel('Owner Actions'),
                 const SizedBox(height: AppSpacing.sm),
-                _InfoCard(
+                SessionInfoCard(
                   children: [
                     TextButton.icon(
                       onPressed: widget.onEndSession,
                       style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
+                        padding: .zero,
                         minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        tapTargetSize: .shrinkWrap,
                       ),
-                      icon: Icon(Icons.stop_circle_outlined, color: colors.error),
+                      icon: Icon(
+                        Icons.stop_circle_outlined,
+                        color: colors.error,
+                      ),
                       label: Text(
                         'End Session Permanently',
-                        style: typography.bodyMedium.copyWith(color: colors.error),
+                        style: typography.bodyMedium.copyWith(
+                          color: colors.error,
+                        ),
                       ),
                     ),
                   ],
@@ -271,110 +296,6 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
-    return Text(
-      label.toUpperCase(),
-      style: typography.labelSmall.copyWith(
-        color: colors.textTertiary,
-        letterSpacing: 0.6,
-      ),
-    );
-  }
-}
-
-class _InfoCard extends StatelessWidget {
-  final List<Widget> children;
-  const _InfoCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-      decoration: BoxDecoration(
-        color: colors.backgroundCard,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: children),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _Badge({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: colors.backgroundElevated,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: AppSpacing.iconSm, color: colors.primaryLight),
-          const SizedBox(width: 4),
-          Text(label, style: typography.labelSmall),
-        ],
-      ),
-    );
-  }
-}
-
-class _IconLabel extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _IconLabel({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
-    return Row(
-      children: [
-        Icon(icon, size: AppSpacing.iconSm, color: colors.textTertiary),
-        const SizedBox(width: AppSpacing.xs),
-        Text(label, style: typography.bodySmall),
-      ],
-    );
-  }
-}
-
-class _TagChip extends StatelessWidget {
-  final String label;
-  const _TagChip(this.label);
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    final typography = AppTypography.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: colors.chipBackground,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
-        border: Border.all(color: colors.chipBorder),
-      ),
-      child: Text(label, style: typography.labelSmall),
     );
   }
 }

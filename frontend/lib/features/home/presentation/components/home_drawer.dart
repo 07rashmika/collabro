@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
-import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/secondary_button.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 import 'package:frontend/features/auth/domain/entities/app_user.dart';
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
 
 class HomeDrawer extends StatelessWidget {
   final AppUser user;
 
   const HomeDrawer({super.key, required this.user});
-
-  void _openSettings(BuildContext context) {
-    Navigator.pop(context);
-    context.push(AppRoutes.settings);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,17 +23,17 @@ class HomeDrawer extends StatelessWidget {
       backgroundColor: colors.backgroundCard,
       child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: .start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
+              padding: const .all(AppSpacing.screenHorizontal),
               child: Row(
                 children: [
                   UserAvatar(name: user.name, size: AppSpacing.avatarLg),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: .start,
                       children: [
                         Text(user.name, style: typography.titleLarge),
                         Text(user.email, style: typography.bodySmall),
@@ -51,22 +44,30 @@ class HomeDrawer extends StatelessWidget {
               ),
             ),
             Divider(color: colors.border, height: 1),
-            ListTile(
-              leading: Icon(
-                Icons.settings_outlined,
-                color: colors.textSecondary,
-              ),
-              title: Text(
-                'Settings',
-                style: typography.bodyMedium.copyWith(
-                  color: colors.textPrimary,
-                ),
-              ),
-              onTap: () => _openSettings(context),
+            BlocBuilder<ThemeCubit, ThemeMode>(
+              builder: (context, mode) {
+                final isLight = mode == .light;
+                return SwitchListTile(
+                  secondary: Icon(
+                    Icons.light_mode_outlined,
+                    color: colors.textSecondary,
+                  ),
+                  title: Text(
+                    'Light Mode',
+                    style: typography.bodyMedium.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  value: isLight,
+                  activeThumbColor: colors.primary,
+                  onChanged: (value) =>
+                      context.read<ThemeCubit>().setLightMode(value),
+                );
+              },
             ),
             const Spacer(),
             Padding(
-              padding: const EdgeInsets.all(AppSpacing.screenHorizontal),
+              padding: const .all(AppSpacing.screenHorizontal),
               child: BlocBuilder<AuthCubit, AuthState>(
                 builder: (context, state) {
                   return SecondaryButton(

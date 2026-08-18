@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
@@ -8,9 +7,6 @@ import 'package:frontend/core/widgets/skill_chip.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 import 'package:frontend/features/notes/domain/entities/note.dart';
 
-/// Read-only preview for a public note found via Discovery. Deliberately
-/// separate from [NoteDetailScreen], which always shows edit/delete/
-/// visibility controls meant only for the note's own author.
 void showNotePreviewSheet(BuildContext context, Note note) {
   final colors = AppColors.of(context);
   final typography = AppTypography.of(context);
@@ -20,7 +16,7 @@ void showNotePreviewSheet(BuildContext context, Note note) {
     backgroundColor: colors.backgroundCard,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.radiusXl)),
+      borderRadius: .vertical(top: .circular(AppSpacing.radiusXl)),
     ),
     builder: (sheetContext) {
       return DraggableScrollableSheet(
@@ -31,9 +27,9 @@ void showNotePreviewSheet(BuildContext context, Note note) {
         builder: (context, scrollController) {
           return SingleChildScrollView(
             controller: scrollController,
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            padding: const .all(AppSpacing.cardPadding),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: .start,
               children: [
                 Center(
                   child: Container(
@@ -41,7 +37,7 @@ void showNotePreviewSheet(BuildContext context, Note note) {
                     height: 4,
                     decoration: BoxDecoration(
                       color: colors.border,
-                      borderRadius: BorderRadius.circular(AppSpacing.radiusFull),
+                      borderRadius: .circular(AppSpacing.radiusFull),
                     ),
                   ),
                 ),
@@ -50,11 +46,17 @@ void showNotePreviewSheet(BuildContext context, Note note) {
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    UserAvatar(name: note.authorName, size: AppSpacing.avatarSm),
+                    UserAvatar(
+                      name: note.authorName,
+                      size: AppSpacing.avatarSm,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Text(note.authorName, style: typography.bodySmall),
                     const SizedBox(width: AppSpacing.xs),
-                    Text('· ${timeAgo(note.updatedAt)}', style: typography.caption),
+                    Text(
+                      '· ${timeAgo(note.updatedAt)}',
+                      style: typography.caption,
+                    ),
                   ],
                 ),
                 if (note.tags.isNotEmpty) ...[
@@ -62,7 +64,9 @@ void showNotePreviewSheet(BuildContext context, Note note) {
                   Wrap(
                     spacing: AppSpacing.xs,
                     runSpacing: AppSpacing.xs,
-                    children: note.tags.map((t) => SkillChip(label: t)).toList(),
+                    children: note.tags
+                        .map((t) => SkillChip(label: t))
+                        .toList(),
                   ),
                 ],
                 const SizedBox(height: AppSpacing.lg),

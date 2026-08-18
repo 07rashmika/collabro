@@ -29,4 +29,5 @@ abstract class AppRoutes {
   static const String editProfile = '/edit-profile';
   static const String notifications = '/notifications';
   static const String settings = '/settings';
+  static const String userProfile = '/user-profile';
 }

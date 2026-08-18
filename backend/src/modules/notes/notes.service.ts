@@ -32,7 +32,7 @@ export class NotesService {
   ) {}
 
   async getMyNotes(userId: string, query: NoteQueryDto) {
-    const { search, tag, page, limit } = query;
+    const { search, tag, hasSummary, page, limit } = query;
     const skip = (page - 1) * limit;
 
     const where = {
@@ -44,6 +44,7 @@ export class NotesService {
         ],
       }),
       ...(tag && { tags: { has: tag } }),
+      ...(hasSummary !== undefined && { summary: hasSummary ? { not: null } : null }),
     };
 
     const [notes, total] = await Promise.all([
@@ -68,11 +69,13 @@ export class NotesService {
   /// subjects the caller is actually studying surface before others, ahead
   /// of raw recency.
   async getPublicNotes(userId: string, query: NoteQueryDto) {
-    const { search, tag, page, limit } = query;
+    const { search, tag, authorIds, hasSummary, page, limit } = query;
     const skip = (page - 1) * limit;
 
     const where = {
       isPublic: true,
+      ...(authorIds && authorIds.length > 0 && { authorId: { in: authorIds } }),
+      ...(hasSummary !== undefined && { summary: hasSummary ? { not: null } : null }),
       ...(search && {
         OR: [
           { title:   { contains: search, mode: "insensitive" as const } },

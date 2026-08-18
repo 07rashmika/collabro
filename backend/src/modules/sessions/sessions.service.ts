@@ -7,6 +7,7 @@ import { notifyUsers }   from "./signaling/user-registry";
 import { SignalingMessageType, NotificationMessageType } from "./signaling/signaling.types";
 import { SummariesService } from "../summaries/summaries.service";
 import { TranscriptionClient } from "./transcription.client";
+import { getConnectedUserIds } from "../connections/connections.service";
 import {
   encryptSessionPassword,
   decryptSessionPassword,
@@ -104,6 +105,28 @@ export class SessionsService {
     private readonly summariesService: SummariesService,
     private readonly transcriptionClient: TranscriptionClient
   ) {}
+
+  /// Persists a SESSION_INVITE notification for each newly-added participant
+  /// (mirrors the CONNECTION_REQUEST/CONNECTION_ACCEPTED pattern in
+  /// connections.service.ts) and pings both the live "go refetch" channels —
+  /// SESSIONS_CHANGED so the Sessions tab updates, NOTIFICATIONS_CHANGED so
+  /// the notification bell does too. The persisted row is what makes the
+  /// invite discoverable even if the recipient's socket was disconnected at
+  /// the moment this fired; the ws pings just make it feel instant when it's
+  /// connected.
+  private async notifyInvitedParticipants(sessionId: string, actorId: string, participantIds: string[]) {
+    if (participantIds.length === 0) return;
+    await this.prisma.client.notification.createMany({
+      data: participantIds.map((recipientId) => ({
+        recipientId,
+        actorId,
+        type: "SESSION_INVITE" as const,
+        sessionId,
+      })),
+    });
+    notifyUsers(participantIds, { type: NotificationMessageType.SESSIONS_CHANGED });
+    notifyUsers(participantIds, { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+  }
 
   /// Which of `sessionIds` the user has bookmarked — batched into one query
   /// per list response instead of N.
@@ -254,7 +277,7 @@ export class SessionsService {
 
     // The creator already has this fresh state locally — only the invitees
     // need telling that a session just appeared for them.
-    notifyUsers(dto.participantIds, { type: NotificationMessageType.SESSIONS_CHANGED });
+    await this.notifyInvitedParticipants(session.id, userId, dto.participantIds);
 
     return { ...toPublicSession(session, userId), savedByMe: false };
   }
@@ -404,11 +427,21 @@ export class SessionsService {
       select: { skills: { select: { skillId: true } } },
     });
     const mySkillIds = new Set(myProfile?.skills.map((s) => s.skillId) ?? []);
+    // A connection's public sessions are always worth surfacing, regardless
+    // of skill overlap — connecting is a stronger relevance signal than a
+    // shared tag.
+    const connectedUserIds = await getConnectedUserIds(this.prisma, userId);
 
+    // `status: "ACTIVE"` alone already means "still joinable" — the
+    // periodic sweep in sessions.routes.ts (expireStaleSessions) flips a
+    // session to CLOSED as soon as it's past its type's TTL from
+    // scheduledAt/createdAt, so there's no separate need to require
+    // `scheduledAt` be in the future here. Requiring that on top used to
+    // hide a session as soon as its scheduled start time passed, even
+    // while it was still ongoing and perfectly joinable.
     const baseWhere = {
       isPublic:    true,
       status:      "ACTIVE" as const,
-      scheduledAt: { gte: new Date() },
       createdBy:   { not: userId },
       participants: { none: { userId } },
     };
@@ -418,11 +451,17 @@ export class SessionsService {
     if (search) {
       where = { ...baseWhere, title: { contains: search, mode: "insensitive" as const } };
     } else {
-      if (mySkillIds.size === 0) {
+      if (mySkillIds.size === 0 && connectedUserIds.length === 0) {
         return { sessions: [], meta: { total: 0, page, limit, totalPages: 0 } };
       }
 
-      where = { ...baseWhere, tags: { some: { skillId: { in: [...mySkillIds] } } } };
+      where = {
+        ...baseWhere,
+        OR: [
+          ...(mySkillIds.size > 0 ? [{ tags: { some: { skillId: { in: [...mySkillIds] } } } }] : []),
+          ...(connectedUserIds.length > 0 ? [{ createdBy: { in: connectedUserIds } }] : []),
+        ],
+      };
     }
 
     // Ranking needs the full matching set scored before it can be paged, so
@@ -434,10 +473,15 @@ export class SessionsService {
       orderBy: { scheduledAt: "asc" },
     });
 
+    const connectedSet = new Set(connectedUserIds);
+    // +1000 pushes every connection's session above pure skill-matches,
+    // then tag overlap breaks ties within each tier.
     const scored = matches
       .map((session) => ({
         session,
-        score: session.tags.filter((t) => mySkillIds.has(t.skill.id)).length,
+        score:
+          session.tags.filter((t) => mySkillIds.has(t.skill.id)).length +
+          (connectedSet.has(session.creator.id) ? 1000 : 0),
       }))
       .sort((a, b) => b.score - a.score);
 
@@ -449,6 +493,22 @@ export class SessionsService {
       sessions: sessions.map((s) => ({ ...toPublicSession(s, userId), savedByMe: saved.has(s.id) })),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
+  }
+
+  /// A specific user's public, still-joinable sessions — feeds their
+  /// profile viewer screen. Unlike discoverPublicSessions this has no
+  /// skill-based ranking (only one author's sessions to show) and doesn't
+  /// exclude the viewer's own sessions (viewing your own profile should
+  /// still show them).
+  async getPublicSessionsByUser(authorId: string, viewerId: string) {
+    const sessions = await this.prisma.client.session.findMany({
+      where: { createdBy: authorId, isPublic: true, status: "ACTIVE" },
+      select: sessionSelect,
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    const saved = await this.savedSessionIds(viewerId, sessions.map((s) => s.id));
+    return sessions.map((s) => ({ ...toPublicSession(s, viewerId), savedByMe: saved.has(s.id) }));
   }
 
   async saveSession(userId: string, sessionId: string) {
@@ -521,7 +581,7 @@ export class SessionsService {
       },
     });
 
-    notifyUsers([participantId], { type: NotificationMessageType.SESSIONS_CHANGED });
+    await this.notifyInvitedParticipants(sessionId, userId, [participantId]);
     return created;
   }
 
@@ -641,12 +701,12 @@ export class SessionsService {
   /// uses (see SummariesService / ml-service).
   async generateSummary(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where:   { id: sessionId },
-      include: { participants: true },
+      where:  { id: sessionId },
+      select: sessionSelect,
     });
 
     if (!session) throw new AppError("Session not found", 404);
-    if (!session.participants.some((p) => p.userId === userId)) {
+    if (!session.participants.some((p) => p.user.id === userId)) {
       throw new AppError("You are not a participant of this session", 403);
     }
 
@@ -658,9 +718,16 @@ export class SessionsService {
     if (messages.length === 0) {
       // A VIDEO session has no chat to fall back to — its recap comes from
       // processRecording() instead, kicked off by the call's recorder right
-      // after hangup. If someone opens the summary dialog before that
-      // upload finishes, say so rather than the generic "no messages".
+      // after hangup. That may well have already finished (the session
+      // already carries its summary) even though `messages` is empty — only
+      // actually still-processing sessions should hit the 409 below, so a
+      // caller polling/regenerating after the first attempt isn't stuck
+      // re-throwing "still processing" forever once it's actually done.
       if (session.type === "VIDEO") {
+        if (session.summary) {
+          const saved = await this.savedSessionIds(userId, [sessionId]);
+          return { ...toPublicSession(session, userId), savedByMe: saved.has(sessionId) };
+        }
         throw new AppError("The call recap is still processing — check back in a moment", 409);
       }
       throw new AppError("No messages to summarize yet", 400);
@@ -713,6 +780,7 @@ export class SessionsService {
     }
 
     try {
+      console.log(`[Recording] Transcribing ${files.length} track(s) for session ${sessionId}`);
       const earliestStart = Math.min(...trackMeta.map((t) => new Date(t.startedAt).getTime()));
 
       const labeledSegments = await Promise.all(
@@ -720,6 +788,9 @@ export class SessionsService {
           const meta = trackMeta[i]!;
           const offsetSeconds = (new Date(meta.startedAt).getTime() - earliestStart) / 1000;
           const segments = await this.transcriptionClient.transcribe(file.path, file.mimetype);
+          console.log(
+            `[Recording] Track "${meta.label}" (${file.mimetype}, ${file.size} bytes) → ${segments.length} segment(s)`
+          );
           return segments.map((s) => ({ start: s.start + offsetSeconds, label: meta.label, text: s.text.trim() }));
         })
       );
@@ -729,12 +800,15 @@ export class SessionsService {
         .filter((s) => s.text.length > 0)
         .sort((a, b) => a.start - b.start);
 
+      console.log(`[Recording] Merged transcript: ${merged.length} segment(s) for session ${sessionId}`);
       if (merged.length === 0) {
         throw new AppError("No speech detected in the recording", 400);
       }
 
       const transcript = merged.map((s) => `${s.label}: ${s.text}`).join("\n");
+      console.log(`[Recording] Summarizing session ${sessionId} (${transcript.length} chars of transcript)`);
       const summary = await this.summariesService.summarize(transcript, "dialogue");
+      console.log(`[Recording] Summary ready for session ${sessionId}`);
 
       const updated = await this.prisma.client.session.update({
         where:  { id: sessionId },
@@ -744,6 +818,9 @@ export class SessionsService {
 
       const saved = await this.savedSessionIds(userId, [sessionId]);
       return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
+    } catch (err) {
+      console.error(`[Recording] Processing failed for session ${sessionId}:`, err);
+      throw err;
     } finally {
       cleanup();
     }

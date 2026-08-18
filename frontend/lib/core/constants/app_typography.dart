@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 
-/// Text styles, exposed as a [ThemeExtension] so their colors follow the
-/// active [AppColors] palette (dark or light). Access via
-/// `AppTypography.of(context)` inside widgets.
 class AppTypography extends ThemeExtension<AppTypography> {
   static const String fontFamily = 'Inter';
 
@@ -47,7 +44,7 @@ class AppTypography extends ThemeExtension<AppTypography> {
       displayLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 36,
-        fontWeight: FontWeight.w800,
+        fontWeight: .w800,
         color: colors.textPrimary,
         height: 1.15,
         letterSpacing: -0.5,
@@ -55,7 +52,7 @@ class AppTypography extends ThemeExtension<AppTypography> {
       displayMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 28,
-        fontWeight: FontWeight.w700,
+        fontWeight: .w700,
         color: colors.textPrimary,
         height: 1.2,
         letterSpacing: -0.3,
@@ -63,70 +60,70 @@ class AppTypography extends ThemeExtension<AppTypography> {
       headlineLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 24,
-        fontWeight: FontWeight.w700,
+        fontWeight: .w700,
         color: colors.textPrimary,
         height: 1.25,
       ),
       headlineMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 20,
-        fontWeight: FontWeight.w700,
+        fontWeight: .w700,
         color: colors.textPrimary,
         height: 1.3,
       ),
       headlineSmall: TextStyle(
         fontFamily: fontFamily,
         fontSize: 17,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.35,
       ),
       titleLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.4,
       ),
       titleMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 14,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.4,
       ),
       titleSmall: TextStyle(
         fontFamily: fontFamily,
         fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.4,
       ),
       bodyLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 16,
-        fontWeight: FontWeight.w400,
+        fontWeight: .w400,
         color: colors.textSecondary,
         height: 1.5,
       ),
       bodyMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 14,
-        fontWeight: FontWeight.w400,
+        fontWeight: .w400,
         color: colors.textSecondary,
         height: 1.5,
       ),
       bodySmall: TextStyle(
         fontFamily: fontFamily,
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: .w400,
         color: colors.textSecondary,
         height: 1.5,
       ),
       labelLarge: TextStyle(
         fontFamily: fontFamily,
         fontSize: 15,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.3,
         letterSpacing: 0.1,
@@ -134,29 +131,29 @@ class AppTypography extends ThemeExtension<AppTypography> {
       labelMedium: TextStyle(
         fontFamily: fontFamily,
         fontSize: 13,
-        fontWeight: FontWeight.w600,
+        fontWeight: .w600,
         color: colors.textPrimary,
         height: 1.3,
       ),
       labelSmall: TextStyle(
         fontFamily: fontFamily,
         fontSize: 11,
-        fontWeight: FontWeight.w500,
+        fontWeight: .w500,
         color: colors.textSecondary,
         height: 1.3,
       ),
       caption: TextStyle(
         fontFamily: fontFamily,
         fontSize: 11,
-        fontWeight: FontWeight.w400,
+        fontWeight: .w400,
         color: colors.textTertiary,
         height: 1.4,
       ),
     );
   }
 
-  static final AppTypography dark = AppTypography.from(AppColors.dark);
-  static final AppTypography light = AppTypography.from(AppColors.light);
+  static final AppTypography dark = .from(AppColors.dark);
+  static final AppTypography light = .from(AppColors.light);
 
   static AppTypography of(BuildContext context) =>
       Theme.of(context).extension<AppTypography>() ?? dark;

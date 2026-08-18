@@ -23,7 +23,7 @@ class SecondaryButton extends StatelessWidget {
     final typography = AppTypography.of(context);
     return SizedBox(
       height: AppSpacing.buttonHeightMd,
-      width: double.infinity,
+      width: .infinity,
       child: OutlinedButton(
         onPressed: isLoading ? null : onPressed,
         style: OutlinedButton.styleFrom(
@@ -43,7 +43,7 @@ class SecondaryButton extends StatelessWidget {
                 ),
               )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: .center,
                 children: [
                   if (leadingIcon != null) ...[
                     Icon(leadingIcon, size: AppSpacing.iconMd),

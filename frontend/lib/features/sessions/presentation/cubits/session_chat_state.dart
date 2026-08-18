@@ -28,8 +28,6 @@ final class ChatError extends SessionChatState {
   List<Object?> get props => [message];
 }
 
-/// The session was permanently ended (by its creator, or auto-closed once
-/// no one else was left) while this chat was open.
 final class ChatSessionEnded extends SessionChatState {
   const ChatSessionEnded();
 }

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/network/api_config.dart';
 import 'package:frontend/features/notes/domain/entities/note_photo.dart';
+import 'package:frontend/features/notes/presentation/components/note_photo_add_tile.dart';
 
-/// Grid of a note's attached photos. In editable mode each thumbnail gets a
-/// delete overlay and a trailing "add" tile is appended; in read-only mode
-/// (note detail) tapping a thumbnail opens it full-screen instead.
 class NotePhotoGallery extends StatelessWidget {
   final List<NotePhoto> photos;
   final bool editable;
@@ -30,13 +27,16 @@ class NotePhotoGallery extends StatelessWidget {
       barrierColor: Colors.black87,
       builder: (dialogContext) => Dialog(
         backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(AppSpacing.lg),
+        insetPadding: const .all(AppSpacing.lg),
         child: Stack(
-          alignment: Alignment.topRight,
+          alignment: .topRight,
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-              child: Image.network('${ApiConfig.baseUrl}${photo.url}', fit: BoxFit.contain),
+              borderRadius: .circular(AppSpacing.radiusLg),
+              child: Image.network(
+                '${ApiConfig.baseUrl}${photo.url}',
+                fit: .contain,
+              ),
             ),
             IconButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -64,23 +64,26 @@ class NotePhotoGallery extends StatelessWidget {
       ),
       itemBuilder: (context, index) {
         if (editable && index == photos.length) {
-          return _AddTile(onTap: isBusy ? null : onAdd, isBusy: isBusy);
+          return NotePhotoAddTile(onTap: isBusy ? null : onAdd, isBusy: isBusy);
         }
 
         final photo = photos[index];
         return ClipRRect(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+          borderRadius: .circular(AppSpacing.radiusMd),
           child: Stack(
-            fit: StackFit.expand,
+            fit: .expand,
             children: [
               GestureDetector(
                 onTap: () => _openFullScreen(context, photo),
                 child: Image.network(
                   '${ApiConfig.baseUrl}${photo.url}',
-                  fit: BoxFit.cover,
+                  fit: .cover,
                   errorBuilder: (context, error, stackTrace) => ColoredBox(
                     color: colors.backgroundCard,
-                    child: Icon(Icons.broken_image_outlined, color: colors.textTertiary),
+                    child: Icon(
+                      Icons.broken_image_outlined,
+                      color: colors.textTertiary,
+                    ),
                   ),
                 ),
               ),
@@ -101,38 +104,6 @@ class NotePhotoGallery extends StatelessWidget {
           ),
         );
       },
-    );
-  }
-}
-
-class _AddTile extends StatelessWidget {
-  final VoidCallback? onTap;
-  final bool isBusy;
-
-  const _AddTile({required this.onTap, required this.isBusy});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = AppColors.of(context);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-      child: Container(
-        decoration: BoxDecoration(
-          color: colors.backgroundCard,
-          borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
-          border: Border.all(color: colors.border),
-        ),
-        child: Center(
-          child: isBusy
-              ? SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary),
-                )
-              : Icon(Icons.add_photo_alternate_outlined, color: colors.textSecondary),
-        ),
-      ),
     );
   }
 }

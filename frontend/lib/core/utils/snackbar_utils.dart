@@ -1,9 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/constants/error_messages.dart';
 
-/// Shows a lightweight snackbar for features that don't exist yet, so
-/// tapping unbuilt affordances is honest instead of dead silent or faked.
 void showComingSoonSnackBar(BuildContext context, String feature) {
+  ScaffoldMessenger.of(
+    context,
+  ).showSnackBar(SnackBar(content: Text('$feature is coming soon.')));
+}
+
+void showErrorSnackBar(BuildContext context) {
+  final colors = AppColors.of(context);
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text('$feature is coming soon.')),
+    SnackBar(
+      content: const Text(genericErrorMessage),
+      backgroundColor: colors.error,
+    ),
   );
 }

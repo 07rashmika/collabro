@@ -70,9 +70,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
 
   int _searchToken = 0;
 
-  /// Live suggestions from the external skills search API as the user
-  /// types. Guarded by [_searchToken] so a slow, stale request can't
-  /// overwrite results from whatever's typed by the time it resolves.
   Future<void> searchSkills(String query) async {
     final current = state;
     if (current is! ProfileSetupReady) return;
@@ -104,8 +101,7 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
       if (token != _searchToken) return;
       final latest = state;
       if (latest is! ProfileSetupReady) return;
-      // Best-effort — a failed remote search just means no bonus
-      // suggestions, not a blocking error like catalogError.
+
       emit(
         latest.copyWith(
           remoteSkillSuggestions: const [],
@@ -115,9 +111,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
     }
   }
 
-  /// Typed a skill that isn't in the catalog — create it server-side (or
-  /// find a case-insensitive match), add it to the local catalog so it's
-  /// available as a future suggestion, and select it.
   Future<void> createAndSelectSkill(String name) async {
     final current = state;
     if (current is! ProfileSetupReady) return;
@@ -153,8 +146,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
     }
   }
 
-  /// Tapping an already-selected skill chip cycles its level: Beginner ->
-  /// Intermediate -> Advanced -> removed.
   void cycleSkillLevel(String skillId) {
     final current = state;
     if (current is! ProfileSetupReady) return;
@@ -218,7 +209,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
     }
   }
 
-  /// Tapping an already-selected study-area chip removes it.
   void removeStudyArea(String studyAreaId) {
     final current = state;
     if (current is! ProfileSetupReady) return;
@@ -268,11 +258,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
               .toList(),
         );
       } on ApiException catch (e) {
-        // 409 means a profile row already exists — e.g. a returning user
-        // who started onboarding before but never finished it (missing a
-        // skill, study area, or interest). Sign-in sends them back here
-        // since their profile is incomplete, but there's nothing left to
-        // *create*: fill in the existing row instead of failing outright.
         if (e.statusCode != 409) rethrow;
         await profilesRepo.updateProfile(
           bio: bio,

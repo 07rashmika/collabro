@@ -24,7 +24,7 @@ class DashboardSectionHeader extends StatelessWidget {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      mainAxisAlignment: .spaceBetween,
       children: [
         Row(
           children: [

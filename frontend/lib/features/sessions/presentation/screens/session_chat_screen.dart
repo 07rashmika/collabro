@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:go_router/go_router.dart';
-
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/constants/error_messages.dart';
+import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/sessions/data/services/chat_socket_service.dart';
 import 'package:frontend/features/sessions/data/services/signaling_service.dart';
@@ -17,10 +17,8 @@ import 'package:frontend/features/sessions/presentation/components/session_info_
 import 'package:frontend/features/sessions/presentation/components/session_summary_dialog.dart';
 import 'package:frontend/features/sessions/presentation/cubits/session_chat_cubit.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+import 'package:go_router/go_router.dart';
 
-/// Pure chat UI for a TEXT session, backed by [SessionChatCubit]. This is
-/// the sole owner of its [SignalingService] (no video call sharing it), so
-/// it constructs and disposes one directly.
 class SessionChatScreen extends StatefulWidget {
   final StudySession session;
 
@@ -108,10 +106,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: colors.backgroundCard,
-        title: Text(
-          'End session permanently?',
-          style: typography.titleMedium,
-        ),
+        title: Text('End session permanently?', style: typography.titleMedium),
         content: Text(
           'This closes the session for everyone and can\'t be undone.',
           style: typography.bodyMedium,
@@ -123,10 +118,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(
-              'End Session',
-              style: TextStyle(color: colors.error),
-            ),
+            child: Text('End Session', style: TextStyle(color: colors.error)),
           ),
         ],
       ),
@@ -157,13 +149,16 @@ class _SessionChatViewState extends State<_SessionChatView> {
       backgroundColor: colors.backgroundDark,
       endDrawer: BlocBuilder<SessionChatCubit, SessionChatState>(
         builder: (context, state) {
-          final currentUserId = state is ChatConnected ? state.currentUserId : null;
+          final currentUserId = state is ChatConnected
+              ? state.currentUserId
+              : null;
           final isCreator = currentUserId == widget.session.creatorId;
           return SessionInfoPanel(
             session: widget.session,
             currentUserId: currentUserId,
-            onEndSession:
-                isCreator && !_isClosed ? () => _confirmEndSession(context) : null,
+            onEndSession: isCreator && !_isClosed
+                ? () => _confirmEndSession(context)
+                : null,
           );
         },
       ),
@@ -173,44 +168,32 @@ class _SessionChatViewState extends State<_SessionChatView> {
             if (state is SessionSaved) {
               await maybeOfferSessionSummary(context, state.session);
               if (!context.mounted) return;
-              // Not context.pop(): the "End Session Permanently" button
-              // lives inside the still-open end drawer at this point, and a
-              // plain pop closes that drawer rather than the route, leaving
-              // the now-closed session on screen. Go straight to Sessions.
               context.go(AppRoutes.sessions);
             } else if (state is SessionsError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: colors.error,
-                ),
-              );
+              showErrorSnackBar(context);
             }
           },
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(
+                padding: const .symmetric(
                   horizontal: AppSpacing.screenHorizontal,
                 ),
                 child: Row(
                   children: [
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: colors.textPrimary,
-                      ),
+                      icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                     ),
                     Expanded(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: .start,
                         children: [
                           Text(
                             widget.session.title,
                             style: typography.titleLarge,
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            overflow: .ellipsis,
                           ),
                           Text(
                             '${widget.session.participants.length} participants'
@@ -220,26 +203,11 @@ class _SessionChatViewState extends State<_SessionChatView> {
                         ],
                       ),
                     ),
-                    BlocBuilder<SessionChatCubit, SessionChatState>(
-                      builder: (context, state) {
-                        final currentUserId =
-                            state is ChatConnected ? state.currentUserId : null;
-                        final isCreator = currentUserId == widget.session.creatorId;
-                        if (!isCreator || _isClosed) return const SizedBox.shrink();
-                        return IconButton(
-                          onPressed: () => _confirmEndSession(context),
-                          tooltip: 'End session',
-                          icon: Icon(Icons.stop_circle_outlined, color: colors.error),
-                        );
-                      },
-                    ),
                     IconButton(
-                      onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+                      onPressed: () =>
+                          _scaffoldKey.currentState?.openEndDrawer(),
                       tooltip: 'Session info',
-                      icon: Icon(
-                        Icons.more_vert,
-                        color: colors.textPrimary,
-                      ),
+                      icon: Icon(Icons.more_vert, color: colors.textPrimary),
                     ),
                   ],
                 ),
@@ -250,12 +218,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                   listener: (context, state) async {
                     if (state is ChatConnected) _scrollToBottom();
                     if (state is ChatError) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(state.message),
-                          backgroundColor: colors.error,
-                        ),
-                      );
+                      showErrorSnackBar(context);
                     }
                     if (state is ChatSessionEnded) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -274,17 +237,15 @@ class _SessionChatViewState extends State<_SessionChatView> {
                   builder: (context, state) {
                     if (state is ChatConnecting) {
                       return Center(
-                        child: CircularProgressIndicator(
-                          color: colors.primary,
-                        ),
+                        child: CircularProgressIndicator(color: colors.primary),
                       );
                     }
 
                     if (state is ChatError) {
                       return Center(
                         child: Text(
-                          state.message,
-                          textAlign: TextAlign.center,
+                          genericErrorMessage,
+                          textAlign: .center,
                           style: typography.bodySmall,
                         ),
                       );
@@ -306,7 +267,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
 
                     return ListView.builder(
                       controller: _scrollController,
-                      padding: const EdgeInsets.symmetric(
+                      padding: const .symmetric(
                         horizontal: AppSpacing.screenHorizontal,
                       ),
                       itemCount: connected.messages.length,
@@ -330,7 +291,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
               ),
               if (!_isClosed)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(
+                  padding: const .fromLTRB(
                     AppSpacing.screenHorizontal,
                     AppSpacing.sm,
                     AppSpacing.screenHorizontal,
@@ -344,7 +305,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
                           style: typography.bodyLarge.copyWith(
                             color: colors.textPrimary,
                           ),
-                          textInputAction: TextInputAction.send,
+                          textInputAction: .send,
                           onSubmitted: (_) => _send(),
                           decoration: InputDecoration(
                             hintText: 'Type a message...',
@@ -353,33 +314,21 @@ class _SessionChatViewState extends State<_SessionChatView> {
                             ),
                             filled: true,
                             fillColor: colors.backgroundInput,
-                            contentPadding: const EdgeInsets.symmetric(
+                            contentPadding: const .symmetric(
                               horizontal: AppSpacing.lg,
                               vertical: AppSpacing.md,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSpacing.radiusFull,
-                              ),
-                              borderSide: BorderSide(
-                                color: colors.border,
-                              ),
+                              borderRadius: .circular(AppSpacing.radiusFull),
+                              borderSide: BorderSide(color: colors.border),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSpacing.radiusFull,
-                              ),
-                              borderSide: BorderSide(
-                                color: colors.border,
-                              ),
+                              borderRadius: .circular(AppSpacing.radiusFull),
+                              borderSide: BorderSide(color: colors.border),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppSpacing.radiusFull,
-                              ),
-                              borderSide: BorderSide(
-                                color: colors.primary,
-                              ),
+                              borderRadius: .circular(AppSpacing.radiusFull),
+                              borderSide: BorderSide(color: colors.primary),
                             ),
                           ),
                         ),

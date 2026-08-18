@@ -16,11 +16,11 @@ class PageContent extends StatelessWidget {
     return SingleChildScrollView(
       physics: const NeverScrollableScrollPhysics(),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: .start,
         children: [
           FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
+            fit: .scaleDown,
+            alignment: .centerLeft,
             child: RichText(
               text: TextSpan(
                 children: [
@@ -47,7 +47,7 @@ class PageContent extends StatelessWidget {
             page.body,
             style: typography.bodyMedium,
             maxLines: 3,
-            overflow: TextOverflow.ellipsis,
+            overflow: .ellipsis,
           ),
           const SizedBox(height: AppSpacing.sm),
           Row(
@@ -62,7 +62,7 @@ class PageContent extends StatelessWidget {
                 child: Text(
                   page.badge,
                   style: typography.caption,
-                  overflow: TextOverflow.ellipsis,
+                  overflow: .ellipsis,
                 ),
               ),
             ],
