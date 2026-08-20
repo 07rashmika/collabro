@@ -1,25 +1,39 @@
+import fs from "fs/promises";
+import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
+import { SummariesService } from "../summaries/summaries.service";
+import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
 import { CreateNoteDto, UpdateNoteDto, NoteQueryDto } from "./notes.schema";
 
 const noteSelect = {
   id: true,
   title: true,
   content: true,
+  summary: true,
   tags: true,
   isPublic: true,
   createdAt: true,
   updatedAt: true,
   author: {
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarUrl: true },
+  },
+  photos: {
+    select: { id: true, url: true, createdAt: true },
+    orderBy: { createdAt: "asc" as const },
   },
 } as const;
 
+const UPLOADS_ROOT = path.join(__dirname, "../../../uploads");
+
 export class NotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly summariesService: SummariesService
+  ) {}
 
   async getMyNotes(userId: string, query: NoteQueryDto) {
-    const { search, tag, page, limit } = query;
+    const { search, tag, hasSummary, page, limit } = query;
     const skip = (page - 1) * limit;
 
     const where = {
@@ -31,6 +45,7 @@ export class NotesService {
         ],
       }),
       ...(tag && { tags: { has: tag } }),
+      ...(hasSummary !== undefined && { summary: hasSummary ? { not: null } : null }),
     };
 
     const [notes, total] = await Promise.all([
@@ -50,31 +65,68 @@ export class NotesService {
     };
   }
 
-  async getPublicNotes(query: NoteQueryDto) {
-    const { search, tag, page, limit } = query;
+  /// Public notes ranked by how many of a note's free-text tags match the
+  /// caller's own skill or study-area names (case-insensitive) — notes on
+  /// subjects the caller is actually studying surface before others, ahead
+  /// of raw recency.
+  async getPublicNotes(userId: string, query: NoteQueryDto) {
+    const { search, tag, authorIds, hasSummary, page, limit } = query;
     const skip = (page - 1) * limit;
+
+    // A search matching a skill or study area name also pulls in notes
+    // tagged with it, even if the title/content don't mention it —
+    // matched against the tags a note actually has (exact name, so a tag
+    // spelled differently from the catalog name won't match here, though
+    // it can still match via the title/content search above).
+    const { skills, studyAreas } = search
+      ? await findMatchingCatalogTerms(this.prisma, search)
+      : { skills: [], studyAreas: [] };
+    const matchingTagNames = [...skills.map((s) => s.name), ...studyAreas.map((s) => s.name)];
 
     const where = {
       isPublic: true,
+      ...(authorIds && authorIds.length > 0 && { authorId: { in: authorIds } }),
+      ...(hasSummary !== undefined && { summary: hasSummary ? { not: null } : null }),
       ...(search && {
         OR: [
           { title:   { contains: search, mode: "insensitive" as const } },
           { content: { contains: search, mode: "insensitive" as const } },
+          ...(matchingTagNames.length > 0 ? [{ tags: { hasSome: matchingTagNames } }] : []),
         ],
       }),
       ...(tag && { tags: { has: tag } }),
     };
 
-    const [notes, total] = await Promise.all([
-      this.prisma.client.note.findMany({
-        where,
-        select: noteSelect,
-        orderBy: { updatedAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      this.prisma.client.note.count({ where }),
+    const myProfile = await this.prisma.client.profile.findUnique({
+      where:  { userId },
+      select: {
+        skills:     { select: { skill: { select: { name: true } } } },
+        studyAreas: { select: { studyArea: { select: { name: true } } } },
+      },
+    });
+    const myTerms = new Set([
+      ...(myProfile?.skills.map((s) => s.skill.name.toLowerCase()) ?? []),
+      ...(myProfile?.studyAreas.map((s) => s.studyArea.name.toLowerCase()) ?? []),
     ]);
+
+    // Ranking needs the full matching set scored before it can be paged, so
+    // this fetches everything the where-clause allows rather than a single
+    // DB page — fine at this app's scale (mirrors MatchingService).
+    const matches = await this.prisma.client.note.findMany({
+      where,
+      select:  noteSelect,
+      orderBy: { updatedAt: "desc" },
+    });
+
+    const scored = matches
+      .map((note) => ({
+        note,
+        score: note.tags.filter((t) => myTerms.has(t.toLowerCase())).length,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const total = scored.length;
+    const notes = scored.slice(skip, skip + limit).map((s) => s.note);
 
     return {
       notes,
@@ -106,10 +158,17 @@ export class NotesService {
         content:  dto.content,
         tags:     dto.tags ?? [],
         isPublic: dto.isPublic,
+        summary:  dto.summary,
         authorId: userId,
       },
       select: noteSelect,
     });
+  }
+
+  /// Summarizes freeform text ahead of note creation — no note row exists
+  /// yet, so unlike [generateSummary] this doesn't touch the database.
+  async summarizeText(content: string) {
+    return this.summariesService.summarize(content, "notes");
   }
 
   async updateNote(noteId: string, userId: string, dto: UpdateNoteDto) {
@@ -133,6 +192,28 @@ export class NotesService {
         ...(dto.tags     !== undefined && { tags:     dto.tags }),
         ...(dto.isPublic !== undefined && { isPublic: dto.isPublic }),
       },
+      select: noteSelect,
+    });
+  }
+
+  async generateSummary(noteId: string, userId: string) {
+    const note = await this.prisma.client.note.findUnique({
+      where: { id: noteId },
+    });
+
+    if (!note) {
+      throw new AppError("Note not found", 404);
+    }
+
+    if (note.authorId !== userId) {
+      throw new AppError("You can only summarize your own notes", 403);
+    }
+
+    const summary = await this.summariesService.summarize(note.content, "notes");
+
+    return this.prisma.client.note.update({
+      where: { id: noteId },
+      data:  { summary },
       select: noteSelect,
     });
   }
@@ -193,5 +274,59 @@ export class NotesService {
     });
 
     return [...new Set(notes.flatMap((n) => n.tags))].sort();
+  }
+
+  async addPhotos(noteId: string, userId: string, files: Express.Multer.File[]) {
+    const note = await this.prisma.client.note.findUnique({
+      where: { id: noteId },
+    });
+
+    if (!note) {
+      throw new AppError("Note not found", 404);
+    }
+
+    if (note.authorId !== userId) {
+      throw new AppError("You can only add photos to your own notes", 403);
+    }
+
+    await this.prisma.client.notePhoto.createMany({
+      data: files.map((file) => ({
+        noteId,
+        url: `/uploads/notes/${file.filename}`,
+      })),
+    });
+
+    return this.prisma.client.note.findUnique({
+      where: { id: noteId },
+      select: noteSelect,
+    });
+  }
+
+  async deletePhoto(noteId: string, photoId: string, userId: string) {
+    const photo = await this.prisma.client.notePhoto.findUnique({
+      where: { id: photoId },
+      include: { note: true },
+    });
+
+    if (!photo || photo.noteId !== noteId) {
+      throw new AppError("Photo not found", 404);
+    }
+
+    if (photo.note.authorId !== userId) {
+      throw new AppError("You can only delete photos from your own notes", 403);
+    }
+
+    await this.prisma.client.notePhoto.delete({ where: { id: photoId } });
+
+    const filePath = path.join(UPLOADS_ROOT, "notes", path.basename(photo.url));
+    await fs.unlink(filePath).catch(() => {
+      // File already gone (or never existed) — the DB row is the source of
+      // truth, so a missing file on disk shouldn't fail the request.
+    });
+
+    return this.prisma.client.note.findUnique({
+      where: { id: noteId },
+      select: noteSelect,
+    });
   }
 }

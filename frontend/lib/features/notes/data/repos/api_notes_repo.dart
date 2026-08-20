@@ -1,0 +1,241 @@
+import 'package:dio/dio.dart';
+
+import '../../../../core/network/api_client.dart';
+import '../../../../core/network/api_exception.dart';
+import '../../domain/entities/note.dart';
+import '../../domain/repos/notes_repo.dart';
+import '../notes_endpoints.dart';
+
+class ApiNotesRepo implements NotesRepo {
+  final ApiClient apiClient;
+
+  ApiNotesRepo({required this.apiClient});
+
+  static final _summaryRequestOptions = Options(
+    sendTimeout: const Duration(seconds: 60),
+    receiveTimeout: const Duration(seconds: 60),
+  );
+
+  @override
+  Future<List<Note>> getMyNotes({
+    String? search,
+    bool? hasSummary,
+    int? limit,
+  }) async {
+    try {
+      final response = await apiClient.get(
+        NotesEndpoints.myNotes,
+        query: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (hasSummary != null) 'hasSummary': '$hasSummary',
+          if (limit != null) 'limit': '$limit',
+        },
+      );
+      final notes = (response.data['notes'] as List<dynamic>?) ?? [];
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching notes failed: $e');
+    }
+  }
+
+  @override
+  Future<List<Note>> getPublicNotes({
+    String? search,
+    String? tag,
+    List<String>? authorIds,
+    bool? hasSummary,
+  }) async {
+    try {
+      final response = await apiClient.get(
+        NotesEndpoints.public,
+        query: {
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (tag != null && tag.isNotEmpty) 'tag': tag,
+          if (authorIds != null && authorIds.isNotEmpty)
+            'authorIds': authorIds.join(','),
+          if (hasSummary != null) 'hasSummary': '$hasSummary',
+        },
+      );
+      final notes = (response.data['notes'] as List<dynamic>?) ?? [];
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching public notes failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> getNoteById(String id) async {
+    try {
+      final response = await apiClient.get(NotesEndpoints.byId(id));
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching note failed: $e');
+    }
+  }
+
+  @override
+  Future<List<Note>> getNotesByUser(String userId) async {
+    try {
+      final response = await apiClient.get(NotesEndpoints.byUser(userId));
+      final notes = (response.data as List<dynamic>?) ?? [];
+      return notes
+          .map((n) => Note.fromJson(n as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching user notes failed: $e');
+    }
+  }
+
+  @override
+  Future<String> summarizeText(String content) async {
+    try {
+      final response = await apiClient.post(
+        NotesEndpoints.summarizeDraft,
+        data: {'content': content},
+        options: _summaryRequestOptions,
+      );
+      return response.data['summary'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Generating summary failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> createNote({
+    required String title,
+    required String content,
+    List<String> tags = const [],
+    bool isPublic = false,
+    String? summary,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        NotesEndpoints.base,
+        data: {
+          'title': title,
+          'content': content,
+          'tags': tags,
+          'isPublic': isPublic,
+          'summary': ?summary,
+        },
+      );
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Creating note failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> updateNote(
+    String id, {
+    String? title,
+    String? content,
+    List<String>? tags,
+    bool? isPublic,
+  }) async {
+    try {
+      final response = await apiClient.patch(
+        NotesEndpoints.byId(id),
+        data: {
+          'title': ?title,
+          'content': ?content,
+          'tags': ?tags,
+          'isPublic': ?isPublic,
+        },
+      );
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Updating note failed: $e');
+    }
+  }
+
+  @override
+  Future<void> deleteNote(String id) async {
+    try {
+      await apiClient.delete(NotesEndpoints.byId(id));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Deleting note failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> toggleVisibility(String id) async {
+    try {
+      final response = await apiClient.patch(NotesEndpoints.visibility(id));
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Updating visibility failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> requestSummary(String id) async {
+    try {
+      final response = await apiClient.post(
+        NotesEndpoints.summary(id),
+        options: _summaryRequestOptions,
+      );
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Generating summary failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> uploadPhotos(String noteId, List<String> imagePaths) async {
+    try {
+      final formData = FormData.fromMap({
+        'photos': [
+          for (final path in imagePaths) await MultipartFile.fromFile(path),
+        ],
+      });
+      final response = await apiClient.post(
+        NotesEndpoints.photos(noteId),
+        data: formData,
+      );
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Uploading photos failed: $e');
+    }
+  }
+
+  @override
+  Future<Note> deletePhoto(String noteId, String photoId) async {
+    try {
+      final response = await apiClient.delete(
+        NotesEndpoints.photo(noteId, photoId),
+      );
+      return Note.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Deleting photo failed: $e');
+    }
+  }
+}

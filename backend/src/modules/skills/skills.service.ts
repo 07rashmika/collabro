@@ -1,5 +1,7 @@
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { CreateSkillDto, UpdateSkillDto } from "./skills.schema";
+import { CreateSkillDto, UpdateSkillDto, FindOrCreateSkillDto } from "./skills.schema";
+
+const SKILLS_API_URL = "https://api.apilayer.com/skills";
 
 export class SkillsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -118,6 +120,59 @@ export class SkillsService {
     }
 
     await this.prisma.client.skill.delete({ where: { id } });
+  }
+
+  /**
+   * Any authenticated student can call this (unlike createSkill, which is
+   * admin-only) — it's how the profile-setup skill picker lets a student
+   * type a skill that isn't in the catalog yet without needing an admin to
+   * pre-seed it. Case-insensitive dedupe so "python" and "Python" collapse
+   * to one row; category defaults to "General" since a student typing a
+   * skill name has no reason to also classify it.
+   */
+  async findOrCreateSkill(dto: FindOrCreateSkillDto) {
+    const name = dto.name.trim();
+
+    const existing = await this.prisma.client.skill.findFirst({
+      where: { name: { equals: name, mode: "insensitive" } },
+      select: { id: true, name: true, category: true, createdAt: true },
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    return this.prisma.client.skill.create({
+      data: { name, category: dto.category?.trim() || "General" },
+      select: { id: true, name: true, category: true, createdAt: true },
+    });
+  }
+
+  /**
+   * Live typeahead suggestions from the apilayer Skills API
+   * (https://marketplace.apilayer.com/skills-api) — a 70,000+ entry catalog,
+   * far broader than what any one deployment's local `Skill` table has been
+   * seeded with. Returns bare names; picking one still goes through
+   * `findOrCreateSkill` to materialize a local row with a real id.
+   */
+  async searchExternalSkills(query: string, count = 10) {
+    const apiKey = process.env.SKILLS_API_KEY;
+    if (!apiKey) {
+      throw new Error("Skill search is not configured on this server");
+    }
+
+    const url = new URL(SKILLS_API_URL);
+    url.searchParams.set("q", query);
+    url.searchParams.set("count", String(count));
+
+    const response = await fetch(url, { headers: { apikey: apiKey } });
+    if (!response.ok) {
+      throw new Error(`Skill search failed (${response.status})`);
+    }
+
+    const results = (await response.json()) as unknown;
+    if (!Array.isArray(results)) return [];
+    return results.filter((r): r is string => typeof r === "string");
   }
 
   async getCategories() {

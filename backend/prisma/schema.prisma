@@ -15,16 +15,26 @@ model User {
   id           String         @id @default(cuid())
   name         String
   email        String         @unique
-  passwordHash String
+  passwordHash String?
+  googleId     String?        @unique
   role          Role           @default(STUDENT)
+  avatarUrl    String?
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   profile       Profile?
   notes         Note[]
   createdSessions      Session[]            @relation("CreatedSessions")
   sessionParticipants  SessionParticipant[]
   messages             Message[]
+  savedSessions        SavedSession[]
+  sentConnections      Connection[]         @relation("SentConnections")
+  receivedConnections  Connection[]         @relation("ReceivedConnections")
+  sentNotifications    Notification[]       @relation("SentNotifications")
+  receivedNotifications Notification[]      @relation("ReceivedNotifications")
 }
 
 model RefreshToken {
@@ -36,24 +46,54 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
+/// Backs the 3-step "forgot password" flow: a 6-digit code is emailed
+/// (codeHash), then exchanged for an opaque reset-session token once
+/// verified correct (resetTokenHash, verifiedAt) — only that token, not the
+/// code, is accepted by the final set-new-password step. Only hashes are
+/// ever stored — see common/utils/password-reset-code.util.ts. `attempts`
+/// locks out brute-forcing of the 6-digit space; `usedAt` marks the whole
+/// flow consumed so neither the code nor the reset token can be replayed.
+model PasswordResetToken {
+  id             String    @id @default(cuid())
+  codeHash       String
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts       Int       @default(0)
+  verifiedAt     DateTime?
+  resetTokenHash String?   @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
+}
+
 model Skill {
   id            String         @id @default(cuid())
   name          String         @unique
   category      String
   createdAt     DateTime       @default(now())
   profileSkills ProfileSkill[]
+  sessionTags   SessionTag[]
+}
+
+model StudyArea {
+  id                 String              @id @default(cuid())
+  name               String              @unique
+  createdAt          DateTime            @default(now())
+  profileStudyAreas  ProfileStudyArea[]
 }
 
 model Profile {
-  id           String         @id @default(cuid())
-  userId       String         @unique
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String              @id @default(cuid())
+  userId       String              @unique
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio          String?
   learningGoal String?
   teachGoal    String?
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  interests    String[]            @default([])
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   skills       ProfileSkill[]
+  studyAreas   ProfileStudyArea[]
 }
 
 model ProfileSkill {
@@ -67,16 +107,36 @@ model ProfileSkill {
   @@unique([profileId, skillId])
 }
 
+model ProfileStudyArea {
+  id          String    @id @default(cuid())
+  profileId   String
+  studyAreaId String
+  profile     Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  studyArea   StudyArea @relation(fields: [studyAreaId], references: [id])
+
+  @@unique([profileId, studyAreaId])
+}
+
 model Note {
-  id        String   @id @default(cuid())
+  id        String      @id @default(cuid())
   title     String
   content   String
+  summary   String?     // AI generated summary — filled later
   tags      String[]
-  isPublic  Boolean  @default(false)
+  isPublic  Boolean     @default(false)
   authorId  String
-  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  author    User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  photos    NotePhoto[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model NotePhoto {
+  id        String   @id @default(cuid())
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  url       String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model Session {
@@ -85,12 +145,46 @@ model Session {
   type        SessionType   @default(TEXT)
   status      SessionStatus @default(ACTIVE)
   summary     String?       // AI generated summary — filled later
+  transcript  String?       // merged, speaker-labeled transcript from a video call recording
+  scheduledAt DateTime?     // set for sessions created to run at a future time
+  joinCode    String        @unique @default(cuid())
+  // Reversibly encrypted (AES-256-GCM, see common/utils/crypto.ts) rather
+  // than hashed — the creator can look the plaintext password back up from
+  // the session info panel, which a one-way hash can't support.
+  encryptedPassword String?
+  isPublic    Boolean       @default(false)
   createdBy   String
   creator     User          @relation("CreatedSessions", fields: [createdBy], references: [id], onDelete: Cascade)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   messages    Message[]
   participants SessionParticipant[]
+  tags        SessionTag[]
+  savedBy     SavedSession[]
+  notifications Notification[]
+}
+
+model SessionTag {
+  id        String  @id @default(cuid())
+  sessionId String
+  skillId   String
+  session   Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  skill     Skill   @relation(fields: [skillId], references: [id])
+
+  @@unique([sessionId, skillId])
+}
+
+/// A user's bookmark of a session — surfaced in the Sessions tab under
+/// "Saved" regardless of whether they're a participant.
+model SavedSession {
+  id        String   @id @default(cuid())
+  userId    String
+  sessionId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session   Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sessionId])
 }
 
 model SessionParticipant {
@@ -113,6 +207,52 @@ model Message {
   sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// A user's request to connect with another user, and its outcome —
+/// surfaced to the addressee as a Notification (see below) rather than a
+/// dedicated inbox screen.
+model Connection {
+  id            String           @id @default(cuid())
+  requesterId   String
+  requester     User             @relation("SentConnections", fields: [requesterId], references: [id], onDelete: Cascade)
+  addresseeId   String
+  addressee     User             @relation("ReceivedConnections", fields: [addresseeId], references: [id], onDelete: Cascade)
+  status        ConnectionStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  notifications Notification[]
+
+  @@unique([requesterId, addresseeId])
+}
+
+/// Generic per-user notification feed — today only populated by the
+/// Connection request/accept flow, but shaped to hold other types later.
+model Notification {
+  id           String           @id @default(cuid())
+  recipientId  String
+  recipient    User             @relation("ReceivedNotifications", fields: [recipientId], references: [id], onDelete: Cascade)
+  actorId      String
+  actor        User             @relation("SentNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  type         NotificationType
+  connectionId String?
+  connection   Connection?      @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  sessionId    String?
+  session      Session?         @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  isRead       Boolean          @default(false)
+  createdAt    DateTime         @default(now())
+}
+
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum NotificationType {
+  CONNECTION_REQUEST
+  CONNECTION_ACCEPTED
+  SESSION_INVITE
 }
 
 enum Level {

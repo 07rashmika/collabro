@@ -1,4 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/network/api_client.dart';
+import 'package:frontend/core/router/app_router.dart';
+import 'package:frontend/core/theme/app_theme.dart';
+import 'package:frontend/features/auth/data/repos/api_auth_repo.dart';
+import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
+import 'package:frontend/features/connections/data/repos/api_connections_repo.dart';
+import 'package:frontend/features/connections/domain/repos/connections_repo.dart';
+import 'package:frontend/features/connections/presentation/cubits/connections_cubit.dart';
+import 'package:frontend/features/matching/data/repos/api_matching_repo.dart';
+import 'package:frontend/features/matching/domain/repos/matching_repo.dart';
+import 'package:frontend/features/notes/data/repos/api_notes_repo.dart';
+import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
+import 'package:frontend/features/notifications/data/repos/api_notifications_repo.dart';
+import 'package:frontend/features/notifications/domain/repos/notifications_repo.dart';
+import 'package:frontend/features/profiles/data/repos/api_profiles_repo.dart';
+import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
+import 'package:frontend/features/sessions/data/repos/api_sessions_repo.dart';
+import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
+import 'package:frontend/features/settings/presentation/cubits/notification_preferences_cubit.dart';
+import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
+import 'package:frontend/features/skills/data/repos/api_skills_repo.dart';
+import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
+import 'package:frontend/features/study_areas/data/repos/api_study_areas_repo.dart';
+import 'package:frontend/features/study_areas/domain/repos/study_areas_repo.dart';
+import 'package:frontend/features/users/data/repos/api_users_repo.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,75 +36,63 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(colorScheme: .fromSeed(seedColor: Colors.deepPurple)),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
+    const storage = FlutterSecureStorage();
+    final apiClient = ApiClient(storage: storage);
+    final authRepo = ApiAuthRepo(apiClient: apiClient, storage: storage);
+    final matchingRepo = ApiMatchingRepo(apiClient: apiClient);
+    final notesRepo = ApiNotesRepo(apiClient: apiClient);
+    final sessionsRepo = ApiSessionsRepo(apiClient: apiClient);
+    final profilesRepo = ApiProfilesRepo(apiClient: apiClient);
+    final skillsRepo = ApiSkillsRepo(apiClient: apiClient);
+    final studyAreasRepo = ApiStudyAreasRepo(apiClient: apiClient);
+    final usersRepo = ApiUsersRepo(apiClient: apiClient);
+    final connectionsRepo = ApiConnectionsRepo(apiClient: apiClient);
+    final notificationsRepo = ApiNotificationsRepo(apiClient: apiClient);
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<FlutterSecureStorage>(create: (context) => storage),
+        RepositoryProvider<AuthRepo>(create: (context) => authRepo),
+        RepositoryProvider<MatchingRepo>(create: (context) => matchingRepo),
+        RepositoryProvider<NotesRepo>(create: (context) => notesRepo),
+        RepositoryProvider<SessionsRepo>(create: (context) => sessionsRepo),
+        RepositoryProvider<ProfilesRepo>(create: (context) => profilesRepo),
+        RepositoryProvider<SkillsRepo>(create: (context) => skillsRepo),
+        RepositoryProvider<StudyAreasRepo>(create: (context) => studyAreasRepo),
+        RepositoryProvider<UsersRepo>(create: (context) => usersRepo),
+        RepositoryProvider<ConnectionsRepo>(
+          create: (context) => connectionsRepo,
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+        RepositoryProvider<NotificationsRepo>(
+          create: (context) => notificationsRepo,
+        ),
+      ],
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => ThemeCubit(storage: storage)),
+          BlocProvider(
+            create: (context) => NotificationPreferencesCubit(storage: storage),
+          ),
+          BlocProvider(
+            create: (context) => ConnectionsCubit(
+              connectionsRepo: context.read<ConnectionsRepo>(),
+            ),
+          ),
+        ],
+        child: BlocBuilder<ThemeCubit, ThemeMode>(
+          builder: (context, themeMode) {
+            return MaterialApp.router(
+              title: 'Collabro',
+              debugShowCheckedModeBanner: false,
+              theme: buildAppTheme(AppColors.light, .light),
+              darkTheme: buildAppTheme(AppColors.dark, .dark),
+              themeMode: themeMode,
+              routerConfig: AppRouter.router,
+            );
+          },
+        ),
       ),
     );
   }

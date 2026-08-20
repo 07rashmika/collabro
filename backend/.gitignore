@@ -3,3 +3,9 @@ node_modules
 .env
 
 package-lock.json
+
+# Uploaded user content — not source, don't version it
+uploads/notes/*
+!uploads/notes/.gitkeep
+uploads/sessions/recordings/*
+!uploads/sessions/recordings/.gitkeep

@@ -3,14 +3,26 @@ import { z } from "zod";
 export const CreateSessionSchema = z.object({
   title: z.string().min(1).max(200),
   type: z.enum(["TEXT", "VIDEO"]).default("TEXT"),
-  participantIds: z
-    .array(z.string())
-    .min(1, "At least one participant is required")
-    .max(20),
+  participantIds: z.array(z.string()).max(20).default([]),
+  scheduledAt: z
+    .string()
+    .datetime()
+    .optional()
+    .refine((val) => !val || new Date(val) > new Date(), {
+      message: "Scheduled time must be in the future",
+    }),
+  password: z.string().min(4).max(100).optional(),
+  tagIds: z.array(z.string()).max(10).default([]),
+  isPublic: z.boolean().default(false),
 });
 
 export const UpdateSessionSchema = z.object({
   title: z.string().min(1).max(200).optional(),
+});
+
+export const JoinByCodeSchema = z.object({
+  joinCode: z.string().min(1),
+  password: z.string().optional(),
 });
 
 export const SendMessageSchema = z.object({
@@ -20,6 +32,10 @@ export const SendMessageSchema = z.object({
 export const SessionQuerySchema = z.object({
   status: z.enum(["ACTIVE", "CLOSED"]).optional(),
   type: z.enum(["TEXT", "VIDEO"]).optional(),
+  upcoming: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((v) => v === "true"),
   page: z
     .string()
     .optional()
@@ -41,8 +57,34 @@ export const MessageQuerySchema = z.object({
     .transform((v) => (v ? parseInt(v) : 20)),
 });
 
+export const PageQuerySchema = z.object({
+  search: z.string().optional(),
+  page: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v) : 1)),
+  limit: z
+    .string()
+    .optional()
+    .transform((v) => (v ? parseInt(v) : 10)),
+});
+
+// One entry per uploaded audio track, in the same order as the `tracks`
+// files array — tells the service who that track's audio belongs to and
+// when its recording started (used to align multiple tracks on one
+// timeline before merging their transcripts).
+export const TrackMetaSchema = z.array(
+  z.object({
+    label: z.string().min(1).max(100),
+    startedAt: z.string().datetime(),
+  })
+);
+
 export type CreateSessionDto = z.infer<typeof CreateSessionSchema>;
 export type UpdateSessionDto = z.infer<typeof UpdateSessionSchema>;
 export type SendMessageDto = z.infer<typeof SendMessageSchema>;
 export type SessionQueryDto = z.infer<typeof SessionQuerySchema>;
 export type MessageQueryDto = z.infer<typeof MessageQuerySchema>;
+export type JoinByCodeDto = z.infer<typeof JoinByCodeSchema>;
+export type PageQueryDto = z.infer<typeof PageQuerySchema>;
+export type TrackMetaDto = z.infer<typeof TrackMetaSchema>;

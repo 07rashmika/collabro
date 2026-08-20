@@ -1,0 +1,14 @@
+import 'package:equatable/equatable.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+part 'onboarding_state.dart';
+
+class OnboardingCubit extends Cubit<OnboardingState> {
+  OnboardingCubit({int totalPages = 3})
+    : super(OnboardingState(totalPages: totalPages));
+
+  void pageChanged(int index) {
+    if (index == state.currentPage) return;
+    emit(state.copyWith(currentPage: index));
+  }
+}

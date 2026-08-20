@@ -1,0 +1,58 @@
+import 'package:flutter/material.dart';
+import 'package:frontend/core/constants/app_colors.dart';
+import 'package:frontend/core/constants/app_spacing.dart';
+import 'package:frontend/core/constants/app_typography.dart';
+
+class SecondaryButton extends StatelessWidget {
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final IconData? leadingIcon;
+
+  const SecondaryButton({
+    super.key,
+    required this.label,
+    this.onPressed,
+    this.isLoading = false,
+    this.leadingIcon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+    return SizedBox(
+      height: AppSpacing.buttonHeightMd,
+      width: .infinity,
+      child: OutlinedButton(
+        onPressed: isLoading ? null : onPressed,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colors.textPrimary,
+          side: BorderSide(color: colors.border),
+          shape: RoundedRectangleBorder(
+            borderRadius: .circular(AppSpacing.radiusMd),
+          ),
+        ),
+        child: isLoading
+            ? SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation(colors.primary),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: .center,
+                children: [
+                  if (leadingIcon != null) ...[
+                    Icon(leadingIcon, size: AppSpacing.iconMd),
+                    const SizedBox(width: AppSpacing.sm),
+                  ],
+                  Text(label, style: typography.labelLarge),
+                ],
+              ),
+      ),
+    );
+  }
+}

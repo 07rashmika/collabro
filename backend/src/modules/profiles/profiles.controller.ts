@@ -6,6 +6,8 @@ import {
   UpdateProfileSchema,
   AddSkillSchema,
   RemoveSkillSchema,
+  AddStudyAreaSchema,
+  RemoveStudyAreaSchema,
 } from "./profiles.schema";
 
 export class ProfilesController {
@@ -89,6 +91,38 @@ export class ProfilesController {
     try {
       const dto = RemoveSkillSchema.parse(req.body);
       await this.profilesService.removeSkill(req.user!.sub, dto);
+      res.status(204).send();
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: z.treeifyError(err) });
+        return;
+      }
+      res.status(404).json({ message: (err as Error).message });
+    }
+  }
+
+  async addStudyArea(req: Request, res: Response) {
+    try {
+      const dto = AddStudyAreaSchema.parse(req.body);
+      const result = await this.profilesService.addStudyArea(req.user!.sub, dto);
+      res.status(200).json(result);
+    } catch (err) {
+      if (err instanceof ZodError) {
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: z.treeifyError(err) });
+        return;
+      }
+      res.status(404).json({ message: (err as Error).message });
+    }
+  }
+
+  async removeStudyArea(req: Request, res: Response) {
+    try {
+      const dto = RemoveStudyAreaSchema.parse(req.body);
+      await this.profilesService.removeStudyArea(req.user!.sub, dto);
       res.status(204).send();
     } catch (err) {
       if (err instanceof ZodError) {
