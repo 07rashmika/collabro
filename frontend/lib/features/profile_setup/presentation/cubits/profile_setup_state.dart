@@ -45,6 +45,10 @@ final class ProfileSetupReady extends ProfileSetupState {
   final String? submitError;
   final bool submitted;
 
+  final String? avatarUrl;
+  final bool avatarUploading;
+  final String? avatarError;
+
   const ProfileSetupReady({
     this.currentStep = kSkillsStep,
     required this.allSkills,
@@ -59,6 +63,9 @@ final class ProfileSetupReady extends ProfileSetupState {
     this.isSubmitting = false,
     this.submitError,
     this.submitted = false,
+    this.avatarUrl,
+    this.avatarUploading = false,
+    this.avatarError,
   });
 
   bool get hasSkills => selectedSkillLevels.isNotEmpty;
@@ -97,6 +104,11 @@ final class ProfileSetupReady extends ProfileSetupState {
     String? submitError,
     bool clearSubmitError = false,
     bool? submitted,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    bool? avatarUploading,
+    String? avatarError,
+    bool clearAvatarError = false,
   }) {
     return ProfileSetupReady(
       currentStep: currentStep ?? this.currentStep,
@@ -115,6 +127,9 @@ final class ProfileSetupReady extends ProfileSetupState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       submitted: submitted ?? this.submitted,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
+      avatarUploading: avatarUploading ?? this.avatarUploading,
+      avatarError: clearAvatarError ? null : (avatarError ?? this.avatarError),
     );
   }
 
@@ -133,5 +148,8 @@ final class ProfileSetupReady extends ProfileSetupState {
     isSubmitting,
     submitError,
     submitted,
+    avatarUrl,
+    avatarUploading,
+    avatarError,
   ];
 }

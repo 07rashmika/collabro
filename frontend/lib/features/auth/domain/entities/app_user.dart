@@ -5,6 +5,7 @@ class AppUser extends Equatable {
   final String name;
   final String email;
   final String? role;
+  final String? avatarUrl;
   final DateTime? createdAt;
 
   const AppUser({
@@ -12,6 +13,7 @@ class AppUser extends Equatable {
     required this.name,
     required this.email,
     this.role,
+    this.avatarUrl,
     this.createdAt,
   });
 
@@ -21,9 +23,21 @@ class AppUser extends Equatable {
       name: json['name'] as String,
       email: json['email'] as String,
       role: json['role'] as String?,
+      avatarUrl: json['avatarUrl'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
+    );
+  }
+
+  AppUser copyWith({String? avatarUrl, bool clearAvatarUrl = false}) {
+    return AppUser(
+      id: id,
+      name: name,
+      email: email,
+      role: role,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
+      createdAt: createdAt,
     );
   }
 
@@ -32,9 +46,10 @@ class AppUser extends Equatable {
     'name': name,
     'email': email,
     if (role != null) 'role': role,
+    if (avatarUrl != null) 'avatarUrl': avatarUrl,
     if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
   };
 
   @override
-  List<Object?> get props => [id, name, email, role, createdAt];
+  List<Object?> get props => [id, name, email, role, avatarUrl, createdAt];
 }

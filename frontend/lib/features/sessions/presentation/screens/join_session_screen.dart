@@ -66,14 +66,9 @@ class _JoinSessionViewState extends State<_JoinSessionView> {
               context.pop(true);
             } else if (state is SessionPasswordRequired) {
               setState(() => _passwordRequired = true);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('This session requires a password.'),
-                  backgroundColor: colors.error,
-                ),
-              );
+              showErrorSnackBar(context, state.message);
             } else if (state is SessionsError) {
-              showErrorSnackBar(context);
+              showErrorSnackBar(context, state.message);
             }
           },
           child: SingleChildScrollView(

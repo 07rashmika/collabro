@@ -6,6 +6,7 @@ class SessionMessage extends Equatable {
   final String content;
   final String senderId;
   final String senderName;
+  final String? senderAvatarUrl;
   final DateTime createdAt;
 
   const SessionMessage({
@@ -14,6 +15,7 @@ class SessionMessage extends Equatable {
     required this.content,
     required this.senderId,
     required this.senderName,
+    this.senderAvatarUrl,
     required this.createdAt,
   });
 
@@ -28,6 +30,7 @@ class SessionMessage extends Equatable {
       content: json['content'] as String,
       senderId: sender['id'] as String,
       senderName: sender['name'] as String,
+      senderAvatarUrl: sender['avatarUrl'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
@@ -39,6 +42,7 @@ class SessionMessage extends Equatable {
       content: json['content'] as String,
       senderId: json['senderId'] as String,
       senderName: json['senderName'] as String,
+      senderAvatarUrl: json['senderAvatarUrl'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }
@@ -50,6 +54,7 @@ class SessionMessage extends Equatable {
     content,
     senderId,
     senderName,
+    senderAvatarUrl,
     createdAt,
   ];
 }

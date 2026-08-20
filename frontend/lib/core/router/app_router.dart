@@ -1,8 +1,12 @@
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/router/main_shell.dart';
 import 'package:frontend/features/auth/domain/entities/app_user.dart';
+import 'package:frontend/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:frontend/features/auth/presentation/screens/sign_in_screen.dart';
 import 'package:frontend/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:frontend/features/auth/presentation/screens/verify_reset_code_screen.dart';
+import 'package:frontend/features/connections/presentation/screens/connections_list_screen.dart';
 import 'package:frontend/features/discovery/presentation/screens/discovery_screen.dart';
 import 'package:frontend/features/home/presentation/screens/home_screen.dart';
 import 'package:frontend/features/notes/domain/entities/note.dart';
@@ -44,6 +48,20 @@ abstract class AppRouter {
       GoRoute(
         path: AppRoutes.signUp,
         builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.forgotPassword,
+        builder: (context, state) => const ForgotPasswordScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.verifyResetCode,
+        builder: (context, state) =>
+            VerifyResetCodeScreen(email: state.extra as String),
+      ),
+      GoRoute(
+        path: AppRoutes.resetPassword,
+        builder: (context, state) =>
+            ResetPasswordScreen(resetToken: state.extra as String),
       ),
       GoRoute(
         path: AppRoutes.profileSetup,
@@ -130,6 +148,16 @@ abstract class AppRouter {
         path: AppRoutes.userProfile,
         builder: (context, state) =>
             UserProfileScreen(userId: state.extra as String),
+      ),
+      GoRoute(
+        path: AppRoutes.connections,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, String>?;
+          return ConnectionsListScreen(
+            userId: extra?['userId'],
+            userName: extra?['userName'],
+          );
+        },
       ),
       GoRoute(
         path: AppRoutes.sessionDetail,

@@ -1,3 +1,5 @@
+import 'package:frontend/features/auth/domain/entities/app_user.dart';
+
 import '../entities/public_user.dart';
 
 abstract class UsersRepo {
@@ -8,4 +10,8 @@ abstract class UsersRepo {
   });
 
   Future<PublicUser> getUserById(String id);
+
+  Future<AppUser> uploadAvatar(String imagePath);
+
+  Future<AppUser> deleteAvatar();
 }

@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../auth/domain/entities/app_user.dart';
 import '../../domain/entities/public_user.dart';
 import '../../domain/repos/users_repo.dart';
 import '../users_endpoints.dart';
@@ -46,6 +47,36 @@ class ApiUsersRepo implements UsersRepo {
       throw ApiException.fromDioError(e);
     } catch (e) {
       throw Exception('Fetching user failed: $e');
+    }
+  }
+
+  @override
+  Future<AppUser> uploadAvatar(String imagePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'avatar': await MultipartFile.fromFile(imagePath),
+      });
+      final response = await apiClient.post(
+        UsersEndpoints.avatar,
+        data: formData,
+      );
+      return AppUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Uploading profile photo failed: $e');
+    }
+  }
+
+  @override
+  Future<AppUser> deleteAvatar() async {
+    try {
+      final response = await apiClient.delete(UsersEndpoints.avatar);
+      return AppUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Removing profile photo failed: $e');
     }
   }
 }

@@ -5,8 +5,10 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/constants/error_messages.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
+import 'package:frontend/core/widgets/avatar_picker.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/tag_input.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../cubits/edit_profile_cubit.dart';
 import 'skills_picker.dart';
@@ -25,6 +27,15 @@ class EditProfileBody extends StatelessWidget {
     required this.learningGoalController,
     required this.teachGoalController,
   });
+
+  Future<void> _pickAndUploadAvatar(BuildContext context) async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (image == null || !context.mounted) return;
+    context.read<EditProfileCubit>().uploadAvatar(image.path);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +80,31 @@ class EditProfileBody extends StatelessWidget {
               crossAxisAlignment: .stretch,
               children: [
                 const SizedBox(height: AppSpacing.sm),
+                Center(
+                  child: AvatarPicker(
+                    name: ready.userName,
+                    imageUrl: ready.avatarUrl,
+                    isUploading: ready.avatarUploading,
+                    onTap: () => _pickAndUploadAvatar(context),
+                  ),
+                ),
+                if (ready.avatarUrl != null) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  Center(
+                    child: TextButton(
+                      onPressed: ready.avatarUploading
+                          ? null
+                          : () => cubit.removeAvatar(),
+                      child: Text(
+                        'Remove photo',
+                        style: typography.bodySmall.copyWith(
+                          color: colors.error,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: AppSpacing.lg),
                 AppTextField(
                   label: 'Short bio',
                   hint: 'A sentence or two about you',

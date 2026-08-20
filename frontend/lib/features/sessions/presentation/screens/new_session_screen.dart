@@ -12,14 +12,14 @@ import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/selectable_chip.dart';
 import 'package:frontend/core/widgets/typeahead_chip_picker.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
-import 'package:frontend/features/matching/domain/repos/matching_repo.dart';
-import 'package:frontend/features/matching/presentation/cubits/matching_cubit.dart';
+import 'package:frontend/features/connections/domain/repos/connections_repo.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/components/session_picker_field.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
 import 'package:frontend/features/skills/domain/entities/skill.dart';
 import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
+import 'package:frontend/features/users/domain/entities/public_user.dart';
 import 'package:go_router/go_router.dart';
 
 class NewSessionScreen extends StatelessWidget {
@@ -27,18 +27,9 @@ class NewSessionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (context) =>
-              SessionsCubit(sessionsRepo: context.read<SessionsRepo>()),
-        ),
-        BlocProvider(
-          create: (context) =>
-              MatchingCubit(matchingRepo: context.read<MatchingRepo>())
-                ..loadMatches(),
-        ),
-      ],
+    return BlocProvider(
+      create: (context) =>
+          SessionsCubit(sessionsRepo: context.read<SessionsRepo>()),
       child: const _NewSessionView(),
     );
   }
@@ -67,12 +58,15 @@ class _NewSessionViewState extends State<_NewSessionView> {
   final List<Skill> _selectedTags = [];
   bool _tagsBusy = false;
 
+  late final Future<List<PublicUser>> _connectionsFuture;
+
   @override
   void initState() {
     super.initState();
     context.read<SkillsRepo>().getAllSkills().then((skills) {
       if (mounted) setState(() => _allSkills = skills);
     });
+    _connectionsFuture = context.read<ConnectionsRepo>().getConnectedUsers();
   }
 
   @override
@@ -362,9 +356,10 @@ class _NewSessionViewState extends State<_NewSessionView> {
                     style: typography.bodySmall,
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  BlocBuilder<MatchingCubit, MatchingState>(
-                    builder: (context, state) {
-                      if (state is MatchesInitial || state is MatchesLoading) {
+                  FutureBuilder<List<PublicUser>>(
+                    future: _connectionsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState != ConnectionState.done) {
                         return Padding(
                           padding: const .symmetric(vertical: AppSpacing.lg),
                           child: Center(
@@ -375,7 +370,7 @@ class _NewSessionViewState extends State<_NewSessionView> {
                         );
                       }
 
-                      if (state is MatchesError) {
+                      if (snapshot.hasError) {
                         return Padding(
                           padding: const .symmetric(vertical: AppSpacing.lg),
                           child: Text(
@@ -385,29 +380,29 @@ class _NewSessionViewState extends State<_NewSessionView> {
                         );
                       }
 
-                      final matches = (state as MatchesLoaded).matches;
-                      if (matches.isEmpty) {
+                      final connections = snapshot.data ?? [];
+                      if (connections.isEmpty) {
                         return Padding(
                           padding: const .symmetric(vertical: AppSpacing.lg),
                           child: Text(
-                            'No study partners to invite yet.',
+                            "You don't have any connections yet — connect with study partners first.",
                             style: typography.bodySmall,
                           ),
                         );
                       }
 
                       return Column(
-                        children: matches.map((m) {
+                        children: connections.map((u) {
                           final isSelected = _selectedParticipantIds.contains(
-                            m.userId,
+                            u.id,
                           );
                           return CheckboxListTile(
                             value: isSelected,
                             onChanged: (checked) => setState(() {
                               if (checked == true) {
-                                _selectedParticipantIds.add(m.userId);
+                                _selectedParticipantIds.add(u.id);
                               } else {
-                                _selectedParticipantIds.remove(m.userId);
+                                _selectedParticipantIds.remove(u.id);
                               }
                             }),
                             activeColor: colors.primary,
@@ -416,11 +411,12 @@ class _NewSessionViewState extends State<_NewSessionView> {
                             title: Row(
                               children: [
                                 UserAvatar(
-                                  name: m.name,
+                                  name: u.name,
+                                  imageUrl: u.avatarUrl,
                                   size: AppSpacing.avatarSm,
                                 ),
                                 const SizedBox(width: AppSpacing.sm),
-                                Text(m.name, style: typography.bodyLarge),
+                                Text(u.name, style: typography.bodyLarge),
                               ],
                             ),
                           );

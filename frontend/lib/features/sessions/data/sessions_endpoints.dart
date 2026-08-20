@@ -13,6 +13,8 @@ abstract class SessionsEndpoints {
   static String message(String id, String messageId) =>
       '/sessions/$id/messages/$messageId';
   static String iceServers(String id) => '/sessions/$id/ice-servers';
+  static String participant(String id, String userId) =>
+      '/sessions/$id/participants/$userId';
   static String summary(String id) => '/sessions/$id/summary';
   static String recording(String id) => '/sessions/$id/recording';
 

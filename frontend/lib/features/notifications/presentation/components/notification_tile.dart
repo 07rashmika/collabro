@@ -105,6 +105,7 @@ class _NotificationTileState extends State<NotificationTile> {
               ),
               child: UserAvatar(
                 name: notification.actorName,
+                imageUrl: notification.actorAvatarUrl,
                 size: AppSpacing.avatarMd,
               ),
             ),

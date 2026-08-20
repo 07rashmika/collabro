@@ -29,4 +29,23 @@ class ConnectionsCubit extends Cubit<ConnectionsState> {
       ),
     );
   }
+
+  Future<void> removeConnection(String userId) async {
+    await connectionsRepo.removeConnection(userId);
+    emit(
+      state.copyWith(
+        overrides: {...state.overrides, userId: ConnectStatus.none},
+      ),
+    );
+  }
+
+  /// Drops all optimistic overrides so the next backend-fetched status wins
+  /// — call this whenever something may have changed a connection's status
+  /// from the OTHER side (e.g. a request was accepted or declined), since
+  /// an override set from this side's own action would otherwise mask that
+  /// change indefinitely.
+  void clearOverrides() {
+    if (state.overrides.isEmpty) return;
+    emit(const ConnectionsState());
+  }
 }

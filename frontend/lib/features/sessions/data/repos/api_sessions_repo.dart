@@ -131,6 +131,17 @@ class ApiSessionsRepo implements SessionsRepo {
   }
 
   @override
+  Future<void> removeParticipant(String sessionId, String userId) async {
+    try {
+      await apiClient.delete(SessionsEndpoints.participant(sessionId, userId));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Removing participant failed: $e');
+    }
+  }
+
+  @override
   Future<List<StudySession>> discoverSessions({
     String? search,
     int page = 1,

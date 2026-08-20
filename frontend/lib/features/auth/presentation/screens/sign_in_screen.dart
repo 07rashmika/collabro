@@ -78,7 +78,7 @@ class _SignInViewState extends State<_SignInView> {
                 context.go(AppRoutes.profileSetup, extra: state.user);
               }
             } else if (state is AuthError) {
-              showErrorSnackBar(context);
+              showErrorSnackBar(context, state.message);
             }
           },
           child: SingleChildScrollView(
@@ -144,15 +144,8 @@ class _SignInViewState extends State<_SignInView> {
                         Align(
                           alignment: .centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    'Password reset is coming soon.',
-                                  ),
-                                ),
-                              );
-                            },
+                            onPressed: () =>
+                                context.push(AppRoutes.forgotPassword),
                             child: Text(
                               'Forgot Password?',
                               style: typography.bodySmall.copyWith(
@@ -167,7 +160,9 @@ class _SignInViewState extends State<_SignInView> {
                             return PrimaryButton(
                               label: 'Sign In',
                               trailingIcon: Icons.arrow_forward,
-                              isLoading: state is AuthLoading,
+                              isLoading:
+                                  state is AuthLoading &&
+                                  state.action == AuthAction.emailPassword,
                               onPressed: () => _submit(context),
                             );
                           },
@@ -189,7 +184,9 @@ class _SignInViewState extends State<_SignInView> {
                         BlocBuilder<AuthCubit, AuthState>(
                           builder: (context, state) {
                             return GoogleSignInButton(
-                              isLoading: state is AuthLoading,
+                              isLoading:
+                                  state is AuthLoading &&
+                                  state.action == AuthAction.google,
                               onPressed: () =>
                                   context.read<AuthCubit>().loginWithGoogle(),
                             );

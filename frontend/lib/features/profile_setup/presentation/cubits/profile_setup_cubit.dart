@@ -7,6 +7,7 @@ import '../../../skills/domain/entities/skill.dart';
 import '../../../skills/domain/repos/skills_repo.dart';
 import '../../../study_areas/domain/entities/study_area.dart';
 import '../../../study_areas/domain/repos/study_areas_repo.dart';
+import '../../../users/domain/repos/users_repo.dart';
 
 part 'profile_setup_state.dart';
 
@@ -16,11 +17,13 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
   final SkillsRepo skillsRepo;
   final StudyAreasRepo studyAreasRepo;
   final ProfilesRepo profilesRepo;
+  final UsersRepo usersRepo;
 
   ProfileSetupCubit({
     required this.skillsRepo,
     required this.studyAreasRepo,
     required this.profilesRepo,
+    required this.usersRepo,
   }) : super(const ProfileSetupLoading());
 
   Future<void> loadCatalogs() async {
@@ -234,6 +237,28 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
         interests: current.interests.where((i) => i != interest).toList(),
       ),
     );
+  }
+
+  Future<void> uploadAvatar(String imagePath) async {
+    final current = state;
+    if (current is! ProfileSetupReady) return;
+
+    emit(current.copyWith(avatarUploading: true, clearAvatarError: true));
+    try {
+      final user = await usersRepo.uploadAvatar(imagePath);
+      final latest = state;
+      if (latest is! ProfileSetupReady) return;
+      emit(latest.copyWith(avatarUrl: user.avatarUrl, avatarUploading: false));
+    } catch (e) {
+      final latest = state;
+      if (latest is! ProfileSetupReady) return;
+      emit(
+        latest.copyWith(
+          avatarUploading: false,
+          avatarError: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
+    }
   }
 
   Future<void> submit({

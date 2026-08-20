@@ -214,7 +214,9 @@ class _HomeViewState extends State<_HomeView> {
         context.push(AppRoutes.sessionDetail, extra: joined);
       }
     } catch (e) {
-      if (context.mounted) showErrorSnackBar(context);
+      if (context.mounted) {
+        showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
+      }
     }
   }
 

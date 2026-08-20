@@ -18,9 +18,13 @@ model User {
   passwordHash String?
   googleId     String?        @unique
   role          Role           @default(STUDENT)
+  avatarUrl    String?
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   profile       Profile?
   notes         Note[]
   createdSessions      Session[]            @relation("CreatedSessions")
@@ -40,6 +44,26 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+/// Backs the 3-step "forgot password" flow: a 6-digit code is emailed
+/// (codeHash), then exchanged for an opaque reset-session token once
+/// verified correct (resetTokenHash, verifiedAt) — only that token, not the
+/// code, is accepted by the final set-new-password step. Only hashes are
+/// ever stored — see common/utils/password-reset-code.util.ts. `attempts`
+/// locks out brute-forcing of the 6-digit space; `usedAt` marks the whole
+/// flow consumed so neither the code nor the reset token can be replayed.
+model PasswordResetToken {
+  id             String    @id @default(cuid())
+  codeHash       String
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  attempts       Int       @default(0)
+  verifiedAt     DateTime?
+  resetTokenHash String?   @unique
+  expiresAt      DateTime
+  usedAt         DateTime?
+  createdAt      DateTime  @default(now())
 }
 
 model Skill {

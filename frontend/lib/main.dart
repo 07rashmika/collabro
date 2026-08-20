@@ -20,6 +20,7 @@ import 'package:frontend/features/profiles/data/repos/api_profiles_repo.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 import 'package:frontend/features/sessions/data/repos/api_sessions_repo.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
+import 'package:frontend/features/settings/presentation/cubits/notification_preferences_cubit.dart';
 import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
 import 'package:frontend/features/skills/data/repos/api_skills_repo.dart';
 import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
@@ -71,6 +72,9 @@ class MyApp extends StatelessWidget {
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => ThemeCubit(storage: storage)),
+          BlocProvider(
+            create: (context) => NotificationPreferencesCubit(storage: storage),
+          ),
           BlocProvider(
             create: (context) => ConnectionsCubit(
               connectionsRepo: context.read<ConnectionsRepo>(),

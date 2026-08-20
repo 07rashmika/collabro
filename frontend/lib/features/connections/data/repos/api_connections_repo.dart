@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../users/domain/entities/public_user.dart';
 import '../../domain/repos/connections_repo.dart';
 import '../connections_endpoints.dart';
 
@@ -66,6 +67,49 @@ class ApiConnectionsRepo implements ConnectionsRepo {
       final response = await apiClient.get(ConnectionsEndpoints.mine);
       final userIds = (response.data['userIds'] as List<dynamic>?) ?? [];
       return userIds.map((id) => id as String).toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching connections failed: $e');
+    }
+  }
+
+  @override
+  Future<void> removeConnection(String userId) async {
+    try {
+      await apiClient.delete(ConnectionsEndpoints.remove(userId));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Removing connection failed: $e');
+    }
+  }
+
+  @override
+  Future<List<PublicUser>> getConnectedUsers() async {
+    try {
+      final response = await apiClient.get(ConnectionsEndpoints.mineUsers);
+      final users = (response.data['users'] as List<dynamic>?) ?? [];
+      return users
+          .map((u) => PublicUser.fromJson(u as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Fetching connections failed: $e');
+    }
+  }
+
+  @override
+  Future<List<PublicUser>> getConnectionsOf(String userId) async {
+    try {
+      final response = await apiClient.get(
+        ConnectionsEndpoints.usersOf(userId),
+      );
+      final users = (response.data['users'] as List<dynamic>?) ?? [];
+      return users
+          .map((u) => PublicUser.fromJson(u as Map<String, dynamic>))
+          .toList();
     } on DioException catch (e) {
       throw ApiException.fromDioError(e);
     } catch (e) {

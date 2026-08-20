@@ -1,12 +1,19 @@
+import fs from "fs/promises";
+import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { AppError } from "../../common/errors/app-error";
 import { UpdateUserDto, UserQueryDto } from "./users.schema";
 import { getConnectionStatuses } from "../connections/connections.service";
+import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
+
+const UPLOADS_ROOT = path.join(__dirname, "../../../uploads");
 
 const publicUserSelect = {
   id: true,
   name: true,
   email: true,
   role: true,
+  avatarUrl: true,
   createdAt: true,
   profile: {
     select: {
@@ -72,12 +79,28 @@ export class UsersService {
     const { search, page, limit } = query;
     const skip = (page - 1) * limit;
 
+    // A search matching a skill or study area name also pulls in students
+    // who have it on their profile, even if their name/email don't mention
+    // it — e.g. searching "React" surfaces everyone who lists React as a
+    // skill, not just users literally named "React".
+    const { skills, studyAreas } = search
+      ? await findMatchingCatalogTerms(this.prisma, search)
+      : { skills: [], studyAreas: [] };
+    const skillIds = skills.map((s) => s.id);
+    const studyAreaIds = studyAreas.map((s) => s.id);
+
     const where = {
       id: { not: userId },
       ...(search && {
         OR: [
           { name: { contains: search, mode: "insensitive" as const } },
           { email: { contains: search, mode: "insensitive" as const } },
+          ...(skillIds.length > 0
+            ? [{ profile: { skills: { some: { skillId: { in: skillIds } } } } }]
+            : []),
+          ...(studyAreaIds.length > 0
+            ? [{ profile: { studyAreas: { some: { studyAreaId: { in: studyAreaIds } } } } }]
+            : []),
         ],
       }),
     };
@@ -149,6 +172,55 @@ export class UsersService {
       data: dto,
       select: publicUserSelect,
     });
+  }
+
+  async uploadAvatar(userId: string, file: Express.Multer.File) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    });
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+
+    const updated = await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { avatarUrl: `/uploads/avatars/${file.filename}` },
+      select: publicUserSelect,
+    });
+
+    if (user.avatarUrl) {
+      const oldPath = path.join(UPLOADS_ROOT, "avatars", path.basename(user.avatarUrl));
+      await fs.unlink(oldPath).catch(() => {});
+    }
+
+    return updated;
+  }
+
+  async deleteAvatar(userId: string) {
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    });
+
+    if (!user) {
+      throw new AppError("User not found", 404);
+    }
+    if (!user.avatarUrl) {
+      throw new AppError("No avatar to remove", 404);
+    }
+
+    const updated = await this.prisma.client.user.update({
+      where: { id: userId },
+      data: { avatarUrl: null },
+      select: publicUserSelect,
+    });
+
+    const oldPath = path.join(UPLOADS_ROOT, "avatars", path.basename(user.avatarUrl));
+    await fs.unlink(oldPath).catch(() => {});
+
+    return updated;
   }
 
   async deleteMe(userId: string) {

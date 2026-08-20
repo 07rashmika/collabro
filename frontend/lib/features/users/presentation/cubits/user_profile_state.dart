@@ -19,11 +19,17 @@ final class UserProfileLoaded extends UserProfileState {
   final PublicUser user;
   final List<Note> notes;
   final List<StudySession> sessions;
+  final int connectionsCount;
 
-  const UserProfileLoaded({required this.user, required this.notes, required this.sessions});
+  const UserProfileLoaded({
+    required this.user,
+    required this.notes,
+    required this.sessions,
+    this.connectionsCount = 0,
+  });
 
   @override
-  List<Object?> get props => [user, notes, sessions];
+  List<Object?> get props => [user, notes, sessions, connectionsCount];
 }
 
 final class UserProfileError extends UserProfileState {

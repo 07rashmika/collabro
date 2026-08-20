@@ -9,6 +9,8 @@ abstract class AppRoutes {
   static const String signIn = '/sign-in';
   static const String signUp = '/sign-up';
   static const String forgotPassword = '/forgot-password';
+  static const String verifyResetCode = '/verify-reset-code';
+  static const String resetPassword = '/reset-password';
   static const String profileSetup = '/profile-setup';
 
   //main shell
@@ -30,4 +32,5 @@ abstract class AppRoutes {
   static const String notifications = '/notifications';
   static const String settings = '/settings';
   static const String userProfile = '/user-profile';
+  static const String connections = '/connections';
 }

@@ -56,11 +56,55 @@ export async function getConnectedUserIds(prisma: PrismaService, userId: string)
   return connections.map((c) => (c.requesterId === userId ? c.addresseeId : c.requesterId));
 }
 
+/// Full profile (not just the id) of the other side of every ACCEPTED
+/// connection a user has — used to populate "invite someone I'm already
+/// connected with" pickers, as opposed to match suggestions.
+export async function getConnectedUsers(prisma: PrismaService, userId: string) {
+  const connections = await prisma.client.connection.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [{ requesterId: userId }, { addresseeId: userId }],
+    },
+    select: {
+      requesterId: true,
+      addresseeId: true,
+      requester: { select: { id: true, name: true, email: true, avatarUrl: true } },
+      addressee: { select: { id: true, name: true, email: true, avatarUrl: true } },
+    },
+  });
+  return connections.map((c) => (c.requesterId === userId ? c.addressee : c.requester));
+}
+
 export class ConnectionsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMyConnectedUserIds(userId: string) {
     return getConnectedUserIds(this.prisma, userId);
+  }
+
+  async getMyConnectedUsers(userId: string) {
+    return getConnectedUsers(this.prisma, userId);
+  }
+
+  /// Either side of an ACCEPTED connection can end it — unlike declining a
+  /// still-PENDING request, there's no "whose call is it" asymmetry once
+  /// both sides have already agreed to connect.
+  async removeConnection(userId: string, otherUserId: string) {
+    const connection = await this.prisma.client.connection.findFirst({
+      where: {
+        status: "ACCEPTED",
+        OR: [
+          { requesterId: userId, addresseeId: otherUserId },
+          { requesterId: otherUserId, addresseeId: userId },
+        ],
+      },
+    });
+    if (!connection) throw new AppError("Connection not found", 404);
+
+    await this.prisma.client.connection.delete({ where: { id: connection.id } });
+    // Both sides need to know — the other party's connections list and
+    // connect-button state should update live too, not just the remover's.
+    notifyUsers([userId, otherUserId], { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
   }
 
   async sendRequest(requesterId: string, dto: SendConnectionRequestDto) {
@@ -164,7 +208,10 @@ export class ConnectionsService {
     });
 
     await this.markTriggeringNotificationRead(connectionId, userId);
-    notifyUsers([userId], { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+    // Notify the requester too, not just the decliner — otherwise their
+    // client never learns the request was declined and keeps showing
+    // "Requested" instead of resetting to "Connect".
+    notifyUsers([connection.requesterId, userId], { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
     return updated;
   }
 

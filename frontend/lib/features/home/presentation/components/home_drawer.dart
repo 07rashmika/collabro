@@ -7,6 +7,7 @@ import 'package:frontend/core/widgets/secondary_button.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 import 'package:frontend/features/auth/domain/entities/app_user.dart';
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
+import 'package:frontend/features/settings/presentation/cubits/notification_preferences_cubit.dart';
 import 'package:frontend/features/settings/presentation/cubits/theme_cubit.dart';
 
 class HomeDrawer extends StatelessWidget {
@@ -29,7 +30,11 @@ class HomeDrawer extends StatelessWidget {
               padding: const .all(AppSpacing.screenHorizontal),
               child: Row(
                 children: [
-                  UserAvatar(name: user.name, size: AppSpacing.avatarLg),
+                  UserAvatar(
+                    name: user.name,
+                    imageUrl: user.avatarUrl,
+                    size: AppSpacing.avatarLg,
+                  ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
@@ -42,6 +47,76 @@ class HomeDrawer extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            Divider(color: colors.border, height: 1),
+            BlocBuilder<NotificationPreferencesCubit, NotificationPreferences>(
+              builder: (context, prefs) {
+                final cubit = context.read<NotificationPreferencesCubit>();
+                return ExpansionTile(
+                  leading: Icon(
+                    Icons.notifications_outlined,
+                    color: colors.textSecondary,
+                  ),
+                  title: Text(
+                    'Notifications',
+                    style: typography.bodyMedium.copyWith(
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  trailing: Switch(
+                    value: prefs.anyEnabled,
+                    activeThumbColor: colors.primary,
+                    onChanged: cubit.setAll,
+                  ),
+                  children: [
+                    SwitchListTile(
+                      contentPadding: const .only(
+                        left: AppSpacing.xxl,
+                        right: AppSpacing.screenHorizontal,
+                      ),
+                      title: Text(
+                        'Message Notifications',
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      value: prefs.messageNotifications,
+                      activeThumbColor: colors.primary,
+                      onChanged: cubit.setMessageNotifications,
+                    ),
+                    SwitchListTile(
+                      contentPadding: const .only(
+                        left: AppSpacing.xxl,
+                        right: AppSpacing.screenHorizontal,
+                      ),
+                      title: Text(
+                        'Connection Notifications',
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      value: prefs.connectionNotifications,
+                      activeThumbColor: colors.primary,
+                      onChanged: cubit.setConnectionNotifications,
+                    ),
+                    SwitchListTile(
+                      contentPadding: const .only(
+                        left: AppSpacing.xxl,
+                        right: AppSpacing.screenHorizontal,
+                      ),
+                      title: Text(
+                        'Video Session Notifications',
+                        style: typography.bodySmall.copyWith(
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      value: prefs.videoSessionNotifications,
+                      activeThumbColor: colors.primary,
+                      onChanged: cubit.setVideoSessionNotifications,
+                    ),
+                  ],
+                );
+              },
             ),
             Divider(color: colors.border, height: 1),
             BlocBuilder<ThemeCubit, ThemeMode>(

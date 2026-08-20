@@ -3,6 +3,7 @@ import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError }      from "../../common/errors/app-error";
 import { SummariesService } from "../summaries/summaries.service";
+import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
 import { CreateNoteDto, UpdateNoteDto, NoteQueryDto } from "./notes.schema";
 
 const noteSelect = {
@@ -15,7 +16,7 @@ const noteSelect = {
   createdAt: true,
   updatedAt: true,
   author: {
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarUrl: true },
   },
   photos: {
     select: { id: true, url: true, createdAt: true },
@@ -72,6 +73,16 @@ export class NotesService {
     const { search, tag, authorIds, hasSummary, page, limit } = query;
     const skip = (page - 1) * limit;
 
+    // A search matching a skill or study area name also pulls in notes
+    // tagged with it, even if the title/content don't mention it —
+    // matched against the tags a note actually has (exact name, so a tag
+    // spelled differently from the catalog name won't match here, though
+    // it can still match via the title/content search above).
+    const { skills, studyAreas } = search
+      ? await findMatchingCatalogTerms(this.prisma, search)
+      : { skills: [], studyAreas: [] };
+    const matchingTagNames = [...skills.map((s) => s.name), ...studyAreas.map((s) => s.name)];
+
     const where = {
       isPublic: true,
       ...(authorIds && authorIds.length > 0 && { authorId: { in: authorIds } }),
@@ -80,6 +91,7 @@ export class NotesService {
         OR: [
           { title:   { contains: search, mode: "insensitive" as const } },
           { content: { contains: search, mode: "insensitive" as const } },
+          ...(matchingTagNames.length > 0 ? [{ tags: { hasSome: matchingTagNames } }] : []),
         ],
       }),
       ...(tag && { tags: { has: tag } }),

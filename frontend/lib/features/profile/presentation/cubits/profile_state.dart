@@ -14,11 +14,16 @@ final class ProfileLoading extends ProfileState {
 final class ProfileLoaded extends ProfileState {
   final AppUser user;
   final Profile? profile;
+  final int connectionsCount;
 
-  const ProfileLoaded({required this.user, required this.profile});
+  const ProfileLoaded({
+    required this.user,
+    required this.profile,
+    this.connectionsCount = 0,
+  });
 
   @override
-  List<Object?> get props => [user, profile];
+  List<Object?> get props => [user, profile, connectionsCount];
 }
 
 final class ProfileError extends ProfileState {

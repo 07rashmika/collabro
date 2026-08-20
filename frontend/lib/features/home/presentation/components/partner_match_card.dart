@@ -43,7 +43,7 @@ class PartnerMatchCard extends StatelessWidget {
             Row(
               mainAxisAlignment: .spaceBetween,
               children: [
-                UserAvatar(name: candidate.name),
+                UserAvatar(name: candidate.name, imageUrl: candidate.avatarUrl),
                 MatchScoreBadge(score: candidate.matchScore),
               ],
             ),

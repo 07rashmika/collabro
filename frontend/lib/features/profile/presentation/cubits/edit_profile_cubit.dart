@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../auth/domain/entities/app_user.dart';
+import '../../../auth/domain/repos/auth_repo.dart';
 import '../../../profiles/domain/entities/profile.dart';
 import '../../../profiles/domain/repos/profiles_repo.dart';
 import '../../../skills/domain/entities/skill.dart';
 import '../../../skills/domain/repos/skills_repo.dart';
 import '../../../study_areas/domain/entities/study_area.dart';
 import '../../../study_areas/domain/repos/study_areas_repo.dart';
+import '../../../users/domain/repos/users_repo.dart';
 
 part 'edit_profile_state.dart';
 
@@ -16,11 +19,15 @@ class EditProfileCubit extends Cubit<EditProfileState> {
   final SkillsRepo skillsRepo;
   final StudyAreasRepo studyAreasRepo;
   final ProfilesRepo profilesRepo;
+  final AuthRepo authRepo;
+  final UsersRepo usersRepo;
 
   EditProfileCubit({
     required this.skillsRepo,
     required this.studyAreasRepo,
     required this.profilesRepo,
+    required this.authRepo,
+    required this.usersRepo,
   }) : super(const EditProfileLoading());
 
   Future<void> load() async {
@@ -30,8 +37,10 @@ class EditProfileCubit extends Cubit<EditProfileState> {
         skillsRepo.getAllSkills(),
         studyAreasRepo.getAllStudyAreas(),
         profilesRepo.getMyProfile(),
+        authRepo.getCurrentUser(),
       ]);
       final profile = results[2] as Profile?;
+      final user = results[3] as AppUser?;
 
       final skillLevels = <String, String>{
         for (final s in profile?.skills ?? const []) s.skillId: s.level,
@@ -52,10 +61,58 @@ class EditProfileCubit extends Cubit<EditProfileState> {
           bio: profile?.bio ?? '',
           learningGoal: profile?.learningGoal ?? '',
           teachGoal: profile?.teachGoal ?? '',
+          userName: user?.name ?? '',
+          avatarUrl: user?.avatarUrl,
         ),
       );
     } catch (e) {
       emit(EditProfileLoadError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> uploadAvatar(String imagePath) async {
+    final current = state;
+    if (current is! EditProfileReady) return;
+
+    emit(current.copyWith(avatarUploading: true, clearAvatarError: true));
+    try {
+      final user = await usersRepo.uploadAvatar(imagePath);
+      final latest = state;
+      if (latest is! EditProfileReady) return;
+      emit(latest.copyWith(avatarUrl: user.avatarUrl, avatarUploading: false));
+    } catch (e) {
+      final latest = state;
+      if (latest is! EditProfileReady) return;
+      emit(
+        latest.copyWith(
+          avatarUploading: false,
+          avatarError: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
+    }
+  }
+
+  Future<void> removeAvatar() async {
+    final current = state;
+    if (current is! EditProfileReady || current.avatarUrl == null) return;
+
+    emit(current.copyWith(avatarUploading: true, clearAvatarError: true));
+    try {
+      await usersRepo.deleteAvatar();
+      final latest = state;
+      if (latest is! EditProfileReady) return;
+      emit(
+        latest.copyWith(avatarUploading: false, clearAvatarUrl: true),
+      );
+    } catch (e) {
+      final latest = state;
+      if (latest is! EditProfileReady) return;
+      emit(
+        latest.copyWith(
+          avatarUploading: false,
+          avatarError: e.toString().replaceFirst('Exception: ', ''),
+        ),
+      );
     }
   }
 

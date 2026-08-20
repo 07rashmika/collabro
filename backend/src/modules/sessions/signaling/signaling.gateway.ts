@@ -214,6 +214,7 @@ async function handleMessage(sessionId: string, client: ConnectedClient, raw: st
               sessionId,
               senderId: saved.sender.id,
               senderName: saved.sender.name,
+              senderAvatarUrl: saved.sender.avatarUrl,
               content: saved.content,
               createdAt: saved.createdAt,
             },

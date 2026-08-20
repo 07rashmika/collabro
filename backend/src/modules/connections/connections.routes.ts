@@ -13,9 +13,12 @@ const connectionsController = new ConnectionsController(connectionsService);
 router.use(jwtGuard);
 
 router.get("/mine", (req, res) => connectionsController.getMyConnections(req, res));
+router.get("/mine/users", (req, res) => connectionsController.getMyConnectedUsers(req, res));
+router.get("/:userId/users", (req, res) => connectionsController.getConnectionsForUser(req, res));
 router.post("/", (req, res) => connectionsController.sendRequest(req, res));
 router.delete("/", (req, res) => connectionsController.cancelRequest(req, res));
 router.post("/:id/accept", (req, res) => connectionsController.accept(req, res));
 router.post("/:id/decline", (req, res) => connectionsController.decline(req, res));
+router.delete("/:userId", (req, res) => connectionsController.removeConnection(req, res));
 
 export default router;

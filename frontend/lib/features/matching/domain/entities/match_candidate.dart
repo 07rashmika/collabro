@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class MatchCandidate extends Equatable {
   final String userId;
   final String name;
+  final String? avatarUrl;
   final int matchScore;
   final String? topCategory;
   final List<String> matchedSkills;
@@ -13,6 +14,7 @@ class MatchCandidate extends Equatable {
   const MatchCandidate({
     required this.userId,
     required this.name,
+    this.avatarUrl,
     required this.matchScore,
     required this.matchedSkills,
     required this.complementarySkills,
@@ -58,6 +60,7 @@ class MatchCandidate extends Equatable {
     return MatchCandidate(
       userId: student['userId'] as String,
       name: student['name'] as String,
+      avatarUrl: student['avatarUrl'] as String?,
       matchScore: (json['totalScore'] as num).round(),
       matchedSkills: matchedSkills,
       complementarySkills: complementarySkills,
@@ -71,6 +74,7 @@ class MatchCandidate extends Equatable {
   List<Object?> get props => [
     userId,
     name,
+    avatarUrl,
     matchScore,
     matchedSkills,
     complementarySkills,

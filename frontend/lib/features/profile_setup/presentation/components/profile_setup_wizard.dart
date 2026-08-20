@@ -5,6 +5,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 import 'package:frontend/core/widgets/secondary_button.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../cubits/profile_setup_cubit.dart';
 import 'about_step.dart';
@@ -29,6 +30,7 @@ String _missingHintFor(int step) {
 
 class ProfileSetupWizard extends StatelessWidget {
   final ProfileSetupReady state;
+  final String userName;
   final TextEditingController bioController;
   final TextEditingController learningGoalController;
   final TextEditingController teachGoalController;
@@ -36,10 +38,20 @@ class ProfileSetupWizard extends StatelessWidget {
   const ProfileSetupWizard({
     super.key,
     required this.state,
+    required this.userName,
     required this.bioController,
     required this.learningGoalController,
     required this.teachGoalController,
   });
+
+  Future<void> _pickAndUploadAvatar(BuildContext context) async {
+    final image = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+    if (image == null || !context.mounted) return;
+    context.read<ProfileSetupCubit>().uploadAvatar(image.path);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,6 +133,10 @@ class ProfileSetupWizard extends StatelessWidget {
                 bioController: bioController,
                 learningGoalController: learningGoalController,
                 teachGoalController: teachGoalController,
+                userName: userName,
+                avatarUrl: state.avatarUrl,
+                avatarUploading: state.avatarUploading,
+                onPickAvatar: () => _pickAndUploadAvatar(context),
               ),
             },
           ),

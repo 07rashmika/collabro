@@ -92,7 +92,7 @@ class _SignUpViewState extends State<_SignUpView> {
                 context.go(AppRoutes.profileSetup, extra: state.user);
               }
             } else if (state is AuthError) {
-              showErrorSnackBar(context);
+              showErrorSnackBar(context, state.message);
             }
           },
           child: SingleChildScrollView(
@@ -199,7 +199,9 @@ class _SignUpViewState extends State<_SignUpView> {
                           builder: (context, state) {
                             return PrimaryButton(
                               label: 'Create Account',
-                              isLoading: state is AuthLoading,
+                              isLoading:
+                                  state is AuthLoading &&
+                                  state.action == AuthAction.emailPassword,
                               onPressed: () => _submit(context),
                             );
                           },
@@ -221,7 +223,9 @@ class _SignUpViewState extends State<_SignUpView> {
                         BlocBuilder<AuthCubit, AuthState>(
                           builder: (context, state) {
                             return GoogleSignInButton(
-                              isLoading: state is AuthLoading,
+                              isLoading:
+                                  state is AuthLoading &&
+                                  state.action == AuthAction.google,
                               onPressed: () =>
                                   context.read<AuthCubit>().loginWithGoogle(),
                             );

@@ -44,6 +44,8 @@ abstract class SessionsRepo {
 
   Future<IceServersResponse> getIceServers(String sessionId);
 
+  Future<void> removeParticipant(String sessionId, String userId);
+
   Future<StudySession> generateSummary(String sessionId);
 
   Future<StudySession> uploadRecording(

@@ -1,7 +1,16 @@
 import { Request, Response } from "express";
 import { ZodError, z } from "zod";
 import { UsersService } from "./users.service";
+import { AppError } from "../../common/errors/app-error";
 import { UpdateUserSchema, UserQuerySchema } from "./users.schema";
+
+function handleUserError(res: Response, err: unknown, defaultStatus: number) {
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({ message: err.message });
+    return;
+  }
+  res.status(defaultStatus).json({ message: (err as Error).message });
+}
 
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -51,6 +60,28 @@ export class UsersController {
         return;
       }
       res.status(404).json({ message: (err as Error).message });
+    }
+  }
+
+  async uploadAvatar(req: Request, res: Response) {
+    try {
+      const file = req.file as Express.Multer.File | undefined;
+      if (!file) {
+        throw new AppError("No image provided", 400);
+      }
+      const user = await this.usersService.uploadAvatar(req.user!.sub, file);
+      res.status(200).json(user);
+    } catch (err) {
+      handleUserError(res, err, 400);
+    }
+  }
+
+  async deleteAvatar(req: Request, res: Response) {
+    try {
+      const user = await this.usersService.deleteAvatar(req.user!.sub);
+      res.status(200).json(user);
+    } catch (err) {
+      handleUserError(res, err, 404);
     }
   }
 

@@ -23,12 +23,14 @@ class SessionParticipant extends Equatable {
   final String userId;
   final String name;
   final String email;
+  final String? avatarUrl;
   final DateTime joinedAt;
 
   const SessionParticipant({
     required this.userId,
     required this.name,
     required this.email,
+    this.avatarUrl,
     required this.joinedAt,
   });
 
@@ -38,12 +40,13 @@ class SessionParticipant extends Equatable {
       userId: user['id'] as String,
       name: user['name'] as String,
       email: user['email'] as String,
+      avatarUrl: user['avatarUrl'] as String?,
       joinedAt: DateTime.parse(json['joinedAt'] as String),
     );
   }
 
   @override
-  List<Object?> get props => [userId, name, email, joinedAt];
+  List<Object?> get props => [userId, name, email, avatarUrl, joinedAt];
 }
 
 class StudySession extends Equatable {

@@ -17,6 +17,7 @@ class AppNotification extends Equatable {
   final String? sessionTitle;
   final String actorId;
   final String actorName;
+  final String? actorAvatarUrl;
 
   const AppNotification({
     required this.id,
@@ -25,6 +26,7 @@ class AppNotification extends Equatable {
     required this.createdAt,
     required this.actorId,
     required this.actorName,
+    this.actorAvatarUrl,
     this.connectionId,
     this.connectionStatus,
     this.sessionId,
@@ -54,6 +56,7 @@ class AppNotification extends Equatable {
       sessionTitle: session?['title'] as String?,
       actorId: actor['id'] as String,
       actorName: actor['name'] as String,
+      actorAvatarUrl: actor['avatarUrl'] as String?,
     );
   }
 
@@ -69,6 +72,7 @@ class AppNotification extends Equatable {
     sessionTitle,
     actorId,
     actorName,
+    actorAvatarUrl,
   ];
 }
 

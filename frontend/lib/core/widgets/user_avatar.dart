@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/network/api_config.dart';
 
 class UserAvatar extends StatelessWidget {
   final String name;
   final double size;
+  // Relative backend path (e.g. `/uploads/avatars/xyz.jpg`) as returned by
+  // the API — resolved against ApiConfig.baseUrl. Falls back to initials
+  // when null or the image fails to load.
+  final String? imageUrl;
 
   const UserAvatar({
     super.key,
     required this.name,
     this.size = AppSpacing.avatarLg,
+    this.imageUrl,
   });
 
   static const List<Color> _palette = [
@@ -38,8 +44,7 @@ class UserAvatar extends StatelessWidget {
     return _palette[hash % _palette.length];
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildInitials(BuildContext context) {
     final color = _colorOf(name);
     return Container(
       width: size,
@@ -51,6 +56,28 @@ class UserAvatar extends StatelessWidget {
         style: AppTypography.of(
           context,
         ).titleMedium.copyWith(color: Colors.white, fontSize: size * 0.36),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final url = imageUrl;
+    if (url == null || url.isEmpty) {
+      return _buildInitials(context);
+    }
+
+    return ClipOval(
+      child: Image.network(
+        '${ApiConfig.baseUrl}$url',
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) => _buildInitials(context),
+        loadingBuilder: (context, child, progress) {
+          if (progress == null) return child;
+          return _buildInitials(context);
+        },
       ),
     );
   }

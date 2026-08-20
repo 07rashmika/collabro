@@ -6,6 +6,7 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/session_time_label.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
+import 'package:frontend/core/widgets/danger_button.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_badge.dart';
@@ -35,6 +36,14 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
   String? _revealedPassword;
   bool _passwordRevealed = false;
   bool _loadingPassword = false;
+  late final List<SessionParticipant> _participants;
+  String? _removingUserId;
+
+  @override
+  void initState() {
+    super.initState();
+    _participants = [...widget.session.participants];
+  }
 
   bool get _isCreator =>
       widget.currentUserId != null &&
@@ -44,6 +53,43 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
   void _revealPassword() {
     setState(() => _loadingPassword = true);
     context.read<SessionsCubit>().loadSessionPassword(widget.session.id);
+  }
+
+  void _confirmRemoveParticipant(
+    String sessionId,
+    String userId,
+    String userName,
+  ) {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.backgroundCard,
+        title: Text('Remove participant?', style: typography.headlineSmall),
+        content: Text(
+          '$userName will be removed from this session and will need a new invite or the join code to come back.',
+          style: typography.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text('Cancel', style: typography.labelMedium),
+          ),
+          DangerButton(
+            label: 'Remove',
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+              setState(() => _removingUserId = userId);
+              context.read<SessionsCubit>().removeParticipant(
+                sessionId,
+                userId,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _copyCode() async {
@@ -75,9 +121,21 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               _passwordRevealed = true;
               _loadingPassword = false;
             });
+          } else if (state is ParticipantRemoved &&
+              state.sessionId == widget.session.id) {
+            setState(() {
+              _participants.removeWhere((p) => p.userId == state.userId);
+              _removingUserId = null;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Participant removed')),
+            );
           } else if (state is SessionsError && _loadingPassword) {
             setState(() => _loadingPassword = false);
-            showErrorSnackBar(context);
+            showErrorSnackBar(context, state.message);
+          } else if (state is SessionsError && _removingUserId != null) {
+            setState(() => _removingUserId = null);
+            showErrorSnackBar(context, state.message);
           }
         },
         child: SafeArea(
@@ -232,18 +290,20 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
               ],
 
               const SizedBox(height: AppSpacing.lg),
-              SessionInfoSectionLabel(
-                'Participants (${session.participants.length})',
-              ),
+              SessionInfoSectionLabel('Participants (${_participants.length})'),
               const SizedBox(height: AppSpacing.sm),
               SessionInfoCard(
                 children: [
-                  for (final p in session.participants) ...[
+                  for (final p in _participants) ...[
                     Padding(
                       padding: const .symmetric(vertical: AppSpacing.xs),
                       child: Row(
                         children: [
-                          UserAvatar(name: p.name, size: AppSpacing.avatarSm),
+                          UserAvatar(
+                            name: p.name,
+                            imageUrl: p.avatarUrl,
+                            size: AppSpacing.avatarSm,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
@@ -256,6 +316,32 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                             const SessionInfoBadge(
                               icon: Icons.star,
                               label: 'Host',
+                            )
+                          else if (_isCreator)
+                            IconButton(
+                              onPressed: _removingUserId != null
+                                  ? null
+                                  : () => _confirmRemoveParticipant(
+                                      session.id,
+                                      p.userId,
+                                      p.name,
+                                    ),
+                              icon: _removingUserId == p.userId
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colors.error,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.person_remove_outlined,
+                                      size: AppSpacing.iconSm,
+                                      color: colors.error,
+                                    ),
+                              visualDensity: .compact,
+                              tooltip: 'Remove participant',
                             ),
                         ],
                       ),

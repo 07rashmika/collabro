@@ -13,6 +13,7 @@ import 'package:frontend/features/profile_setup/presentation/cubits/profile_setu
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
 import 'package:frontend/features/study_areas/domain/repos/study_areas_repo.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 import 'package:go_router/go_router.dart';
 
 class ProfileSetupScreen extends StatelessWidget {
@@ -27,6 +28,7 @@ class ProfileSetupScreen extends StatelessWidget {
         skillsRepo: context.read<SkillsRepo>(),
         studyAreasRepo: context.read<StudyAreasRepo>(),
         profilesRepo: context.read<ProfilesRepo>(),
+        usersRepo: context.read<UsersRepo>(),
       )..loadCatalogs(),
       child: _ProfileSetupView(user: user),
     );
@@ -67,10 +69,17 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
           child: BlocConsumer<ProfileSetupCubit, ProfileSetupState>(
             listener: (context, state) {
               if (state is ProfileSetupReady && state.submitted) {
-                context.go(AppRoutes.home, extra: widget.user);
+                context.go(
+                  AppRoutes.home,
+                  extra: state.avatarUrl != null
+                      ? widget.user.copyWith(avatarUrl: state.avatarUrl)
+                      : widget.user,
+                );
               } else if (state is ProfileSetupReady &&
                   (state.submitError != null || state.catalogError != null)) {
-                showErrorSnackBar(context);
+                showErrorSnackBar(context, state.submitError ?? state.catalogError);
+              } else if (state is ProfileSetupReady && state.avatarError != null) {
+                showErrorSnackBar(context, state.avatarError);
               }
             },
             builder: (context, state) {
@@ -106,6 +115,7 @@ class _ProfileSetupViewState extends State<_ProfileSetupView> {
               final ready = state as ProfileSetupReady;
               return ProfileSetupWizard(
                 state: ready,
+                userName: widget.user.name,
                 bioController: _bioController,
                 learningGoalController: _learningGoalController,
                 teachGoalController: _teachGoalController,

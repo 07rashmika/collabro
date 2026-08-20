@@ -12,7 +12,7 @@ class AuthCubit extends Cubit<AuthState> {
   AuthCubit({required this.authRepo}) : super(const AuthInitial());
 
   Future<void> login(String email, String password) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(AuthAction.emailPassword));
     try {
       final user = await authRepo.loginWithEmailPassword(email, password);
       emit(AuthSuccess(user));
@@ -22,7 +22,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> register(String name, String email, String password) async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(AuthAction.emailPassword));
     try {
       final user = await authRepo.registerWithEmailPassword(
         name,
@@ -36,7 +36,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> loginWithGoogle() async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(AuthAction.google));
     try {
       final user = await authRepo.loginWithGoogle();
       emit(AuthSuccess(user));
@@ -46,7 +46,7 @@ class AuthCubit extends Cubit<AuthState> {
   }
 
   Future<void> logout() async {
-    emit(const AuthLoading());
+    emit(const AuthLoading(AuthAction.logout));
     try {
       await authRepo.logout();
       emit(const AuthLoggedOut());

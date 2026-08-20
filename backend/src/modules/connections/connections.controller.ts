@@ -29,6 +29,27 @@ export class ConnectionsController {
     } catch (err) { handleError(res, err); }
   }
 
+  async getMyConnectedUsers(req: Request, res: Response) {
+    try {
+      const users = await this.connectionsService.getMyConnectedUsers(req.user!.sub);
+      res.status(200).json({ users });
+    } catch (err) { handleError(res, err); }
+  }
+
+  async getConnectionsForUser(req: Request, res: Response) {
+    try {
+      const users = await this.connectionsService.getMyConnectedUsers(req.params.userId as string);
+      res.status(200).json({ users });
+    } catch (err) { handleError(res, err); }
+  }
+
+  async removeConnection(req: Request, res: Response) {
+    try {
+      await this.connectionsService.removeConnection(req.user!.sub, req.params.userId as string);
+      res.status(204).send();
+    } catch (err) { handleError(res, err); }
+  }
+
   async sendRequest(req: Request, res: Response) {
     try {
       const dto = SendConnectionRequestSchema.parse(req.body);

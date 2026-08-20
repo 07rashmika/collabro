@@ -96,7 +96,9 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
       );
       if (mounted) await context.push(AppRoutes.sessionDetail, extra: joined);
     } catch (e) {
-      if (mounted) showErrorSnackBar(context);
+      if (mounted) {
+        showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
+      }
     }
   }
 

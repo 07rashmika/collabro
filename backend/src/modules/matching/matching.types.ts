@@ -11,6 +11,7 @@ export interface StudentProfile {
   userId: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   bio: string | null;
   learningGoal: string | null;
   teachGoal: string | null;

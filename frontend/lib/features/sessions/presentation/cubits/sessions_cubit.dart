@@ -98,6 +98,15 @@ class SessionsCubit extends Cubit<SessionsState> {
     }
   }
 
+  Future<void> removeParticipant(String sessionId, String userId) async {
+    try {
+      await sessionsRepo.removeParticipant(sessionId, userId);
+      emit(ParticipantRemoved(sessionId, userId));
+    } catch (e) {
+      emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
   Future<void> createSession({
     required String title,
     required SessionType type,

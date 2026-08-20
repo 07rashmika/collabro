@@ -119,6 +119,55 @@ class ApiAuthRepo implements AuthRepo {
     }
   }
 
+  @override
+  Future<void> requestPasswordReset(String email) async {
+    try {
+      await apiClient.post(
+        AuthEndpoints.forgotPassword,
+        data: {'email': email},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Could not send reset code: $e');
+    }
+  }
+
+  @override
+  Future<String> verifyResetCode({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        AuthEndpoints.verifyResetCode,
+        data: {'email': email, 'code': code},
+      );
+      return response.data['resetToken'] as String;
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Code verification failed: $e');
+    }
+  }
+
+  @override
+  Future<void> resetPassword({
+    required String resetToken,
+    required String newPassword,
+  }) async {
+    try {
+      await apiClient.post(
+        AuthEndpoints.resetPassword,
+        data: {'resetToken': resetToken, 'newPassword': newPassword},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Password reset failed: $e');
+    }
+  }
+
   Future<void> _persistTokens(String access, String refresh) async {
     await storage.write(key: SecureStorageKeys.accessToken, value: access);
     await storage.write(key: SecureStorageKeys.refreshToken, value: refresh);

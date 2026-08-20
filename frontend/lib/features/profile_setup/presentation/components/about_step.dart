@@ -2,17 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/widgets/app_text_field.dart';
+import 'package:frontend/core/widgets/avatar_picker.dart';
 
 class AboutStep extends StatelessWidget {
   final TextEditingController bioController;
   final TextEditingController learningGoalController;
   final TextEditingController teachGoalController;
+  final String userName;
+  final String? avatarUrl;
+  final bool avatarUploading;
+  final VoidCallback onPickAvatar;
 
   const AboutStep({
     super.key,
     required this.bioController,
     required this.learningGoalController,
     required this.teachGoalController,
+    required this.userName,
+    required this.onPickAvatar,
+    this.avatarUrl,
+    this.avatarUploading = false,
   });
 
   @override
@@ -28,6 +37,22 @@ class AboutStep extends StatelessWidget {
           Text(
             'A few optional details to help peers get to know you.',
             style: typography.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          Center(
+            child: AvatarPicker(
+              name: userName,
+              imageUrl: avatarUrl,
+              isUploading: avatarUploading,
+              onTap: onPickAvatar,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Center(
+            child: Text(
+              avatarUrl != null ? 'Tap to change photo' : 'Add a profile photo (optional)',
+              style: typography.bodySmall,
+            ),
           ),
           const SizedBox(height: AppSpacing.xl),
           AppTextField(

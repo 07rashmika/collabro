@@ -66,3 +66,12 @@ final class SessionPasswordViewed extends SessionsState {
   @override
   List<Object?> get props => [password];
 }
+
+final class ParticipantRemoved extends SessionsState {
+  final String sessionId;
+  final String userId;
+  const ParticipantRemoved(this.sessionId, this.userId);
+
+  @override
+  List<Object?> get props => [sessionId, userId];
+}

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/features/connections/domain/repos/connections_repo.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/users/domain/repos/users_repo.dart';
@@ -23,6 +24,7 @@ class UserProfileScreen extends StatelessWidget {
         usersRepo: context.read<UsersRepo>(),
         notesRepo: context.read<NotesRepo>(),
         sessionsRepo: context.read<SessionsRepo>(),
+        connectionsRepo: context.read<ConnectionsRepo>(),
         userId: userId,
       )..load(),
       child: const _UserProfileView(),

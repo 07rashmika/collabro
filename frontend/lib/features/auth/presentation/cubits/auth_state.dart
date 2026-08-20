@@ -11,8 +11,14 @@ final class AuthInitial extends AuthState {
   const AuthInitial();
 }
 
+enum AuthAction { emailPassword, google, logout }
+
 final class AuthLoading extends AuthState {
-  const AuthLoading();
+  final AuthAction action;
+  const AuthLoading(this.action);
+
+  @override
+  List<Object?> get props => [action];
 }
 
 final class AuthSuccess extends AuthState {

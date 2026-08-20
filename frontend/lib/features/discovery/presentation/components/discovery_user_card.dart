@@ -43,7 +43,11 @@ class DiscoveryUserCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                UserAvatar(name: user.name, size: AppSpacing.avatarMd),
+                UserAvatar(
+                  name: user.name,
+                  imageUrl: user.avatarUrl,
+                  size: AppSpacing.avatarMd,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Column(

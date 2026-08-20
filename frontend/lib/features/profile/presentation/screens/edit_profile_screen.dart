@@ -4,9 +4,11 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
+import 'package:frontend/features/auth/domain/repos/auth_repo.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
 import 'package:frontend/features/skills/domain/repos/skills_repo.dart';
 import 'package:frontend/features/study_areas/domain/repos/study_areas_repo.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/edit_profile_body.dart';
@@ -22,6 +24,8 @@ class EditProfileScreen extends StatelessWidget {
         skillsRepo: context.read<SkillsRepo>(),
         studyAreasRepo: context.read<StudyAreasRepo>(),
         profilesRepo: context.read<ProfilesRepo>(),
+        authRepo: context.read<AuthRepo>(),
+        usersRepo: context.read<UsersRepo>(),
       )..load(),
       child: const _EditProfileView(),
     );
@@ -40,6 +44,8 @@ class _EditProfileViewState extends State<_EditProfileView> {
   final _learningGoalController = TextEditingController();
   final _teachGoalController = TextEditingController();
   bool _controllersSeeded = false;
+  String? _initialAvatarUrl;
+  bool _avatarChanged = false;
 
   @override
   void dispose() {
@@ -60,15 +66,23 @@ class _EditProfileViewState extends State<_EditProfileView> {
           listener: (context, state) {
             if (state is EditProfileReady && !_controllersSeeded) {
               _controllersSeeded = true;
+              _initialAvatarUrl = state.avatarUrl;
               _bioController.text = state.bio;
               _learningGoalController.text = state.learningGoal;
               _teachGoalController.text = state.teachGoal;
+            }
+            if (state is EditProfileReady &&
+                _controllersSeeded &&
+                state.avatarUrl != _initialAvatarUrl) {
+              _avatarChanged = true;
             }
             if (state is EditProfileReady && state.submitted) {
               context.pop(true);
             } else if (state is EditProfileReady &&
                 (state.submitError != null || state.catalogError != null)) {
-              showErrorSnackBar(context);
+              showErrorSnackBar(context, state.submitError ?? state.catalogError);
+            } else if (state is EditProfileReady && state.avatarError != null) {
+              showErrorSnackBar(context, state.avatarError);
             }
           },
           builder: (context, state) {
@@ -82,7 +96,7 @@ class _EditProfileViewState extends State<_EditProfileView> {
                   child: Row(
                     children: [
                       IconButton(
-                        onPressed: () => context.pop(),
+                        onPressed: () => context.pop(_avatarChanged),
                         icon: Icon(Icons.arrow_back, color: colors.textPrimary),
                       ),
                       Expanded(

@@ -5,6 +5,7 @@ class PublicUser extends Equatable {
   final String id;
   final String name;
   final String email;
+  final String? avatarUrl;
   final String? bio;
   final String? learningGoal;
   final String? teachGoal;
@@ -19,6 +20,7 @@ class PublicUser extends Equatable {
     required this.id,
     required this.name,
     required this.email,
+    this.avatarUrl,
     this.bio,
     this.learningGoal,
     this.teachGoal,
@@ -37,6 +39,7 @@ class PublicUser extends Equatable {
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
+      avatarUrl: json['avatarUrl'] as String?,
       bio: profile?['bio'] as String?,
       learningGoal: profile?['learningGoal'] as String?,
       teachGoal: profile?['teachGoal'] as String?,
@@ -60,6 +63,7 @@ class PublicUser extends Equatable {
     id,
     name,
     email,
+    avatarUrl,
     bio,
     learningGoal,
     teachGoal,

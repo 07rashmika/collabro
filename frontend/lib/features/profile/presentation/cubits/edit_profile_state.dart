@@ -43,6 +43,11 @@ final class EditProfileReady extends EditProfileState {
   final String? submitError;
   final bool submitted;
 
+  final String userName;
+  final String? avatarUrl;
+  final bool avatarUploading;
+  final String? avatarError;
+
   const EditProfileReady({
     required this.allSkills,
     required this.allStudyAreas,
@@ -61,6 +66,10 @@ final class EditProfileReady extends EditProfileState {
     this.isSubmitting = false,
     this.submitError,
     this.submitted = false,
+    this.userName = '',
+    this.avatarUrl,
+    this.avatarUploading = false,
+    this.avatarError,
   });
 
   bool get hasSkills => selectedSkillLevels.isNotEmpty;
@@ -85,6 +94,11 @@ final class EditProfileReady extends EditProfileState {
     String? submitError,
     bool clearSubmitError = false,
     bool? submitted,
+    String? avatarUrl,
+    bool clearAvatarUrl = false,
+    bool? avatarUploading,
+    String? avatarError,
+    bool clearAvatarError = false,
   }) {
     return EditProfileReady(
       allSkills: allSkills ?? this.allSkills,
@@ -107,6 +121,10 @@ final class EditProfileReady extends EditProfileState {
       isSubmitting: isSubmitting ?? this.isSubmitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       submitted: submitted ?? this.submitted,
+      userName: userName,
+      avatarUrl: clearAvatarUrl ? null : (avatarUrl ?? this.avatarUrl),
+      avatarUploading: avatarUploading ?? this.avatarUploading,
+      avatarError: clearAvatarError ? null : (avatarError ?? this.avatarError),
     );
   }
 
@@ -129,5 +147,9 @@ final class EditProfileReady extends EditProfileState {
     isSubmitting,
     submitError,
     submitted,
+    userName,
+    avatarUrl,
+    avatarUploading,
+    avatarError,
   ];
 }

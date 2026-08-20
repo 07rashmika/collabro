@@ -6,7 +6,7 @@ import { getConnectionStatuses } from "../connections/connections.service";
 const LEVEL_WEIGHT = { BEGINNER: 1, INTERMEDIATE: 2, ADVANCED: 3 };
 
 const profileInclude = {
-  user: { select: { id: true, name: true, email: true } },
+  user: { select: { id: true, name: true, email: true, avatarUrl: true } },
   skills: {
     select: {
       level: true,
@@ -81,9 +81,11 @@ export class MatchingService {
 
     // score + rank every candidate, then attach a human-readable reason
     // built directly from the score breakdown (see buildReason below)
+    // A 0% match isn't a "recommendation" — always excluded regardless of
+    // the requested minScore, which only raises the bar further.
     const scored: MatchScore[] = candidateProfiles
       .map((p) => this.scoreCandidate(me, this.toStudentProfile(p)))
-      .filter((s) => s.totalScore >= minScore)
+      .filter((s) => s.totalScore > 0 && s.totalScore >= minScore)
       .sort((a, b) => b.totalScore - a.totalScore)
       .slice(0, limit)
       .map((s) => ({ ...s, aiReason: this.buildReason(s) }));
@@ -129,7 +131,7 @@ export class MatchingService {
     learningGoal: string | null;
     teachGoal: string | null;
     interests: string[];
-    user: { name: string; email: string };
+    user: { name: string; email: string; avatarUrl: string | null };
     skills: SkillWithLevel[];
     studyAreas: StudyAreaRef[];
   }): StudentProfile {
@@ -137,6 +139,7 @@ export class MatchingService {
       userId: p.userId,
       name: p.user.name,
       email: p.user.email,
+      avatarUrl: p.user.avatarUrl,
       bio: p.bio,
       learningGoal: p.learningGoal,
       teachGoal: p.teachGoal,

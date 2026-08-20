@@ -6,7 +6,7 @@ const notificationSelect = {
   isRead: true,
   createdAt: true,
   connectionId: true,
-  actor: { select: { id: true, name: true } },
+  actor: { select: { id: true, name: true, avatarUrl: true } },
   // Lets the client tell a still-pending CONNECTION_REQUEST apart from one
   // that's since been accepted/declined, so a responded-to notification
   // renders its outcome instead of stale Accept/Decline buttons.

@@ -8,6 +8,7 @@ import { SignalingMessageType, NotificationMessageType } from "./signaling/signa
 import { SummariesService } from "../summaries/summaries.service";
 import { TranscriptionClient } from "./transcription.client";
 import { getConnectedUserIds } from "../connections/connections.service";
+import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
 import {
   encryptSessionPassword,
   decryptSessionPassword,
@@ -45,12 +46,12 @@ const sessionSelect = {
   createdAt: true,
   updatedAt: true,
   creator: {
-    select: { id: true, name: true, email: true },
+    select: { id: true, name: true, email: true, avatarUrl: true },
   },
   participants: {
     select: {
       joinedAt: true,
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, name: true, email: true, avatarUrl: true } },
     },
   },
   tags: {
@@ -96,7 +97,7 @@ const messageSelect = {
   content: true,
   createdAt: true,
   updatedAt: true,
-  sender: { select: { id: true, name: true, email: true } },
+  sender: { select: { id: true, name: true, email: true, avatarUrl: true } },
 } as const;
 
 export class SessionsService {
@@ -415,8 +416,10 @@ export class SessionsService {
   /// learning, the earlier it surfaces, ahead of raw scheduling order. With
   /// no `search` a skill-match is also required to appear at all (the feed
   /// that surfaces on the Home tab's Upcoming Sessions); with a `search`
-  /// term (Discovery tab) that gate is dropped in favor of a title search,
-  /// so it works for callers with no skills on their profile, with skill
+  /// term (Discovery tab) that gate is dropped in favor of a title/skill-tag
+  /// search — a search matching a skill's name pulls in sessions tagged
+  /// with it even if the title doesn't mention it — so it works for
+  /// callers with no skills on their profile, with skill
   /// overlap only affecting order.
   async discoverPublicSessions(userId: string, query: PageQueryDto) {
     const { search, page, limit } = query;
@@ -449,7 +452,15 @@ export class SessionsService {
     let where: typeof baseWhere & Record<string, unknown> = baseWhere;
 
     if (search) {
-      where = { ...baseWhere, title: { contains: search, mode: "insensitive" as const } };
+      const { skills } = await findMatchingCatalogTerms(this.prisma, search);
+      const skillIds = skills.map((s) => s.id);
+      where = {
+        ...baseWhere,
+        OR: [
+          { title: { contains: search, mode: "insensitive" as const } },
+          ...(skillIds.length > 0 ? [{ tags: { some: { skillId: { in: skillIds } } } }] : []),
+        ],
+      };
     } else {
       if (mySkillIds.size === 0 && connectedUserIds.length === 0) {
         return { sessions: [], meta: { total: 0, page, limit, totalPages: 0 } };
