@@ -2,7 +2,7 @@ import fs from "fs/promises";
 import path from "path";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
 import { AppError } from "../../common/errors/app-error";
-import { UpdateUserDto, UserQueryDto } from "./users.schema";
+import { UpdateUserDto, UserQueryDto, RegisterDeviceTokenDto } from "./users.schema";
 import { getConnectionStatuses } from "../connections/connections.service";
 import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
 
@@ -14,6 +14,9 @@ const publicUserSelect = {
   email: true,
   role: true,
   avatarUrl: true,
+  notifyMessages: true,
+  notifyConnections: true,
+  notifyVideoSessions: true,
   createdAt: true,
   profile: {
     select: {
@@ -171,6 +174,23 @@ export class UsersService {
       where: { id: userId },
       data: dto,
       select: publicUserSelect,
+    });
+  }
+
+  /// `token` is unique per-install, not per-user — upserting on it (rather
+  /// than inserting) handles a device being reused across accounts (sign
+  /// out, sign in as someone else) by simply reassigning it.
+  async registerDeviceToken(userId: string, dto: RegisterDeviceTokenDto) {
+    await this.prisma.client.deviceToken.upsert({
+      where: { token: dto.token },
+      create: { token: dto.token, userId, platform: dto.platform },
+      update: { userId, platform: dto.platform },
+    });
+  }
+
+  async unregisterDeviceToken(userId: string, token: string) {
+    await this.prisma.client.deviceToken.deleteMany({
+      where: { token, userId },
     });
   }
 

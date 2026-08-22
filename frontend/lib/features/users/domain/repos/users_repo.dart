@@ -14,4 +14,13 @@ abstract class UsersRepo {
   Future<AppUser> uploadAvatar(String imagePath);
 
   Future<AppUser> deleteAvatar();
+
+  Future<void> registerDeviceToken(String token);
+  Future<void> unregisterDeviceToken(String token);
+
+  Future<AppUser> updateNotificationPreferences({
+    bool? notifyMessages,
+    bool? notifyConnections,
+    bool? notifyVideoSessions,
+  });
 }

@@ -9,6 +9,7 @@ import { SummariesService } from "../summaries/summaries.service";
 import { TranscriptionClient } from "./transcription.client";
 import { getConnectedUserIds } from "../connections/connections.service";
 import { findMatchingCatalogTerms } from "../../common/utils/catalog-search.util";
+import { sendPushToUser } from "../notifications/push.service";
 import {
   encryptSessionPassword,
   decryptSessionPassword,
@@ -115,7 +116,12 @@ export class SessionsService {
   /// invite discoverable even if the recipient's socket was disconnected at
   /// the moment this fired; the ws pings just make it feel instant when it's
   /// connected.
-  private async notifyInvitedParticipants(sessionId: string, actorId: string, participantIds: string[]) {
+  private async notifyInvitedParticipants(
+    sessionId: string,
+    actorId: string,
+    participantIds: string[],
+    sessionTitle: string
+  ) {
     if (participantIds.length === 0) return;
     await this.prisma.client.notification.createMany({
       data: participantIds.map((recipientId) => ({
@@ -127,6 +133,20 @@ export class SessionsService {
     });
     notifyUsers(participantIds, { type: NotificationMessageType.SESSIONS_CHANGED });
     notifyUsers(participantIds, { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+
+    const actor = await this.prisma.client.user.findUnique({
+      where: { id: actorId },
+      select: { name: true },
+    });
+    await Promise.all(
+      participantIds.map((recipientId) =>
+        sendPushToUser(this.prisma, recipientId, "videoSessions", {
+          title: "Session invite",
+          body: `${actor?.name ?? "Someone"} added you to "${sessionTitle}"`,
+          data: { type: "SESSION_INVITE", sessionId },
+        })
+      )
+    );
   }
 
   /// Which of `sessionIds` the user has bookmarked — batched into one query
@@ -278,7 +298,7 @@ export class SessionsService {
 
     // The creator already has this fresh state locally — only the invitees
     // need telling that a session just appeared for them.
-    await this.notifyInvitedParticipants(session.id, userId, dto.participantIds);
+    await this.notifyInvitedParticipants(session.id, userId, dto.participantIds, session.title);
 
     return { ...toPublicSession(session, userId), savedByMe: false };
   }
@@ -592,7 +612,7 @@ export class SessionsService {
       },
     });
 
-    await this.notifyInvitedParticipants(sessionId, userId, [participantId]);
+    await this.notifyInvitedParticipants(sessionId, userId, [participantId], session.title);
     return created;
   }
 
@@ -688,6 +708,19 @@ export class SessionsService {
         data:  { updatedAt: new Date() },
       }),
     ]);
+
+    const recipientIds = session.participants
+      .map((p) => p.userId)
+      .filter((id) => id !== userId);
+    await Promise.all(
+      recipientIds.map((recipientId) =>
+        sendPushToUser(this.prisma, recipientId, "messages", {
+          title: session.title,
+          body: `${message.sender.name}: ${message.content}`,
+          data: { type: "NEW_MESSAGE", sessionId },
+        })
+      )
+    );
 
     return message;
   }

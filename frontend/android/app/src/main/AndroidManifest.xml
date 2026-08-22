@@ -52,6 +52,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- Routes FCM notifications delivered while the app is backgrounded
+             or terminated to the high-importance channel created in
+             push_notifications_service.dart, so they show as a heads-up
+             banner instead of landing silently in the shade. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

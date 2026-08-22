@@ -4,6 +4,7 @@ import { notifyUsers } from "../sessions/signaling/user-registry";
 import { NotificationMessageType } from "../sessions/signaling/signaling.types";
 import { SendConnectionRequestDto } from "./connections.schema";
 import { ConnectionStatusView } from "./connections.types";
+import { sendPushToUser } from "../notifications/push.service";
 
 /// Batch status lookup for a list of other users, from the caller's point of
 /// view — used by users.service.ts and matching.service.ts to annotate
@@ -193,6 +194,17 @@ export class ConnectionsService {
     });
 
     notifyUsers([connection.requesterId, userId], { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+
+    const accepter = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+      select: { name: true },
+    });
+    await sendPushToUser(this.prisma, connection.requesterId, "connections", {
+      title: "Connection accepted",
+      body: `${accepter?.name ?? "Someone"} accepted your connection request`,
+      data: { type: "CONNECTION_ACCEPTED", connectionId },
+    });
+
     return updated;
   }
 
@@ -220,6 +232,16 @@ export class ConnectionsService {
       data: { recipientId: addresseeId, actorId: requesterId, type: "CONNECTION_REQUEST", connectionId },
     });
     notifyUsers([addresseeId], { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+
+    const requester = await this.prisma.client.user.findUnique({
+      where: { id: requesterId },
+      select: { name: true },
+    });
+    await sendPushToUser(this.prisma, addresseeId, "connections", {
+      title: "New connection request",
+      body: `${requester?.name ?? "Someone"} wants to connect with you`,
+      data: { type: "CONNECTION_REQUEST", connectionId },
+    });
   }
 
   private async markTriggeringNotificationRead(connectionId: string, recipientId: string) {

@@ -21,9 +21,16 @@ model User {
   avatarUrl    String?
   failedLoginAttempts Int      @default(0)
   lockedUntil         DateTime?
+  // Server-side mirror of the on-device toggles (settings drawer) — the
+  // backend checks these before sending a push, since the device-local
+  // copy never reaches it otherwise.
+  notifyMessages         Boolean @default(true)
+  notifyConnections      Boolean @default(true)
+  notifyVideoSessions    Boolean @default(true)
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]
+  deviceTokens  DeviceToken[]
   passwordResetTokens PasswordResetToken[]
   profile       Profile?
   notes         Note[]
@@ -43,6 +50,20 @@ model RefreshToken {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+/// An FCM registration token for one installed app instance. `token` is
+/// globally unique (Firebase's own identifier, not ours) — re-registering
+/// the same token just reassigns it to whichever user is now signed in on
+/// that device, which is why registration is an upsert keyed on `token`
+/// rather than a plain insert.
+model DeviceToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform  String   @default("android")
   createdAt DateTime @default(now())
 }
 

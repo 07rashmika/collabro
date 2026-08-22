@@ -63,6 +63,14 @@ router.post("/me/avatar", uploadAvatarMiddleware, (req, res) =>
 );
 router.delete("/me/avatar", (req, res) => usersController.deleteAvatar(req, res));
 
+// Push notification device tokens
+router.post("/me/device-tokens", (req, res) =>
+  usersController.registerDeviceToken(req, res)
+);
+router.delete("/me/device-tokens/:token", (req, res) =>
+  usersController.unregisterDeviceToken(req, res)
+);
+
 // All users
 router.get("/", (req, res) => usersController.getAllUsers(req, res));
 

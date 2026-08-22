@@ -11,7 +11,7 @@ const prisma               = PrismaService.getInstance();
 const studyAreasService    = new StudyAreasService(prisma);
 const studyAreasController = new StudyAreasController(studyAreasService);
 
-// All routes require a valid JWT and a student email domain
+// All routes require a valid JWT
 router.use(jwtGuard);
 
 // ── Read-only (all students) ──────────────────────────────────────────────────

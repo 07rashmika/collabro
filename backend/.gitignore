@@ -2,6 +2,9 @@ node_modules
 # Keep environment variables out of version control
 .env
 
+# Firebase service account key (path set via FIREBASE_SERVICE_ACCOUNT_PATH)
+firebase-service-account.json
+
 package-lock.json
 
 # Uploaded user content — not source, don't version it

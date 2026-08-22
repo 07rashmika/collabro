@@ -69,6 +69,54 @@ class ApiUsersRepo implements UsersRepo {
   }
 
   @override
+  Future<void> registerDeviceToken(String token) async {
+    try {
+      await apiClient.post(
+        UsersEndpoints.deviceTokens,
+        data: {'token': token, 'platform': 'android'},
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Registering device token failed: $e');
+    }
+  }
+
+  @override
+  Future<void> unregisterDeviceToken(String token) async {
+    try {
+      await apiClient.delete(UsersEndpoints.deviceToken(token));
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Unregistering device token failed: $e');
+    }
+  }
+
+  @override
+  Future<AppUser> updateNotificationPreferences({
+    bool? notifyMessages,
+    bool? notifyConnections,
+    bool? notifyVideoSessions,
+  }) async {
+    try {
+      final response = await apiClient.patch(
+        UsersEndpoints.me,
+        data: {
+          'notifyMessages': ?notifyMessages,
+          'notifyConnections': ?notifyConnections,
+          'notifyVideoSessions': ?notifyVideoSessions,
+        },
+      );
+      return AppUser.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Updating notification preferences failed: $e');
+    }
+  }
+
+  @override
   Future<AppUser> deleteAvatar() async {
     try {
       final response = await apiClient.delete(UsersEndpoints.avatar);

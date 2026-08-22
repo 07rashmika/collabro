@@ -14,6 +14,7 @@ import 'package:frontend/features/auth/presentation/components/google_sign_in_bu
 import 'package:frontend/features/auth/presentation/cubits/auth_cubit.dart';
 import 'package:frontend/features/profiles/domain/entities/profile.dart';
 import 'package:frontend/features/profiles/domain/repos/profiles_repo.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 import 'package:go_router/go_router.dart';
 
 class SignInScreen extends StatelessWidget {
@@ -22,7 +23,10 @@ class SignInScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => AuthCubit(authRepo: context.read<AuthRepo>()),
+      create: (context) => AuthCubit(
+        authRepo: context.read<AuthRepo>(),
+        usersRepo: context.read<UsersRepo>(),
+      ),
       child: const _SignInView(),
     );
   }

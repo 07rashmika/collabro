@@ -24,6 +24,7 @@ import 'package:frontend/features/notifications/domain/repos/notifications_repo.
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
 import 'package:frontend/features/sessions/domain/repos/sessions_repo.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+import 'package:frontend/features/users/domain/repos/users_repo.dart';
 import 'package:go_router/go_router.dart';
 
 import '../components/ai_summary_card.dart';
@@ -112,8 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return MultiBlocProvider(
           providers: [
             BlocProvider(
-              create: (context) =>
-                  AuthCubit(authRepo: context.read<AuthRepo>()),
+              create: (context) => AuthCubit(
+                authRepo: context.read<AuthRepo>(),
+                usersRepo: context.read<UsersRepo>(),
+              ),
             ),
             BlocProvider(
               create: (context) =>

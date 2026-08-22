@@ -21,7 +21,7 @@ const List<OnboardingPageData> onboardingPages = [
     headline3: 'Excel.',
     body:
         'Join the exclusive academic network. Connect with peers, organize study sessions, and access shared resources.',
-    badge: 'University email verification required.',
+    badge: 'Built for university students',
   ),
   OnboardingPageData(
     headline1: 'Find Your',

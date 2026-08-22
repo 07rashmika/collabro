@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -29,7 +30,16 @@ import 'package:frontend/features/study_areas/domain/repos/study_areas_repo.dart
 import 'package:frontend/features/users/data/repos/api_users_repo.dart';
 import 'package:frontend/features/users/domain/repos/users_repo.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Push notifications are a soft dependency — don't block the app from
+    // starting if Firebase isn't configured yet (e.g. google-services.json
+    // hasn't been added). Everything else keeps working without it.
+    debugPrint('Firebase init failed (push notifications disabled): $e');
+  }
   runApp(const MyApp());
 }
 
@@ -73,7 +83,10 @@ class MyApp extends StatelessWidget {
         providers: [
           BlocProvider(create: (context) => ThemeCubit(storage: storage)),
           BlocProvider(
-            create: (context) => NotificationPreferencesCubit(storage: storage),
+            create: (context) => NotificationPreferencesCubit(
+              storage: storage,
+              usersRepo: context.read<UsersRepo>(),
+            ),
           ),
           BlocProvider(
             create: (context) => ConnectionsCubit(

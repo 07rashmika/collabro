@@ -11,7 +11,7 @@ const prisma = PrismaService.getInstance();
 const profilesService = new ProfilesService(prisma);
 const profilesController = new ProfilesController(profilesService);
 
-// All profile routes require auth + student check
+// All profile routes require auth
 router.use(authenticate);
 
 // My profile
