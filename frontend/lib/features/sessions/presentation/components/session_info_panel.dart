@@ -8,13 +8,20 @@ import 'package:frontend/core/utils/session_time_label.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/widgets/danger_button.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
+import 'package:frontend/features/sessions/domain/entities/report_reason.dart';
 import 'package:frontend/features/sessions/domain/entities/study_session.dart';
+import 'package:frontend/features/sessions/presentation/components/report_dialog.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_badge.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_card.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_icon_label.dart';
 import 'package:frontend/features/sessions/presentation/components/session_info_section_label.dart';
 import 'package:frontend/features/sessions/presentation/components/session_tag_chip.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
+
+/// Key used in [_reportingKey] to track an in-flight "report the session
+/// itself" submission, as opposed to a report targeting a specific
+/// participant (keyed by that participant's userId).
+const _sessionReportKey = '__session__';
 
 class SessionInfoPanel extends StatefulWidget {
   final StudySession session;
@@ -38,6 +45,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
   bool _loadingPassword = false;
   late final List<SessionParticipant> _participants;
   String? _removingUserId;
+  String? _reportingKey;
 
   @override
   void initState() {
@@ -92,6 +100,39 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
     );
   }
 
+  Future<void> _reportSession() async {
+    final result = await ReportDialog.show(
+      context,
+      title: 'Report Session',
+      description: 'Let us know what\'s wrong with this session.',
+    );
+    if (result == null || !mounted) return;
+    setState(() => _reportingKey = _sessionReportKey);
+    context.read<SessionsCubit>().submitReport(
+      sessionId: widget.session.id,
+      targetType: ReportTargetType.session,
+      reason: result.reason,
+      details: result.details,
+    );
+  }
+
+  Future<void> _reportUser(String userId, String userName) async {
+    final result = await ReportDialog.show(
+      context,
+      title: 'Report $userName',
+      description: 'Let us know what\'s wrong.',
+    );
+    if (result == null || !mounted) return;
+    setState(() => _reportingKey = userId);
+    context.read<SessionsCubit>().submitReport(
+      sessionId: widget.session.id,
+      targetType: ReportTargetType.user,
+      reportedUserId: userId,
+      reason: result.reason,
+      details: result.details,
+    );
+  }
+
   Future<void> _copyCode() async {
     final code = widget.session.joinCode;
     if (code == null) return;
@@ -135,6 +176,14 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
             showErrorSnackBar(context, state.message);
           } else if (state is SessionsError && _removingUserId != null) {
             setState(() => _removingUserId = null);
+            showErrorSnackBar(context, state.message);
+          } else if (state is ReportSubmitted) {
+            setState(() => _reportingKey = null);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Report submitted. Thank you.')),
+            );
+          } else if (state is SessionsError && _reportingKey != null) {
+            setState(() => _reportingKey = null);
             showErrorSnackBar(context, state.message);
           }
         },
@@ -316,8 +365,8 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                             const SessionInfoBadge(
                               icon: Icons.star,
                               label: 'Host',
-                            )
-                          else if (_isCreator)
+                            ),
+                          if (_isCreator && p.userId != session.creatorId)
                             IconButton(
                               onPressed: _removingUserId != null
                                   ? null
@@ -343,6 +392,29 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                               visualDensity: .compact,
                               tooltip: 'Remove participant',
                             ),
+                          if (widget.currentUserId != null &&
+                              p.userId != widget.currentUserId)
+                            IconButton(
+                              onPressed: _reportingKey != null
+                                  ? null
+                                  : () => _reportUser(p.userId, p.name),
+                              icon: _reportingKey == p.userId
+                                  ? SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: colors.error,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.flag_outlined,
+                                      size: AppSpacing.iconSm,
+                                      color: colors.error,
+                                    ),
+                              visualDensity: .compact,
+                              tooltip: 'Report ${p.name}',
+                            ),
                         ],
                       ),
                     ),
@@ -350,12 +422,12 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                 ],
               ),
 
-              if (_isCreator && widget.onEndSession != null) ...[
-                const SizedBox(height: AppSpacing.lg),
-                SessionInfoSectionLabel('Owner Actions'),
-                const SizedBox(height: AppSpacing.sm),
-                SessionInfoCard(
-                  children: [
+              const SizedBox(height: AppSpacing.lg),
+              SessionInfoSectionLabel('Actions'),
+              const SizedBox(height: AppSpacing.sm),
+              SessionInfoCard(
+                children: [
+                  if (_isCreator && widget.onEndSession != null) ...[
                     TextButton.icon(
                       onPressed: widget.onEndSession,
                       style: TextButton.styleFrom(
@@ -374,9 +446,34 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: AppSpacing.sm),
                   ],
-                ),
-              ],
+                  TextButton.icon(
+                    onPressed: _reportingKey != null ? null : _reportSession,
+                    style: TextButton.styleFrom(
+                      padding: .zero,
+                      minimumSize: Size.zero,
+                      tapTargetSize: .shrinkWrap,
+                    ),
+                    icon: _reportingKey == _sessionReportKey
+                        ? SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colors.error,
+                            ),
+                          )
+                        : Icon(Icons.flag_outlined, color: colors.error),
+                    label: Text(
+                      'Report Session',
+                      style: typography.bodyMedium.copyWith(
+                        color: colors.error,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: AppSpacing.xxl),
             ],
           ),

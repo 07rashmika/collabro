@@ -17,6 +17,7 @@ abstract class SessionsEndpoints {
       '/sessions/$id/participants/$userId';
   static String summary(String id) => '/sessions/$id/summary';
   static String recording(String id) => '/sessions/$id/recording';
+  static String reports(String id) => '/sessions/$id/reports';
 
   static String signalingWsUrl(
     String baseHttpUrl,

@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
+import '../../domain/entities/report_reason.dart';
 import '../../domain/entities/study_session.dart';
 import '../../domain/repos/sessions_repo.dart';
 
@@ -170,6 +171,28 @@ class SessionsCubit extends Cubit<SessionsState> {
     try {
       await sessionsRepo.deleteSession(id);
       emit(SessionDeleted(id));
+    } catch (e) {
+      emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
+    }
+  }
+
+  Future<void> submitReport({
+    required String sessionId,
+    required ReportTargetType targetType,
+    String? reportedUserId,
+    required ReportReason reason,
+    String? details,
+  }) async {
+    emit(const ReportSubmitting());
+    try {
+      await sessionsRepo.submitReport(
+        sessionId: sessionId,
+        targetType: targetType,
+        reportedUserId: reportedUserId,
+        reason: reason,
+        details: details,
+      );
+      emit(const ReportSubmitted());
     } catch (e) {
       emit(SessionsError(e.toString().replaceFirst('Exception: ', '')));
     }

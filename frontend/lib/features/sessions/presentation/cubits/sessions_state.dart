@@ -75,3 +75,11 @@ final class ParticipantRemoved extends SessionsState {
   @override
   List<Object?> get props => [sessionId, userId];
 }
+
+final class ReportSubmitting extends SessionsState {
+  const ReportSubmitting();
+}
+
+final class ReportSubmitted extends SessionsState {
+  const ReportSubmitted();
+}

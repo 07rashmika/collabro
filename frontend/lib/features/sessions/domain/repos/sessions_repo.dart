@@ -1,4 +1,5 @@
 import '../entities/ice_server_config.dart';
+import '../entities/report_reason.dart';
 import '../entities/session_message.dart';
 import '../entities/study_session.dart';
 
@@ -52,4 +53,12 @@ abstract class SessionsRepo {
     String sessionId,
     List<({String path, String label, DateTime startedAt})> tracks,
   );
+
+  Future<void> submitReport({
+    required String sessionId,
+    required ReportTargetType targetType,
+    String? reportedUserId,
+    required ReportReason reason,
+    String? details,
+  });
 }

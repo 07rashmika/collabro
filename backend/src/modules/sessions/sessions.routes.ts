@@ -10,6 +10,8 @@ import { AppError } from "../../common/errors/app-error";
 import { SummarizerClient } from "../summaries/summarizer.client";
 import { SummariesService } from "../summaries/summaries.service";
 import { TranscriptionClient } from "./transcription.client";
+import { ReportsService } from "../reports/reports.service";
+import { ReportsController } from "../reports/reports.controller";
 
 const router = Router();
 
@@ -19,6 +21,8 @@ const transcriptionClient = new TranscriptionClient(process.env.SUMMARIZER_URL |
 const summariesService = new SummariesService(summarizerClient);
 const sessionsService = new SessionsService(prisma, summariesService, transcriptionClient);
 const sessionsController = new SessionsController(sessionsService);
+const reportsService = new ReportsService(prisma);
+const reportsController = new ReportsController(reportsService);
 
 const MAX_RECORDING_TRACKS = 2;
 const MAX_RECORDING_SIZE_BYTES = 200 * 1024 * 1024; // 200MB — up to ~2h call audio
@@ -114,6 +118,11 @@ router.post("/:id/messages", (req, res) =>
 );
 router.delete("/:id/messages/:messageId", (req, res) =>
   sessionsController.deleteMessage(req, res)
+);
+
+// Reports (session or a participant, filed from within the session)
+router.post("/:id/reports", (req, res) =>
+  reportsController.createReport(req, res)
 );
 
 // Video calling (WebRTC ICE config)

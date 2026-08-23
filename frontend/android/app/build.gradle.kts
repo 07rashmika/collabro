@@ -8,7 +8,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.frontend"
+    namespace = "com.rashmika.collabro"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

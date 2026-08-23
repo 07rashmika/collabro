@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../domain/entities/ice_server_config.dart';
+import '../../domain/entities/report_reason.dart';
 import '../../domain/entities/session_message.dart';
 import '../../domain/entities/study_session.dart';
 import '../../domain/repos/sessions_repo.dart';
@@ -354,6 +355,31 @@ class ApiSessionsRepo implements SessionsRepo {
       throw ApiException.fromDioError(e);
     } catch (e) {
       throw Exception('Uploading call recording failed: $e');
+    }
+  }
+
+  @override
+  Future<void> submitReport({
+    required String sessionId,
+    required ReportTargetType targetType,
+    String? reportedUserId,
+    required ReportReason reason,
+    String? details,
+  }) async {
+    try {
+      await apiClient.post(
+        SessionsEndpoints.reports(sessionId),
+        data: {
+          'targetType': targetType.toJson(),
+          if (reportedUserId != null) 'reportedUserId': reportedUserId,
+          'reason': reason.toJson(),
+          if (details != null && details.isNotEmpty) 'details': details,
+        },
+      );
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Submitting report failed: $e');
     }
   }
 }
