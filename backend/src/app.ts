@@ -12,6 +12,7 @@ import userRoutes from "./modules/users/users.routes";
 import matchingRoutes from "./modules/matching/matching.routes";
 import connectionsRoutes from "./modules/connections/connections.routes";
 import notificationsRoutes from "./modules/notifications/notifications.routes";
+import adminPanelRoutes from "./modules/admin-panel/admin-panel.routes";
 
 import { loggingInterceptor } from "./common/interceptors/logging.interceptor";
 import { httpExceptionFilter } from "./common/filters/http-exception.filter";
@@ -23,6 +24,9 @@ app.use(cors());
 app.use(express.json());
 app.use(loggingInterceptor);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// Web admin panel (plain HTML/CSS/JS, no build step) — its own API lives
+// under /api/admin, kept separate from this static bundle.
+app.use("/admin", express.static(path.join(__dirname, "../public/admin")));
 
 // Health check
 app.get("/", (_req, res) => {
@@ -40,6 +44,7 @@ app.use("/users",    userRoutes);
 app.use("/matching", matchingRoutes);
 app.use("/connections",   connectionsRoutes);
 app.use("/notifications", notificationsRoutes);
+app.use("/api/admin", adminPanelRoutes);
 
 // Global error handler
 app.use(httpExceptionFilter);

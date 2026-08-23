@@ -28,7 +28,7 @@ import {
 // Sessions auto-close once past their type's time limit, counted from
 // whichever of scheduledAt/createdAt marks when the session actually starts
 // (so a session scheduled for the future doesn't expire before it begins).
-const SESSION_TTL_MS: Record<"VIDEO" | "TEXT", number> = {
+export const SESSION_TTL_MS: Record<"VIDEO" | "TEXT", number> = {
   VIDEO: 2 * 60 * 60 * 1000,
   TEXT:  4 * 60 * 60 * 1000,
 };

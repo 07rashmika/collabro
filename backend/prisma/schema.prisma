@@ -27,6 +27,12 @@ model User {
   notifyMessages         Boolean @default(true)
   notifyConnections      Boolean @default(true)
   notifyVideoSessions    Boolean @default(true)
+  // Set by the web admin panel, typically off the back of a Report. Checked
+  // at login/refresh (not per-request) — see auth.service.ts — so an already
+  // live access token can outlive a suspension by up to its own TTL.
+  isSuspended      Boolean   @default(false)
+  suspendedAt      DateTime?
+  suspendedReason  String?
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshTokens RefreshToken[]

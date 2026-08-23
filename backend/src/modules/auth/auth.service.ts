@@ -76,6 +76,8 @@ export class AuthService {
         passwordHash: true,
         failedLoginAttempts: true,
         lockedUntil: true,
+        isSuspended: true,
+        suspendedReason: true,
       },
     });
 
@@ -125,6 +127,18 @@ export class AuthService {
         where: { id: user.id },
         data: { failedLoginAttempts: 0, lockedUntil: null },
       });
+    }
+
+    // Checked after the password is confirmed valid (not before) so a
+    // suspended account's status isn't revealed to someone who's merely
+    // guessing at the password.
+    if (user.isSuspended) {
+      throw new AppError(
+        user.suspendedReason
+          ? `Your account has been suspended: ${user.suspendedReason}`
+          : "Your account has been suspended. Contact support for details.",
+        403
+      );
     }
 
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
@@ -183,6 +197,15 @@ export class AuthService {
           });
     }
 
+    if (user.isSuspended) {
+      throw new AppError(
+        user.suspendedReason
+          ? `Your account has been suspended: ${user.suspendedReason}`
+          : "Your account has been suspended. Contact support for details.",
+        403
+      );
+    }
+
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
       sub: user.id,
       email: user.email,
@@ -217,6 +240,19 @@ export class AuthService {
 
     if (!stored || stored.expiresAt < new Date()) {
       throw new Error("Invalid or expired refresh token");
+    }
+
+    // Catches a suspension that landed after this token was issued — the
+    // access token itself is short-lived (15m), so this is the next
+    // checkpoint where it actually takes effect.
+    if (stored.user.isSuspended) {
+      await this.prisma.client.refreshToken.deleteMany({ where: { userId: stored.user.id } });
+      throw new AppError(
+        stored.user.suspendedReason
+          ? `Your account has been suspended: ${stored.user.suspendedReason}`
+          : "Your account has been suspended. Contact support for details.",
+        403
+      );
     }
 
     const { accessToken, refreshToken: newRefreshToken } =

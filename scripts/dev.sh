@@ -52,6 +52,10 @@ pids+=("$!")
 (cd "$BACKEND_DIR" && exec npm run dev) &
 pids+=("$!")
 
+# The web admin panel (backend/public/admin) is just static files served by
+# the backend above — no separate process to start, just a URL to know about.
+echo "[dev.sh] Admin panel: http://localhost:3000/admin"
+
 # The app's default API base URL (see frontend/lib/core/network/api_config.dart)
 # is 10.0.2.2 for Android or localhost otherwise — both are loopback aliases
 # that only resolve to *this* machine from an emulator/simulator, which

@@ -5,6 +5,9 @@ const REQUIRED_ENV_VARS = [
   "DATABASE_URL",
   "JWT_ACCESS_SECRET",
   "JWT_REFRESH_SECRET",
+  "ADMIN_EMAIL",
+  "ADMIN_PASSWORD",
+  "ADMIN_JWT_SECRET",
 ];
 
 const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
