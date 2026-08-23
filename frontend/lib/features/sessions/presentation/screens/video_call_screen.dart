@@ -261,6 +261,7 @@ class _VideoCallViewState extends State<_VideoCallView> {
         session: widget.session,
         currentUserId: widget.currentUserId,
         onEndSession: isCreator ? () => _confirmEndSession(context) : null,
+        onLeaveSession: () => context.read<VideoCallCubit>().hangUp(),
       ),
       body: SafeArea(
         child: BlocListener<SessionsCubit, SessionsState>(

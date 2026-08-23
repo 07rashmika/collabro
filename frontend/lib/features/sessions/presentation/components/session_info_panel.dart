@@ -27,12 +27,14 @@ class SessionInfoPanel extends StatefulWidget {
   final StudySession session;
   final String? currentUserId;
   final VoidCallback? onEndSession;
+  final VoidCallback? onLeaveSession;
 
   const SessionInfoPanel({
     super.key,
     required this.session,
     required this.currentUserId,
     this.onEndSession,
+    this.onLeaveSession,
   });
 
   @override
@@ -133,6 +135,36 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
     );
   }
 
+  Future<void> _promptLeaveAfterReport() async {
+    final colors = AppColors.of(context);
+    final typography = AppTypography.of(context);
+    final shouldLeave = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: colors.backgroundCard,
+        title: Text('Report submitted', style: typography.headlineSmall),
+        content: Text(
+          'Thanks for letting us know. Would you like to leave this session immediately?',
+          style: typography.bodyMedium,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text('Stay', style: typography.labelMedium),
+          ),
+          DangerButton(
+            label: 'Leave Now',
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+          ),
+        ],
+      ),
+    );
+    if (shouldLeave == true && mounted) {
+      Navigator.of(context).pop();
+      widget.onLeaveSession?.call();
+    }
+  }
+
   Future<void> _copyCode() async {
     final code = widget.session.joinCode;
     if (code == null) return;
@@ -179,9 +211,7 @@ class _SessionInfoPanelState extends State<SessionInfoPanel> {
             showErrorSnackBar(context, state.message);
           } else if (state is ReportSubmitted) {
             setState(() => _reportingKey = null);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Report submitted. Thank you.')),
-            );
+            _promptLeaveAfterReport();
           } else if (state is SessionsError && _reportingKey != null) {
             setState(() => _reportingKey = null);
             showErrorSnackBar(context, state.message);

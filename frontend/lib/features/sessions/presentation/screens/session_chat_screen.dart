@@ -159,6 +159,7 @@ class _SessionChatViewState extends State<_SessionChatView> {
             onEndSession: isCreator && !_isClosed
                 ? () => _confirmEndSession(context)
                 : null,
+            onLeaveSession: () => context.go(AppRoutes.sessions),
           );
         },
       ),
