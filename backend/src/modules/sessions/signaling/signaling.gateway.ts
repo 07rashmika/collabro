@@ -143,7 +143,7 @@ async function handleNotificationsUpgrade(
   });
 }
 
-function handleConnection(
+export function handleConnection(
   ws: WebSocket,
   sessionId: string,
   client: ConnectedClient
@@ -182,7 +182,7 @@ function handleConnection(
   });
 }
 
-async function handleMessage(sessionId: string, client: ConnectedClient, raw: string): Promise<void> {
+export async function handleMessage(sessionId: string, client: ConnectedClient, raw: string): Promise<void> {
   try {
     const message = JSON.parse(raw) as InboundSignalingMessage;
 
