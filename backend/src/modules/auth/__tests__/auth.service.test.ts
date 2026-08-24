@@ -199,6 +199,37 @@ describe("AuthService.login", () => {
       refreshToken: "refresh-token",
     });
   });
+
+  it("rejects a suspended account after the password checks out, with its reason", async () => {
+    mockedCompare.mockResolvedValue(true);
+    const user = mockModel({
+      findUnique: jest.fn().mockResolvedValue(
+        baseUser({ isSuspended: true, suspendedReason: "Harassment in session chat" })
+      ),
+      update: jest.fn().mockResolvedValue({}),
+    });
+    const { service, tokenUtil } = makeService({ user });
+
+    await expect(service.login({ email: "a@x.com", password: "correct" })).rejects.toMatchObject({
+      statusCode: 403,
+      message: expect.stringContaining("Harassment in session chat"),
+    });
+    expect(tokenUtil.generateTokenPair).not.toHaveBeenCalled();
+  });
+
+  it("rejects a suspended account with a generic message when no reason was recorded", async () => {
+    mockedCompare.mockResolvedValue(true);
+    const user = mockModel({
+      findUnique: jest.fn().mockResolvedValue(baseUser({ isSuspended: true, suspendedReason: null })),
+      update: jest.fn().mockResolvedValue({}),
+    });
+    const { service } = makeService({ user });
+
+    await expect(service.login({ email: "a@x.com", password: "correct" })).rejects.toMatchObject({
+      statusCode: 403,
+      message: expect.stringContaining("Contact support"),
+    });
+  });
 });
 
 describe("AuthService.loginWithGoogle", () => {
@@ -260,6 +291,29 @@ describe("AuthService.loginWithGoogle", () => {
       where: { id: "u1" },
       data: { googleId: "google-1" },
     });
+  });
+
+  it("rejects a suspended account matched by googleId", async () => {
+    mockOAuthInstance.verifyIdToken.mockResolvedValue({
+      getPayload: () => ({ sub: "google-1", email: "a@x.com", email_verified: true, name: "A" }),
+    });
+    const user = mockModel({
+      findUnique: jest.fn().mockResolvedValue({
+        id: "u1",
+        name: "A",
+        email: "a@x.com",
+        role: "STUDENT",
+        isSuspended: true,
+        suspendedReason: "Spam",
+      }),
+    });
+    const { service, tokenUtil } = makeService({ user });
+
+    await expect(service.loginWithGoogle("id-token")).rejects.toMatchObject({
+      statusCode: 403,
+      message: expect.stringContaining("Spam"),
+    });
+    expect(tokenUtil.generateTokenPair).not.toHaveBeenCalled();
   });
 
   it("creates a brand-new user when neither googleId nor email match an existing account", async () => {
@@ -327,6 +381,31 @@ describe("AuthService.refresh", () => {
       data: { token: "refresh-token", expiresAt: expect.any(Date) },
     });
     expect(result).toEqual({ accessToken: "access-token", refreshToken: "refresh-token" });
+  });
+
+  it("rejects and revokes all refresh tokens once the account has been suspended", async () => {
+    const refreshToken = mockModel({
+      findUnique: jest.fn().mockResolvedValue({
+        id: "rt1",
+        expiresAt: new Date(Date.now() + 100_000),
+        user: {
+          id: "u1",
+          email: "a@x.com",
+          role: "STUDENT",
+          isSuspended: true,
+          suspendedReason: "Harassment",
+        },
+      }),
+      deleteMany: jest.fn().mockResolvedValue({}),
+    });
+    const { service, tokenUtil } = makeService({ refreshToken });
+
+    await expect(service.refresh("valid-token")).rejects.toMatchObject({
+      statusCode: 403,
+      message: expect.stringContaining("Harassment"),
+    });
+    expect(refreshToken.deleteMany).toHaveBeenCalledWith({ where: { userId: "u1" } });
+    expect(tokenUtil.generateTokenPair).not.toHaveBeenCalled();
   });
 });
 

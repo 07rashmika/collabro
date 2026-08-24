@@ -6,3 +6,6 @@ process.env.DATABASE_URL = "postgresql://test:test@localhost:5432/test";
 process.env.JWT_ACCESS_SECRET = "test-access-secret";
 process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
 process.env.SESSION_PASSWORD_KEY = "bpOllSMF0WGlCV9mSx228c/n2Qo7DfRlNyFgXS9jPUM=";
+process.env.ADMIN_EMAIL = "admin@test.local";
+process.env.ADMIN_PASSWORD = "test-admin-password";
+process.env.ADMIN_JWT_SECRET = "test-admin-jwt-secret";

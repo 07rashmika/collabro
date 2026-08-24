@@ -11,7 +11,7 @@
     reports: { page: 1, status: "PENDING", targetType: "" },
   };
 
-  // ---------- helpers ----------
+  //helpers
 
   function esc(value) {
     const div = document.createElement("div");
@@ -80,7 +80,7 @@
     try {
       body = await res.json();
     } catch {
-      // no body
+      //no body
     }
 
     if (!res.ok) {
@@ -122,7 +122,7 @@
     container.append(prev, label, next);
   }
 
-  // ---------- auth ----------
+  //auth
 
   function showLogin() {
     document.getElementById("login-screen").hidden = false;
@@ -169,7 +169,7 @@
     showLogin();
   });
 
-  // ---------- tab navigation ----------
+  //tab navigation
 
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -192,7 +192,7 @@
     if (tab === "reports") return loadReports();
   }
 
-  // ---------- dashboard ----------
+  //dashboard
 
   async function loadDashboard() {
     try {
@@ -234,7 +234,7 @@
     }
   }
 
-  // ---------- users ----------
+  //users
 
   const usersSearchInput = document.getElementById("users-search");
   const usersStatusFilter = document.getElementById("users-status-filter");
@@ -334,7 +334,7 @@
     }
   }
 
-  // ---------- sessions ----------
+  //sessions
 
   const sessionsSearchInput = document.getElementById("sessions-search");
   sessionsSearchInput.addEventListener(
@@ -394,7 +394,7 @@
     }
   }
 
-  // ---------- reports ----------
+  //reports
 
   document
     .getElementById("reports-status-filter")
@@ -524,7 +524,7 @@
     }
   }
 
-  // ---------- boot ----------
+  //boot
 
   document.getElementById("reports-status-filter").value = state.reports.status;
 
