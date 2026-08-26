@@ -11,8 +11,6 @@
     reports: { page: 1, status: "PENDING", targetType: "" },
   };
 
-  //helpers
-
   function esc(value) {
     const div = document.createElement("div");
     div.textContent = value ?? "";
@@ -122,8 +120,6 @@
     container.append(prev, label, next);
   }
 
-  //auth
-
   function showLogin() {
     document.getElementById("login-screen").hidden = false;
     document.getElementById("app-shell").hidden = true;
@@ -169,8 +165,6 @@
     showLogin();
   });
 
-  //tab navigation
-
   document.querySelectorAll(".nav-item").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
@@ -191,8 +185,6 @@
     if (tab === "sessions") return loadSessions();
     if (tab === "reports") return loadReports();
   }
-
-  //dashboard
 
   async function loadDashboard() {
     try {
@@ -233,8 +225,6 @@
       toast(err.message, true);
     }
   }
-
-  //users
 
   const usersSearchInput = document.getElementById("users-search");
   const usersStatusFilter = document.getElementById("users-status-filter");
@@ -334,8 +324,6 @@
     }
   }
 
-  //sessions
-
   const sessionsSearchInput = document.getElementById("sessions-search");
   sessionsSearchInput.addEventListener(
     "input",
@@ -393,8 +381,6 @@
       toast(err.message, true);
     }
   }
-
-  //reports
 
   document
     .getElementById("reports-status-filter")
@@ -523,8 +509,6 @@
       toast(err.message, true);
     }
   }
-
-  //boot
 
   document.getElementById("reports-status-filter").value = state.reports.status;
 

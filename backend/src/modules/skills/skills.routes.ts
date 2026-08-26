@@ -1,38 +1,42 @@
 import { Router } from "express";
-import { SkillsController }   from "./skills.controller";
-import { SkillsService }      from "./skills.service";
-import { PrismaService }      from "../../infrastructure/database/prisma.service";
-import { jwtGuard }           from "../../common/guards/jwt.guard";
-import { adminGuard }         from "../../common/guards/admin.guard";
+import { SkillsController } from "./skills.controller";
+import { SkillsService } from "./skills.service";
+import { PrismaService } from "../../infrastructure/database/prisma.service";
+import { jwtGuard } from "../../common/guards/jwt.guard";
+import { adminGuard } from "../../common/guards/admin.guard";
 
 const router = Router();
 
-const prisma           = PrismaService.getInstance();
-const skillsService    = new SkillsService(prisma);
+const prisma = PrismaService.getInstance();
+const skillsService = new SkillsService(prisma);
 const skillsController = new SkillsController(skillsService);
 
-// All routes require a valid JWT
 router.use(jwtGuard);
 
-// ── Read-only (all students) ──────────────────────────────────────────────────
-router.get("/categories", (req, res) => skillsController.getCategories(req, res));
-// Live suggestions from the external apilayer Skills API — registered
-// before "/:id" so "search" isn't swallowed as an id lookup.
-router.get("/search",     (req, res) => skillsController.searchSkills(req, res));
-router.get("/",           (req, res) => skillsController.getAllSkills(req, res));
+router.get("/categories", (req, res) =>
+  skillsController.getCategories(req, res),
+);
+router.get("/search", (req, res) => skillsController.searchSkills(req, res));
+router.get("/", (req, res) => skillsController.getAllSkills(req, res));
 
-// Lets a student type a skill that isn't in the catalog yet — creates it
-// if missing (case-insensitive dedupe) instead of requiring an admin.
-router.post("/find-or-create", (req, res) => skillsController.findOrCreateSkill(req, res));
+router.post("/find-or-create", (req, res) =>
+  skillsController.findOrCreateSkill(req, res),
+);
 
-router.get("/:id",        (req, res) => skillsController.getSkillById(req, res));
+router.get("/:id", (req, res) => skillsController.getSkillById(req, res));
 
-// ── Write operations (admin only) ─────────────────────────────────────────────
-router.post(  "/",    adminGuard, (req, res) => skillsController.createSkill(req, res));
-router.patch( "/:id", adminGuard, (req, res) => skillsController.updateSkill(req, res));
-router.delete("/:id", adminGuard, (req, res) => skillsController.deleteSkill(req, res));
+router.post("/", adminGuard, (req, res) =>
+  skillsController.createSkill(req, res),
+);
+router.patch("/:id", adminGuard, (req, res) =>
+  skillsController.updateSkill(req, res),
+);
+router.delete("/:id", adminGuard, (req, res) =>
+  skillsController.deleteSkill(req, res),
+);
 
-// Seed is admin-only — run once after first deploy
-router.post("/seed", adminGuard, (req, res) => skillsController.seedSkills(req, res));
+router.post("/seed", adminGuard, (req, res) =>
+  skillsController.seedSkills(req, res),
+);
 
 export default router;

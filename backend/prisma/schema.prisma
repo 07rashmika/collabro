@@ -21,15 +21,9 @@ model User {
   avatarUrl    String?
   failedLoginAttempts Int      @default(0)
   lockedUntil         DateTime?
-  // Server-side mirror of the on-device toggles (settings drawer) — the
-  // backend checks these before sending a push, since the device-local
-  // copy never reaches it otherwise.
   notifyMessages         Boolean @default(true)
   notifyConnections      Boolean @default(true)
   notifyVideoSessions    Boolean @default(true)
-  // Set by the web admin panel, typically off the back of a Report. Checked
-  // at login/refresh (not per-request) — see auth.service.ts — so an already
-  // live access token can outlive a suspension by up to its own TTL.
   isSuspended      Boolean   @default(false)
   suspendedAt      DateTime?
   suspendedReason  String?
@@ -61,11 +55,6 @@ model RefreshToken {
   createdAt DateTime @default(now())
 }
 
-/// An FCM registration token for one installed app instance. `token` is
-/// globally unique (Firebase's own identifier, not ours) — re-registering
-/// the same token just reassigns it to whichever user is now signed in on
-/// that device, which is why registration is an upsert keyed on `token`
-/// rather than a plain insert.
 model DeviceToken {
   id        String   @id @default(cuid())
   token     String   @unique
@@ -75,13 +64,6 @@ model DeviceToken {
   createdAt DateTime @default(now())
 }
 
-/// Backs the 3-step "forgot password" flow: a 6-digit code is emailed
-/// (codeHash), then exchanged for an opaque reset-session token once
-/// verified correct (resetTokenHash, verifiedAt) — only that token, not the
-/// code, is accepted by the final set-new-password step. Only hashes are
-/// ever stored — see common/utils/password-reset-code.util.ts. `attempts`
-/// locks out brute-forcing of the 6-digit space; `usedAt` marks the whole
-/// flow consumed so neither the code nor the reset token can be replayed.
 model PasswordResetToken {
   id             String    @id @default(cuid())
   codeHash       String
@@ -173,13 +155,10 @@ model Session {
   title       String
   type        SessionType   @default(TEXT)
   status      SessionStatus @default(ACTIVE)
-  summary     String?       // AI generated summary — filled later
-  transcript  String?       // merged, speaker-labeled transcript from a video call recording
-  scheduledAt DateTime?     // set for sessions created to run at a future time
+  summary     String?
+  transcript  String? 
+  scheduledAt DateTime?     
   joinCode    String        @unique @default(cuid())
-  // Reversibly encrypted (AES-256-GCM, see common/utils/crypto.ts) rather
-  // than hashed — the creator can look the plaintext password back up from
-  // the session info panel, which a one-way hash can't support.
   encryptedPassword String?
   isPublic    Boolean       @default(false)
   createdBy   String
@@ -204,8 +183,6 @@ model SessionTag {
   @@unique([sessionId, skillId])
 }
 
-/// A user's bookmark of a session — surfaced in the Sessions tab under
-/// "Saved" regardless of whether they're a participant.
 model SavedSession {
   id        String   @id @default(cuid())
   userId    String
@@ -239,9 +216,6 @@ model Message {
   updatedAt DateTime @updatedAt
 }
 
-/// A user's request to connect with another user, and its outcome —
-/// surfaced to the addressee as a Notification (see below) rather than a
-/// dedicated inbox screen.
 model Connection {
   id            String           @id @default(cuid())
   requesterId   String
@@ -256,8 +230,6 @@ model Connection {
   @@unique([requesterId, addresseeId])
 }
 
-/// Generic per-user notification feed — today only populated by the
-/// Connection request/accept flow, but shaped to hold other types later.
 model Notification {
   id           String           @id @default(cuid())
   recipientId  String
@@ -273,12 +245,6 @@ model Notification {
   createdAt    DateTime         @default(now())
 }
 
-/// A user flagging a session or another participant for moderator review.
-/// Always scoped to the session it happened in — even a USER report carries
-/// sessionId so reviewers have context — since both entry points (the
-/// session info panel and the participant list) only exist inside a
-/// session. Purely a write-and-store model for now: no moderation workflow
-/// consumes `status` yet.
 model Report {
   id             String       @id @default(cuid())
   targetType     ReportTargetType

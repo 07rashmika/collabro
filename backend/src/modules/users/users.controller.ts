@@ -2,7 +2,11 @@ import { Request, Response } from "express";
 import { ZodError, z } from "zod";
 import { UsersService } from "./users.service";
 import { AppError } from "../../common/errors/app-error";
-import { UpdateUserSchema, UserQuerySchema, RegisterDeviceTokenSchema } from "./users.schema";
+import {
+  UpdateUserSchema,
+  UserQuerySchema,
+  RegisterDeviceTokenSchema,
+} from "./users.schema";
 
 function handleUserError(res: Response, err: unknown, defaultStatus: number) {
   if (err instanceof AppError) {
@@ -28,7 +32,7 @@ export class UsersController {
     try {
       const user = await this.usersService.getUserById(
         req.params.id as string,
-        req.user!.sub
+        req.user!.sub,
       );
       res.status(200).json(user);
     } catch (err) {
@@ -92,7 +96,9 @@ export class UsersController {
       res.status(204).send();
     } catch (err) {
       if (err instanceof ZodError) {
-        res.status(400).json({ message: "Validation failed", errors: z.treeifyError(err) });
+        res
+          .status(400)
+          .json({ message: "Validation failed", errors: z.treeifyError(err) });
         return;
       }
       handleUserError(res, err, 400);
@@ -101,7 +107,10 @@ export class UsersController {
 
   async unregisterDeviceToken(req: Request, res: Response) {
     try {
-      await this.usersService.unregisterDeviceToken(req.user!.sub, req.params.token as string);
+      await this.usersService.unregisterDeviceToken(
+        req.user!.sub,
+        req.params.token as string,
+      );
       res.status(204).send();
     } catch (err) {
       handleUserError(res, err, 400);

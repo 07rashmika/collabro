@@ -24,29 +24,24 @@ app.use(cors());
 app.use(express.json());
 app.use(loggingInterceptor);
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
-// Web admin panel (plain HTML/CSS/JS, no build step) — its own API lives
-// under /api/admin, kept separate from this static bundle.
 app.use("/admin", express.static(path.join(__dirname, "../public/admin")));
 
-// Health check
 app.get("/", (_req, res) => {
   res.json({ status: "ok", service: "collabro-api" });
 });
 
-// Feature routes
-app.use("/auth",     authRoutes);
+app.use("/auth", authRoutes);
 app.use("/profiles", profileRoutes);
-app.use("/skills",   skillsRoutes);
+app.use("/skills", skillsRoutes);
 app.use("/study-areas", studyAreasRoutes);
-app.use("/notes",    notesRoutes);
+app.use("/notes", notesRoutes);
 app.use("/sessions", sessionRoutes);
-app.use("/users",    userRoutes);
+app.use("/users", userRoutes);
 app.use("/matching", matchingRoutes);
-app.use("/connections",   connectionsRoutes);
+app.use("/connections", connectionsRoutes);
 app.use("/notifications", notificationsRoutes);
 app.use("/api/admin", adminPanelRoutes);
 
-// Global error handler
 app.use(httpExceptionFilter);
 
 export default app;

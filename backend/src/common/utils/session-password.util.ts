@@ -19,9 +19,6 @@ function getKey(): Buffer {
   return buf;
 }
 
-/// Reversible encryption for session passwords — the creator can look the
-/// plaintext back up later (see sessions.service.ts#getSessionPassword),
-/// which a one-way hash (bcrypt, used for login passwords) can't support.
 export function encryptSessionPassword(plainText: string): string {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, getKey(), iv);

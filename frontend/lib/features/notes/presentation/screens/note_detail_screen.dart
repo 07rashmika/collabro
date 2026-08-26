@@ -4,6 +4,7 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_routes.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/share_utils.dart';
 import 'package:frontend/core/utils/snackbar_utils.dart';
 import 'package:frontend/core/utils/time_ago.dart';
 import 'package:frontend/core/widgets/danger_button.dart';
@@ -51,6 +52,10 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
   Future<void> _editNote(BuildContext context) async {
     await context.push(AppRoutes.noteEditor, extra: _note);
     if (context.mounted) context.pop();
+  }
+
+  void _shareNote(BuildContext context) {
+    shareText(context, text: '${_note.title}\n\n${_note.content}');
   }
 
   void _confirmDelete(BuildContext context) {
@@ -119,6 +124,14 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                       ),
                       const Spacer(),
                       IconButton(
+                        onPressed: () => _shareNote(context),
+                        icon: Icon(
+                          Icons.share_outlined,
+                          color: colors.textPrimary,
+                        ),
+                        tooltip: 'Share note',
+                      ),
+                      IconButton(
                         onPressed: isBusy
                             ? null
                             : () => context.read<NotesCubit>().toggleVisibility(
@@ -176,6 +189,7 @@ class _NoteDetailViewState extends State<_NoteDetailView> {
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   AiSummarySection(
+                    title: _note.title,
                     summary: _note.summary,
                     isGenerating: state is NoteSummarizing,
                     onGenerate: () =>

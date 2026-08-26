@@ -10,7 +10,7 @@ export const CreateProfileSchema = z.object({
       z.object({
         skillId: z.string().min(1),
         level: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED"]),
-      })
+      }),
     )
     .optional(),
   studyAreaIds: z.array(z.string().min(1)).optional(),

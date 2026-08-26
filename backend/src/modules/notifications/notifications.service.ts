@@ -7,14 +7,8 @@ const notificationSelect = {
   createdAt: true,
   connectionId: true,
   actor: { select: { id: true, name: true, avatarUrl: true } },
-  // Lets the client tell a still-pending CONNECTION_REQUEST apart from one
-  // that's since been accepted/declined, so a responded-to notification
-  // renders its outcome instead of stale Accept/Decline buttons.
   connection: { select: { status: true } },
   sessionId: true,
-  // Just enough to render "X invited you to '<title>'" — the full session
-  // is fetched separately (with a fresh participant/expiry check) if the
-  // client navigates into it.
   session: { select: { title: true } },
 } as const;
 

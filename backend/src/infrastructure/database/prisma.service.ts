@@ -3,7 +3,6 @@ import { PrismaNeon } from "@prisma/adapter-neon";
 import { WebSocket } from "ws";
 import { neonConfig } from "@neondatabase/serverless";
 
-// tell Neon serverless driver to use the ws package in Node.js
 neonConfig.webSocketConstructor = WebSocket;
 
 export class PrismaService {

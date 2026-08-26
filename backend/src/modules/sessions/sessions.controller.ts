@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { ZodError } from "zod";
 import { SessionsService } from "./sessions.service";
-import { AppError }        from "../../common/errors/app-error";
+import { AppError } from "../../common/errors/app-error";
 import {
   CreateSessionSchema,
   UpdateSessionSchema,
@@ -36,161 +36,255 @@ export class SessionsController {
 
   async getMySessions(req: Request, res: Response) {
     try {
-      const query  = SessionQuerySchema.parse(req.query);
-      const result = await this.sessionsService.getMySessions(req.user!.sub, query);
+      const query = SessionQuerySchema.parse(req.query);
+      const result = await this.sessionsService.getMySessions(
+        req.user!.sub,
+        query,
+      );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getSessionById(req: Request, res: Response) {
     try {
-      const session = await this.sessionsService.getSessionById(req.params.id as string, req.user!.sub);
+      const session = await this.sessionsService.getSessionById(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async createSession(req: Request, res: Response) {
     try {
-      const dto     = CreateSessionSchema.parse(req.body);
-      const session = await this.sessionsService.createSession(req.user!.sub, dto);
+      const dto = CreateSessionSchema.parse(req.body);
+      const session = await this.sessionsService.createSession(
+        req.user!.sub,
+        dto,
+      );
       res.status(201).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async joinByCode(req: Request, res: Response) {
     try {
-      const dto     = JoinByCodeSchema.parse(req.body);
-      const session = await this.sessionsService.joinSessionByCode(req.user!.sub, dto);
+      const dto = JoinByCodeSchema.parse(req.body);
+      const session = await this.sessionsService.joinSessionByCode(
+        req.user!.sub,
+        dto,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async discoverSessions(req: Request, res: Response) {
     try {
-      const query  = PageQuerySchema.parse(req.query);
-      const result = await this.sessionsService.discoverPublicSessions(req.user!.sub, query);
+      const query = PageQuerySchema.parse(req.query);
+      const result = await this.sessionsService.discoverPublicSessions(
+        req.user!.sub,
+        query,
+      );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getSessionsByUser(req: Request, res: Response) {
     try {
       const sessions = await this.sessionsService.getPublicSessionsByUser(
         req.params.userId as string,
-        req.user!.sub
+        req.user!.sub,
       );
       res.status(200).json(sessions);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getSavedSessions(req: Request, res: Response) {
     try {
-      const query  = PageQuerySchema.parse(req.query);
-      const result = await this.sessionsService.getSavedSessions(req.user!.sub, query);
+      const query = PageQuerySchema.parse(req.query);
+      const result = await this.sessionsService.getSavedSessions(
+        req.user!.sub,
+        query,
+      );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async saveSession(req: Request, res: Response) {
     try {
-      await this.sessionsService.saveSession(req.user!.sub, req.params.id as string);
+      await this.sessionsService.saveSession(
+        req.user!.sub,
+        req.params.id as string,
+      );
       res.status(204).send();
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async unsaveSession(req: Request, res: Response) {
     try {
-      await this.sessionsService.unsaveSession(req.user!.sub, req.params.id as string);
+      await this.sessionsService.unsaveSession(
+        req.user!.sub,
+        req.params.id as string,
+      );
       res.status(204).send();
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getSessionPassword(req: Request, res: Response) {
     try {
-      const result = await this.sessionsService.getSessionPassword(req.params.id as string, req.user!.sub);
+      const result = await this.sessionsService.getSessionPassword(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async updateSession(req: Request, res: Response) {
     try {
-      const dto     = UpdateSessionSchema.parse(req.body);
-      const session = await this.sessionsService.updateSession(req.params.id as string, req.user!.sub, dto);
+      const dto = UpdateSessionSchema.parse(req.body);
+      const session = await this.sessionsService.updateSession(
+        req.params.id as string,
+        req.user!.sub,
+        dto,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async closeSession(req: Request, res: Response) {
     try {
-      const session = await this.sessionsService.closeSession(req.params.id as string, req.user!.sub);
+      const session = await this.sessionsService.closeSession(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async deleteSession(req: Request, res: Response) {
     try {
-      await this.sessionsService.deleteSession(req.params.id as string, req.user!.sub);
+      await this.sessionsService.deleteSession(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(204).send();
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async addParticipant(req: Request, res: Response) {
     try {
       const result = await this.sessionsService.addParticipant(
-        req.params.id as string, req.user!.sub, req.params.userId as string
+        req.params.id as string,
+        req.user!.sub,
+        req.params.userId as string,
       );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async removeParticipant(req: Request, res: Response) {
     try {
       await this.sessionsService.removeParticipant(
-        req.params.id as string, req.user!.sub, req.params.userId as string
+        req.params.id as string,
+        req.user!.sub,
+        req.params.userId as string,
       );
       res.status(204).send();
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getMessages(req: Request, res: Response) {
     try {
-      const query  = MessageQuerySchema.parse(req.query);
+      const query = MessageQuerySchema.parse(req.query);
       const result = await this.sessionsService.getMessages(
-        req.params.id as string, req.user!.sub, query
+        req.params.id as string,
+        req.user!.sub,
+        query,
       );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async sendMessage(req: Request, res: Response) {
     try {
-      const dto     = SendMessageSchema.parse(req.body);
+      const dto = SendMessageSchema.parse(req.body);
       const message = await this.sessionsService.sendMessage(
-        req.params.id as string, req.user!.sub, dto
+        req.params.id as string,
+        req.user!.sub,
+        dto,
       );
       res.status(201).json(message);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async deleteMessage(req: Request, res: Response) {
     try {
-      await this.sessionsService.deleteMessage(req.params.messageId as string, req.user!.sub);
+      await this.sessionsService.deleteMessage(
+        req.params.messageId as string,
+        req.user!.sub,
+      );
       res.status(204).send();
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async getIceServers(req: Request, res: Response) {
     try {
-      const result = await this.sessionsService.getIceServers(req.params.id as string, req.user!.sub);
+      const result = await this.sessionsService.getIceServers(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(200).json(result);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async generateSummary(req: Request, res: Response) {
     try {
-      const session = await this.sessionsService.generateSummary(req.params.id as string, req.user!.sub);
+      const session = await this.sessionsService.generateSummary(
+        req.params.id as string,
+        req.user!.sub,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 
   async uploadRecording(req: Request, res: Response) {
@@ -198,21 +292,37 @@ export class SessionsController {
       const files = (req.files as Express.Multer.File[]) || [];
       console.log(
         `[Sessions] Recording upload for session ${req.params.id}: ${files.length} file(s)`,
-        files.map((f) => ({ name: f.originalname, size: f.size, mimetype: f.mimetype }))
+        files.map((f) => ({
+          name: f.originalname,
+          size: f.size,
+          mimetype: f.mimetype,
+        })),
       );
       if (files.length === 0) {
         throw new AppError("At least one audio track is required", 400);
       }
-      const trackMeta = TrackMetaSchema.parse(JSON.parse(req.body.trackMeta || "[]"));
+      const trackMeta = TrackMetaSchema.parse(
+        JSON.parse(req.body.trackMeta || "[]"),
+      );
       if (trackMeta.length !== files.length) {
-        throw new AppError("trackMeta must have one entry per uploaded track", 400);
+        throw new AppError(
+          "trackMeta must have one entry per uploaded track",
+          400,
+        );
       }
 
       const session = await this.sessionsService.processRecording(
-        req.params.id as string, req.user!.sub, files, trackMeta
+        req.params.id as string,
+        req.user!.sub,
+        files,
+        trackMeta,
       );
-      console.log(`[Sessions] Recording processed successfully for session ${req.params.id}`);
+      console.log(
+        `[Sessions] Recording processed successfully for session ${req.params.id}`,
+      );
       res.status(200).json(session);
-    } catch (err) { handleError(res, err); }
+    } catch (err) {
+      handleError(res, err);
+    }
   }
 }

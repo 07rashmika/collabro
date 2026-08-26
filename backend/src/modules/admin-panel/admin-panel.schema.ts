@@ -7,8 +7,6 @@ export const AdminLoginSchema = z.object({
 
 export const SuspendUserSchema = z.object({
   reason: z.string().max(500).optional(),
-  // When suspending directly from a report row, also marks that report
-  // REVIEWED in the same request instead of a separate round trip.
   reportId: z.string().min(1).optional(),
 });
 

@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
+import 'package:frontend/core/utils/share_utils.dart';
 import 'package:frontend/core/widgets/primary_button.dart';
 
 class AiSummarySection extends StatelessWidget {
+  final String? title;
   final String? summary;
   final bool isGenerating;
   final VoidCallback onGenerate;
 
   const AiSummarySection({
     super.key,
+    this.title,
     required this.summary,
     required this.isGenerating,
     required this.onGenerate,
@@ -50,7 +53,7 @@ class AiSummarySection extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.md),
             PrimaryButton(
-              label: isGenerating ? 'Generating...' : 'Generate Summary',
+              label: 'Generate Summary',
               isLoading: isGenerating,
               leadingIcon: Icons.auto_awesome,
               onPressed: isGenerating ? null : onGenerate,
@@ -58,15 +61,32 @@ class AiSummarySection extends StatelessWidget {
           ] else ...[
             Text(summary!, style: typography.bodyMedium),
             const SizedBox(height: AppSpacing.sm),
-            TextButton(
-              onPressed: isGenerating ? null : onGenerate,
-              style: TextButton.styleFrom(padding: .zero),
-              child: Text(
-                'Regenerate',
-                style: typography.labelSmall.copyWith(
-                  color: colors.primaryLight,
+            Row(
+              children: [
+                TextButton(
+                  onPressed: isGenerating ? null : onGenerate,
+                  style: TextButton.styleFrom(padding: .zero),
+                  child: Text(
+                    'Regenerate',
+                    style: typography.labelSmall.copyWith(
+                      color: colors.primaryLight,
+                    ),
+                  ),
                 ),
-              ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () => shareText(
+                    context,
+                    text: title == null ? summary! : '$title\n\n$summary',
+                  ),
+                  icon: Icon(
+                    Icons.share_outlined,
+                    color: colors.primaryLight,
+                    size: AppSpacing.iconSm,
+                  ),
+                  tooltip: 'Share summary',
+                ),
+              ],
             ),
           ],
         ],

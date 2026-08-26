@@ -1,137 +1,160 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Collabro Admin</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <!-- Login screen -->
-  <section id="login-screen" class="login-screen">
-    <form id="login-form" class="login-card">
-      <h1>Collabro Admin</h1>
-      <p class="subtitle">Sign in to manage users, sessions, and reports.</p>
-      <label for="login-email">Email</label>
-      <input id="login-email" type="email" autocomplete="username" required />
-      <label for="login-password">Password</label>
-      <input id="login-password" type="password" autocomplete="current-password" required />
-      <p id="login-error" class="error-text" hidden></p>
-      <button type="submit" id="login-submit">Sign In</button>
-    </form>
-  </section>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collabro Admin</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Login screen -->
+    <section id="login-screen" class="login-screen">
+      <form id="login-form" class="login-card">
+        <h1>Collabro Admin</h1>
+        <p class="subtitle">Sign in to manage users, sessions, and reports.</p>
+        <label for="login-email">Email</label>
+        <input id="login-email" type="email" autocomplete="username" required />
+        <label for="login-password">Password</label>
+        <input
+          id="login-password"
+          type="password"
+          autocomplete="current-password"
+          required
+        />
+        <p id="login-error" class="error-text" hidden></p>
+        <button type="submit" id="login-submit">Sign In</button>
+      </form>
+    </section>
 
-  <!-- App shell -->
-  <div id="app-shell" class="app-shell" hidden>
-    <aside class="sidebar">
-      <div class="brand">Collabro Admin</div>
-      <nav class="nav">
-        <button class="nav-item active" data-tab="dashboard">Dashboard</button>
-        <button class="nav-item" data-tab="users">Users</button>
-        <button class="nav-item" data-tab="sessions">Sessions</button>
-        <button class="nav-item" data-tab="reports">Reports</button>
-      </nav>
-      <button id="logout-btn" class="logout-btn">Log Out</button>
-    </aside>
+    <!-- App shell -->
+    <div id="app-shell" class="app-shell" hidden>
+      <aside class="sidebar">
+        <div class="brand">Collabro Admin</div>
+        <nav class="nav">
+          <button class="nav-item active" data-tab="dashboard">
+            Dashboard
+          </button>
+          <button class="nav-item" data-tab="users">Users</button>
+          <button class="nav-item" data-tab="sessions">Sessions</button>
+          <button class="nav-item" data-tab="reports">Reports</button>
+        </nav>
+        <button id="logout-btn" class="logout-btn">Log Out</button>
+      </aside>
 
-    <main class="main">
-      <!-- Dashboard -->
-      <section id="tab-dashboard" class="tab-panel">
-        <h2>Dashboard</h2>
-        <div class="stat-grid" id="stat-grid"></div>
-      </section>
+      <main class="main">
+        <!-- Dashboard -->
+        <section id="tab-dashboard" class="tab-panel">
+          <h2>Dashboard</h2>
+          <div class="stat-grid" id="stat-grid"></div>
+        </section>
 
-      <!-- Users -->
-      <section id="tab-users" class="tab-panel" hidden>
-        <div class="panel-header">
-          <h2>Users</h2>
-          <div class="controls">
-            <input type="search" id="users-search" placeholder="Search name or email…" />
-            <select id="users-status-filter">
-              <option value="">All</option>
-              <option value="ACTIVE">Active</option>
-              <option value="SUSPENDED">Suspended</option>
-            </select>
+        <!-- Users -->
+        <section id="tab-users" class="tab-panel" hidden>
+          <div class="panel-header">
+            <h2>Users</h2>
+            <div class="controls">
+              <input
+                type="search"
+                id="users-search"
+                placeholder="Search name or email…"
+              />
+              <select id="users-status-filter">
+                <option value="">All</option>
+                <option value="ACTIVE">Active</option>
+                <option value="SUSPENDED">Suspended</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Status</th>
-                <th>Sessions</th>
-                <th>Reports filed</th>
-                <th>Reports against</th>
-                <th>Joined</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="users-tbody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="users-pagination"></div>
-      </section>
-
-      <!-- Sessions -->
-      <section id="tab-sessions" class="tab-panel" hidden>
-        <div class="panel-header">
-          <h2>Sessions</h2>
-          <div class="controls">
-            <input type="search" id="sessions-search" placeholder="Search title or creator…" />
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Status</th>
+                  <th>Sessions</th>
+                  <th>Reports filed</th>
+                  <th>Reports against</th>
+                  <th>Joined</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
           </div>
-        </div>
-        <div class="subtabs">
-          <button class="subtab-item active" data-category="ONGOING">Ongoing</button>
-          <button class="subtab-item" data-category="UPCOMING">Upcoming</button>
-          <button class="subtab-item" data-category="ENDED">Ended</button>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Type</th>
-                <th>Creator</th>
-                <th>Participants</th>
-                <th>Visibility</th>
-                <th id="sessions-date-col">Scheduled / Created</th>
-                <th>Expires</th>
-              </tr>
-            </thead>
-            <tbody id="sessions-tbody"></tbody>
-          </table>
-        </div>
-        <div class="pagination" id="sessions-pagination"></div>
-      </section>
+          <div class="pagination" id="users-pagination"></div>
+        </section>
 
-      <!-- Reports -->
-      <section id="tab-reports" class="tab-panel" hidden>
-        <div class="panel-header">
-          <h2>Reports</h2>
-          <div class="controls">
-            <select id="reports-status-filter">
-              <option value="PENDING">Pending</option>
-              <option value="REVIEWED">Reviewed</option>
-              <option value="DISMISSED">Dismissed</option>
-              <option value="">All</option>
-            </select>
+        <!-- Sessions -->
+        <section id="tab-sessions" class="tab-panel" hidden>
+          <div class="panel-header">
+            <h2>Sessions</h2>
+            <div class="controls">
+              <input
+                type="search"
+                id="sessions-search"
+                placeholder="Search title or creator…"
+              />
+            </div>
           </div>
-        </div>
-        <div class="subtabs">
-          <button class="subtab-item active" data-target-type="">All</button>
-          <button class="subtab-item" data-target-type="SESSION">Session Reports</button>
-          <button class="subtab-item" data-target-type="USER">User Reports</button>
-        </div>
-        <div class="report-list" id="reports-list"></div>
-        <div class="pagination" id="reports-pagination"></div>
-      </section>
-    </main>
-  </div>
+          <div class="subtabs">
+            <button class="subtab-item active" data-category="ONGOING">
+              Ongoing
+            </button>
+            <button class="subtab-item" data-category="UPCOMING">
+              Upcoming
+            </button>
+            <button class="subtab-item" data-category="ENDED">Ended</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Title</th>
+                  <th>Type</th>
+                  <th>Creator</th>
+                  <th>Participants</th>
+                  <th>Visibility</th>
+                  <th id="sessions-date-col">Scheduled / Created</th>
+                  <th>Expires</th>
+                </tr>
+              </thead>
+              <tbody id="sessions-tbody"></tbody>
+            </table>
+          </div>
+          <div class="pagination" id="sessions-pagination"></div>
+        </section>
 
-  <div id="toast" class="toast" hidden></div>
+        <!-- Reports -->
+        <section id="tab-reports" class="tab-panel" hidden>
+          <div class="panel-header">
+            <h2>Reports</h2>
+            <div class="controls">
+              <select id="reports-status-filter">
+                <option value="PENDING">Pending</option>
+                <option value="REVIEWED">Reviewed</option>
+                <option value="DISMISSED">Dismissed</option>
+                <option value="">All</option>
+              </select>
+            </div>
+          </div>
+          <div class="subtabs">
+            <button class="subtab-item active" data-target-type="">All</button>
+            <button class="subtab-item" data-target-type="SESSION">
+              Session Reports
+            </button>
+            <button class="subtab-item" data-target-type="USER">
+              User Reports
+            </button>
+          </div>
+          <div class="report-list" id="reports-list"></div>
+          <div class="pagination" id="reports-pagination"></div>
+        </section>
+      </main>
+    </div>
 
-  <script src="app.js"></script>
-</body>
+    <div id="toast" class="toast" hidden></div>
+
+    <script src="app.js"></script>
+  </body>
 </html>

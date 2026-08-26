@@ -7,7 +7,10 @@ import { SessionsService } from "../sessions.service";
 import { SummarizerClient } from "../../summaries/summarizer.client";
 import { SummariesService } from "../../summaries/summaries.service";
 import { TranscriptionClient } from "../transcription.client";
-import { SignalingMessageType, InboundSignalingMessage } from "./signaling.types";
+import {
+  SignalingMessageType,
+  InboundSignalingMessage,
+} from "./signaling.types";
 import {
   ConnectedClient,
   joinRoom,
@@ -23,38 +26,48 @@ const NOTIFICATIONS_PATH = "/users/ws";
 
 const tokenUtil = new TokenUtil();
 const prisma = PrismaService.getInstance();
-const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
-const transcriptionClient = new TranscriptionClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const summarizerClient = new SummarizerClient(
+  process.env.SUMMARIZER_URL || "http://localhost:8000",
+);
+const transcriptionClient = new TranscriptionClient(
+  process.env.SUMMARIZER_URL || "http://localhost:8000",
+);
 const summariesService = new SummariesService(summarizerClient);
-const sessionsService = new SessionsService(prisma, summariesService, transcriptionClient);
+const sessionsService = new SessionsService(
+  prisma,
+  summariesService,
+  transcriptionClient,
+);
 
 function rejectUpgrade(socket: Socket, statusLine: string) {
   socket.write(`HTTP/1.1 ${statusLine}\r\n\r\n`);
   socket.destroy();
 }
 
-// Both the per-session signaling socket and the per-user notifications
-// socket share the HTTP server's single "upgrade" event, so both live here
-// and are routed by pathname — two independent listeners would otherwise
-// race to call handleUpgrade on the same incoming request.
 export function attachSignalingServer(httpServer: HttpServer): void {
   const sessionsWss = new WebSocketServer({ noServer: true });
   const notificationsWss = new WebSocketServer({ noServer: true });
 
-  httpServer.on("upgrade", (req: IncomingMessage, socket: Socket, head: Buffer) => {
-    const url = new URL(req.url ?? "", "http://localhost");
-    if (url.pathname === SIGNALING_PATH) {
-      void handleSignalingUpgrade(sessionsWss, req, socket, head);
-    } else if (url.pathname === NOTIFICATIONS_PATH) {
-      void handleNotificationsUpgrade(notificationsWss, req, socket, head);
-    } else {
-      rejectUpgrade(socket, "404 Not Found");
-    }
-  });
+  httpServer.on(
+    "upgrade",
+    (req: IncomingMessage, socket: Socket, head: Buffer) => {
+      const url = new URL(req.url ?? "", "http://localhost");
+      if (url.pathname === SIGNALING_PATH) {
+        void handleSignalingUpgrade(sessionsWss, req, socket, head);
+      } else if (url.pathname === NOTIFICATIONS_PATH) {
+        void handleNotificationsUpgrade(notificationsWss, req, socket, head);
+      } else {
+        rejectUpgrade(socket, "404 Not Found");
+      }
+    },
+  );
 
-  sessionsWss.on("connection", (ws: WebSocket, sessionId: string, client: ConnectedClient) => {
-    handleConnection(ws, sessionId, client);
-  });
+  sessionsWss.on(
+    "connection",
+    (ws: WebSocket, sessionId: string, client: ConnectedClient) => {
+      handleConnection(ws, sessionId, client);
+    },
+  );
 
   notificationsWss.on("connection", (ws: WebSocket, userId: string) => {
     registerUserSocket(userId, ws);
@@ -62,12 +75,10 @@ export function attachSignalingServer(httpServer: HttpServer): void {
   });
 }
 
-/// Shared by both upgrade paths — verifies the access token, rejecting the
-/// upgrade otherwise. Returns null (after already rejecting) on any failure.
 async function authenticateUpgrade(
   req: IncomingMessage,
   socket: Socket,
-  token: string | null
+  token: string | null,
 ): Promise<{ sub: string; email: string } | null> {
   if (!token) {
     rejectUpgrade(socket, "400 Bad Request");
@@ -85,7 +96,7 @@ async function handleSignalingUpgrade(
   wss: WebSocketServer,
   req: IncomingMessage,
   socket: Socket,
-  head: Buffer
+  head: Buffer,
 ): Promise<void> {
   const url = new URL(req.url ?? "", "http://localhost");
   const sessionId = url.searchParams.get("sessionId");
@@ -94,7 +105,11 @@ async function handleSignalingUpgrade(
     return;
   }
 
-  const payload = await authenticateUpgrade(req, socket, url.searchParams.get("token"));
+  const payload = await authenticateUpgrade(
+    req,
+    socket,
+    url.searchParams.get("token"),
+  );
   if (!payload) return;
 
   const membership = await prisma.client.sessionParticipant.findUnique({
@@ -112,7 +127,7 @@ async function handleSignalingUpgrade(
   });
 
   const client: ConnectedClient = {
-    ws: null as unknown as WebSocket, // set once handleUpgrade completes below
+    ws: null as unknown as WebSocket,
     userId: payload.sub,
     name: user?.name ?? payload.email,
     isMicMuted: false,
@@ -126,16 +141,18 @@ async function handleSignalingUpgrade(
   });
 }
 
-/// The notifications channel needs no session/room membership check — it's
-/// a personal push channel any authenticated student can open.
 async function handleNotificationsUpgrade(
   wss: WebSocketServer,
   req: IncomingMessage,
   socket: Socket,
-  head: Buffer
+  head: Buffer,
 ): Promise<void> {
   const url = new URL(req.url ?? "", "http://localhost");
-  const payload = await authenticateUpgrade(req, socket, url.searchParams.get("token"));
+  const payload = await authenticateUpgrade(
+    req,
+    socket,
+    url.searchParams.get("token"),
+  );
   if (!payload) return;
 
   wss.handleUpgrade(req, socket, head, (ws) => {
@@ -146,7 +163,7 @@ async function handleNotificationsUpgrade(
 export function handleConnection(
   ws: WebSocket,
   sessionId: string,
-  client: ConnectedClient
+  client: ConnectedClient,
 ): void {
   const wasAlreadyConnected = !!getClient(sessionId, client.userId);
   const existingParticipants = joinRoom(sessionId, client);
@@ -182,7 +199,11 @@ export function handleConnection(
   });
 }
 
-export async function handleMessage(sessionId: string, client: ConnectedClient, raw: string): Promise<void> {
+export async function handleMessage(
+  sessionId: string,
+  client: ConnectedClient,
+  raw: string,
+): Promise<void> {
   try {
     const message = JSON.parse(raw) as InboundSignalingMessage;
 
@@ -195,15 +216,22 @@ export async function handleMessage(sessionId: string, client: ConnectedClient, 
           fromUserId: client.userId,
         });
         if (!delivered) {
-          send(client.ws, { type: SignalingMessageType.ERROR, message: "Target participant not connected" });
+          send(client.ws, {
+            type: SignalingMessageType.ERROR,
+            message: "Target participant not connected",
+          });
         }
         break;
       }
 
       case SignalingMessageType.CHAT_MESSAGE: {
-        const saved = await sessionsService.sendMessage(sessionId, client.userId, {
-          content: message.content,
-        });
+        const saved = await sessionsService.sendMessage(
+          sessionId,
+          client.userId,
+          {
+            content: message.content,
+          },
+        );
         broadcastToRoom(
           sessionId,
           client.userId,
@@ -219,7 +247,7 @@ export async function handleMessage(sessionId: string, client: ConnectedClient, 
               createdAt: saved.createdAt,
             },
           },
-          { includeSender: true }
+          { includeSender: true },
         );
         break;
       }
@@ -252,7 +280,10 @@ export async function handleMessage(sessionId: string, client: ConnectedClient, 
         break;
 
       default:
-        send(client.ws, { type: SignalingMessageType.ERROR, message: "Unknown message type" });
+        send(client.ws, {
+          type: SignalingMessageType.ERROR,
+          message: "Unknown message type",
+        });
     }
   } catch (err) {
     send(client.ws, {

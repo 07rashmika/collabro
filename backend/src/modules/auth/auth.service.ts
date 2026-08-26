@@ -25,7 +25,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenUtil: TokenUtil,
-    private readonly mailService: MailService
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -45,7 +45,13 @@ export class AuthService {
         email: dto.email,
         passwordHash,
       },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true,
+      },
     });
 
     const { accessToken, refreshToken } = this.tokenUtil.generateTokenPair({
@@ -86,15 +92,19 @@ export class AuthService {
     }
 
     if (user.lockedUntil && user.lockedUntil > new Date()) {
-      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      const minutesLeft = Math.ceil(
+        (user.lockedUntil.getTime() - Date.now()) / 60000,
+      );
       throw new AppError(
         `Account locked due to too many failed login attempts. Try again in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`,
-        423
+        423,
       );
     }
 
     if (!user.passwordHash) {
-      throw new Error("This account uses Google Sign-In. Please continue with Google.");
+      throw new Error(
+        "This account uses Google Sign-In. Please continue with Google.",
+      );
     }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
@@ -111,7 +121,7 @@ export class AuthService {
         });
         throw new AppError(
           `Too many failed login attempts. Account locked for ${ACCOUNT_LOCK_MINUTES} minutes.`,
-          423
+          423,
         );
       }
 
@@ -129,15 +139,12 @@ export class AuthService {
       });
     }
 
-    // Checked after the password is confirmed valid (not before) so a
-    // suspended account's status isn't revealed to someone who's merely
-    // guessing at the password.
     if (user.isSuspended) {
       throw new AppError(
         user.suspendedReason
           ? `Your account has been suspended: ${user.suspendedReason}`
           : "Your account has been suspended. Contact support for details.",
-        403
+        403,
       );
     }
 
@@ -147,7 +154,6 @@ export class AuthService {
       role: user.role,
     });
 
-    // Rotate: invalidate all old refresh tokens for this user, issue new one
     await this.prisma.client.refreshToken.deleteMany({
       where: { userId: user.id },
     });
@@ -182,10 +188,14 @@ export class AuthService {
     const email = payload.email;
     const name = payload.name ?? email.split("@")[0];
 
-    let user = await this.prisma.client.user.findUnique({ where: { googleId } });
+    let user = await this.prisma.client.user.findUnique({
+      where: { googleId },
+    });
 
     if (!user) {
-      const existingByEmail = await this.prisma.client.user.findUnique({ where: { email } });
+      const existingByEmail = await this.prisma.client.user.findUnique({
+        where: { email },
+      });
 
       user = existingByEmail
         ? await this.prisma.client.user.update({
@@ -202,7 +212,7 @@ export class AuthService {
         user.suspendedReason
           ? `Your account has been suspended: ${user.suspendedReason}`
           : "Your account has been suspended. Contact support for details.",
-        403
+        403,
       );
     }
 
@@ -212,7 +222,6 @@ export class AuthService {
       role: user.role,
     });
 
-    // Rotate: invalidate all old refresh tokens for this user, issue new one
     await this.prisma.client.refreshToken.deleteMany({
       where: { userId: user.id },
     });
@@ -242,16 +251,15 @@ export class AuthService {
       throw new Error("Invalid or expired refresh token");
     }
 
-    // Catches a suspension that landed after this token was issued — the
-    // access token itself is short-lived (15m), so this is the next
-    // checkpoint where it actually takes effect.
     if (stored.user.isSuspended) {
-      await this.prisma.client.refreshToken.deleteMany({ where: { userId: stored.user.id } });
+      await this.prisma.client.refreshToken.deleteMany({
+        where: { userId: stored.user.id },
+      });
       throw new AppError(
         stored.user.suspendedReason
           ? `Your account has been suspended: ${stored.user.suspendedReason}`
           : "Your account has been suspended. Contact support for details.",
-        403
+        403,
       );
     }
 
@@ -262,7 +270,6 @@ export class AuthService {
         role: stored.user.role,
       });
 
-    // Rotate refresh token
     await this.prisma.client.refreshToken.update({
       where: { id: stored.id },
       data: {
@@ -280,13 +287,10 @@ export class AuthService {
     });
   }
 
-  /// Always responds the same way whether or not the email exists, so the
-  /// endpoint can't be used to enumerate registered accounts. Only sends
-  /// mail (and so only surfaces a mail-config 503) when a matching user
-  /// is actually found.
   async forgotPassword(email: string) {
     const genericResult = {
-      message: "If an account exists for that email, we've sent a 6-digit reset code.",
+      message:
+        "If an account exists for that email, we've sent a 6-digit reset code.",
     };
 
     const user = await this.prisma.client.user.findUnique({ where: { email } });
@@ -300,9 +304,13 @@ export class AuthService {
     });
     if (
       outstanding &&
-      outstanding.createdAt.getTime() > Date.now() - RESET_CODE_RESEND_COOLDOWN_SECONDS * 1000
+      outstanding.createdAt.getTime() >
+        Date.now() - RESET_CODE_RESEND_COOLDOWN_SECONDS * 1000
     ) {
-      throw new AppError("Please wait a moment before requesting another code", 429);
+      throw new AppError(
+        "Please wait a moment before requesting another code",
+        429,
+      );
     }
 
     const code = generateResetCode();
@@ -319,9 +327,6 @@ export class AuthService {
     return genericResult;
   }
 
-  /// Step 2 of 3. Checks the emailed code and, if correct, exchanges it for
-  /// an opaque reset-session token — the code itself is spent at this point
-  /// and can't be reused; only the returned token unlocks resetPassword().
   async verifyResetCode(email: string, code: string) {
     const invalidCodeError = new AppError("Invalid or expired reset code", 400);
 
@@ -339,7 +344,10 @@ export class AuthService {
       throw invalidCodeError;
     }
     if (token.attempts >= RESET_CODE_MAX_ATTEMPTS) {
-      throw new AppError("Too many incorrect attempts. Request a new code.", 400);
+      throw new AppError(
+        "Too many incorrect attempts. Request a new code.",
+        400,
+      );
     }
 
     if (token.codeHash !== hashToken(code)) {
@@ -364,12 +372,10 @@ export class AuthService {
     return { resetToken };
   }
 
-  /// Step 3 of 3. Only accepts a token minted by verifyResetCode() — never
-  /// the raw email/code — so the code can't be replayed against this step.
   async resetPassword(resetToken: string, newPassword: string) {
     const invalidSessionError = new AppError(
       "Your reset session has expired. Please start again.",
-      400
+      400,
     );
 
     const token = await this.prisma.client.passwordResetToken.findFirst({
@@ -396,7 +402,8 @@ export class AuthService {
       data: { usedAt: new Date() },
     });
 
-    // Reset invalidates every existing session, on every device.
-    await this.prisma.client.refreshToken.deleteMany({ where: { userId: token.userId } });
+    await this.prisma.client.refreshToken.deleteMany({
+      where: { userId: token.userId },
+    });
   }
 }

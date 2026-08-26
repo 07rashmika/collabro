@@ -10,10 +10,8 @@ const prisma = PrismaService.getInstance();
 const adminPanelService = new AdminPanelService(prisma);
 const adminPanelController = new AdminPanelController(adminPanelService);
 
-// Public
 router.post("/login", (req, res) => adminPanelController.login(req, res));
 
-// Everything below requires a valid admin panel session token
 router.use(adminPanelGuard);
 
 router.get("/dashboard", (req, res) => adminPanelController.getDashboard(req, res));

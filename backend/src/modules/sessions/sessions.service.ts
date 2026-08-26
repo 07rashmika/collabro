@@ -1,10 +1,13 @@
 import fs from "fs";
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { AppError }      from "../../common/errors/app-error";
-import { ICE_SERVERS }   from "./signaling/ice-servers.config";
-import { endRoom }       from "./signaling/room-registry";
-import { notifyUsers }   from "./signaling/user-registry";
-import { SignalingMessageType, NotificationMessageType } from "./signaling/signaling.types";
+import { AppError } from "../../common/errors/app-error";
+import { ICE_SERVERS } from "./signaling/ice-servers.config";
+import { endRoom } from "./signaling/room-registry";
+import { notifyUsers } from "./signaling/user-registry";
+import {
+  SignalingMessageType,
+  NotificationMessageType,
+} from "./signaling/signaling.types";
 import { SummariesService } from "../summaries/summaries.service";
 import { TranscriptionClient } from "./transcription.client";
 import { getConnectedUserIds } from "../connections/connections.service";
@@ -25,12 +28,9 @@ import {
   TrackMetaDto,
 } from "./sessions.schema";
 
-// Sessions auto-close once past their type's time limit, counted from
-// whichever of scheduledAt/createdAt marks when the session actually starts
-// (so a session scheduled for the future doesn't expire before it begins).
 export const SESSION_TTL_MS: Record<"VIDEO" | "TEXT", number> = {
   VIDEO: 2 * 60 * 60 * 1000,
-  TEXT:  4 * 60 * 60 * 1000,
+  TEXT: 4 * 60 * 60 * 1000,
 };
 
 const sessionSelect = {
@@ -74,13 +74,10 @@ type SelectedSession = {
   tags: { skill: { id: string; name: string; category: string } }[];
 };
 
-/// Strips the encrypted password before a session ever leaves the service
-/// layer (only `hasPassword` goes out — the ciphertext never does, and only
-/// the creator can decrypt it via `getSessionPassword`), flattens tags down
-/// to bare skills, hides the join code from non-creators unless the session
-/// is public, and adds the derived `expiresAt` (never stored — computed from
-/// type + scheduledAt/createdAt) so the client can display/enforce it.
-function toPublicSession<T extends SelectedSession>(session: T, viewerId: string) {
+function toPublicSession<T extends SelectedSession>(
+  session: T,
+  viewerId: string,
+) {
   const { encryptedPassword, joinCode, tags, ...rest } = session;
   const isCreator = session.creator.id === viewerId;
   const anchor = session.scheduledAt ?? session.createdAt;
@@ -105,22 +102,14 @@ export class SessionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly summariesService: SummariesService,
-    private readonly transcriptionClient: TranscriptionClient
+    private readonly transcriptionClient: TranscriptionClient,
   ) {}
 
-  /// Persists a SESSION_INVITE notification for each newly-added participant
-  /// (mirrors the CONNECTION_REQUEST/CONNECTION_ACCEPTED pattern in
-  /// connections.service.ts) and pings both the live "go refetch" channels —
-  /// SESSIONS_CHANGED so the Sessions tab updates, NOTIFICATIONS_CHANGED so
-  /// the notification bell does too. The persisted row is what makes the
-  /// invite discoverable even if the recipient's socket was disconnected at
-  /// the moment this fired; the ws pings just make it feel instant when it's
-  /// connected.
   private async notifyInvitedParticipants(
     sessionId: string,
     actorId: string,
     participantIds: string[],
-    sessionTitle: string
+    sessionTitle: string,
   ) {
     if (participantIds.length === 0) return;
     await this.prisma.client.notification.createMany({
@@ -131,8 +120,12 @@ export class SessionsService {
         sessionId,
       })),
     });
-    notifyUsers(participantIds, { type: NotificationMessageType.SESSIONS_CHANGED });
-    notifyUsers(participantIds, { type: NotificationMessageType.NOTIFICATIONS_CHANGED });
+    notifyUsers(participantIds, {
+      type: NotificationMessageType.SESSIONS_CHANGED,
+    });
+    notifyUsers(participantIds, {
+      type: NotificationMessageType.NOTIFICATIONS_CHANGED,
+    });
 
     const actor = await this.prisma.client.user.findUnique({
       where: { id: actorId },
@@ -144,32 +137,27 @@ export class SessionsService {
           title: "Session invite",
           body: `${actor?.name ?? "Someone"} added you to "${sessionTitle}"`,
           data: { type: "SESSION_INVITE", sessionId },
-        })
-      )
+        }),
+      ),
     );
   }
 
-  /// Which of `sessionIds` the user has bookmarked — batched into one query
-  /// per list response instead of N.
-  private async savedSessionIds(userId: string, sessionIds: string[]): Promise<Set<string>> {
+  private async savedSessionIds(
+    userId: string,
+    sessionIds: string[],
+  ): Promise<Set<string>> {
     if (sessionIds.length === 0) return new Set();
     const rows = await this.prisma.client.savedSession.findMany({
-      where:  { userId, sessionId: { in: sessionIds } },
+      where: { userId, sessionId: { in: sessionIds } },
       select: { sessionId: true },
     });
     return new Set(rows.map((r) => r.sessionId));
   }
 
-  /// Auto-closes any ACTIVE session past its type's time limit (see
-  /// SESSION_TTL_MS), the same way `closeSession` does manually — flips it
-  /// to CLOSED and notifies any connected clients over the signaling socket
-  /// so they get kicked out exactly like a manual end. Run on a timer from
-  /// sessions.routes.ts rather than checked per-request, since expiry here
-  /// is on the order of hours, not something that needs sub-request latency.
   async expireStaleSessions(): Promise<void> {
     const now = Date.now();
     const videoThreshold = new Date(now - SESSION_TTL_MS.VIDEO);
-    const textThreshold  = new Date(now - SESSION_TTL_MS.TEXT);
+    const textThreshold = new Date(now - SESSION_TTL_MS.TEXT);
 
     const expired = await this.prisma.client.session.findMany({
       where: {
@@ -198,13 +186,13 @@ export class SessionsService {
     const ids = expired.map((s) => s.id);
     await this.prisma.client.session.updateMany({
       where: { id: { in: ids } },
-      data:  { status: "CLOSED" },
+      data: { status: "CLOSED" },
     });
     for (const session of expired) {
       endRoom(session.id, { type: SignalingMessageType.SESSION_ENDED });
       notifyUsers(
         session.participants.map((p) => p.userId),
-        { type: NotificationMessageType.SESSIONS_CHANGED }
+        { type: NotificationMessageType.SESSIONS_CHANGED },
       );
     }
   }
@@ -216,14 +204,17 @@ export class SessionsService {
     const where = {
       participants: { some: { userId } },
       ...(status && { status }),
-      ...(type   && { type }),
-      ...(upcoming && { scheduledAt: { gte: new Date() }, status: "ACTIVE" as const }),
+      ...(type && { type }),
+      ...(upcoming && {
+        scheduledAt: { gte: new Date() },
+        status: "ACTIVE" as const,
+      }),
     };
 
     const [sessions, total] = await Promise.all([
       this.prisma.client.session.findMany({
         where,
-        select:  sessionSelect,
+        select: sessionSelect,
         orderBy: upcoming ? { scheduledAt: "asc" } : { updatedAt: "desc" },
         skip,
         take: limit,
@@ -231,16 +222,22 @@ export class SessionsService {
       this.prisma.client.session.count({ where }),
     ]);
 
-    const saved = await this.savedSessionIds(userId, sessions.map((s) => s.id));
+    const saved = await this.savedSessionIds(
+      userId,
+      sessions.map((s) => s.id),
+    );
     return {
-      sessions: sessions.map((s) => ({ ...toPublicSession(s, userId), savedByMe: saved.has(s.id) })),
+      sessions: sessions.map((s) => ({
+        ...toPublicSession(s, userId),
+        savedByMe: saved.has(s.id),
+      })),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
   async getSessionById(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where:  { id: sessionId },
+      where: { id: sessionId },
       select: sessionSelect,
     });
 
@@ -253,17 +250,20 @@ export class SessionsService {
     }
 
     const saved = await this.savedSessionIds(userId, [session.id]);
-    return { ...toPublicSession(session, userId), savedByMe: saved.has(session.id) };
+    return {
+      ...toPublicSession(session, userId),
+      savedByMe: saved.has(session.id),
+    };
   }
 
   async createSession(userId: string, dto: CreateSessionDto) {
     const [users, skills] = await Promise.all([
       this.prisma.client.user.findMany({
-        where:  { id: { in: dto.participantIds } },
+        where: { id: { in: dto.participantIds } },
         select: { id: true },
       }),
       this.prisma.client.skill.findMany({
-        where:  { id: { in: dto.tagIds } },
+        where: { id: { in: dto.tagIds } },
         select: { id: true },
       }),
     ]);
@@ -276,16 +276,18 @@ export class SessionsService {
     }
 
     const allParticipantIds = [...new Set([userId, ...dto.participantIds])];
-    const encryptedPassword = dto.password ? encryptSessionPassword(dto.password) : null;
+    const encryptedPassword = dto.password
+      ? encryptSessionPassword(dto.password)
+      : null;
 
     const session = await this.prisma.client.session.create({
       data: {
-        title:       dto.title,
-        type:        dto.type,
-        createdBy:   userId,
+        title: dto.title,
+        type: dto.type,
+        createdBy: userId,
         scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
         encryptedPassword,
-        isPublic:    dto.isPublic,
+        isPublic: dto.isPublic,
         participants: {
           create: allParticipantIds.map((id) => ({ userId: id })),
         },
@@ -296,16 +298,19 @@ export class SessionsService {
       select: sessionSelect,
     });
 
-    // The creator already has this fresh state locally — only the invitees
-    // need telling that a session just appeared for them.
-    await this.notifyInvitedParticipants(session.id, userId, dto.participantIds, session.title);
+    await this.notifyInvitedParticipants(
+      session.id,
+      userId,
+      dto.participantIds,
+      session.title,
+    );
 
     return { ...toPublicSession(session, userId), savedByMe: false };
   }
 
   async joinSessionByCode(userId: string, dto: JoinByCodeDto) {
     const session = await this.prisma.client.session.findUnique({
-      where:  { joinCode: dto.joinCode },
+      where: { joinCode: dto.joinCode },
       select: sessionSelect,
     });
 
@@ -315,41 +320,46 @@ export class SessionsService {
     }
 
     if (session.encryptedPassword) {
-      // 403, not 401 — the caller is authenticated, just not authorized for
-      // this session yet. A 401 here would trip the API client's "access
-      // token expired" refresh-and-retry interceptor into looping forever.
       if (!dto.password) {
         throw new AppError("This session requires a password", 403);
       }
-      const valid = decryptSessionPassword(session.encryptedPassword) === dto.password;
+      const valid =
+        decryptSessionPassword(session.encryptedPassword) === dto.password;
       if (!valid) {
         throw new AppError("Incorrect password", 403);
       }
     }
 
-    const alreadyParticipant = session.participants.some((p) => p.user.id === userId);
+    const alreadyParticipant = session.participants.some(
+      (p) => p.user.id === userId,
+    );
     if (!alreadyParticipant) {
       await this.prisma.client.sessionParticipant.create({
         data: { sessionId: session.id, userId },
       });
-      // Let everyone already in the session know its participant list
-      // changed (the joiner sees their own fresh state from this response).
       notifyUsers(
         session.participants.map((p) => p.user.id),
-        { type: NotificationMessageType.SESSIONS_CHANGED }
+        { type: NotificationMessageType.SESSIONS_CHANGED },
       );
     }
 
     const joined = await this.prisma.client.session.findUnique({
-      where:  { id: session.id },
+      where: { id: session.id },
       select: sessionSelect,
     });
 
     const saved = await this.savedSessionIds(userId, [session.id]);
-    return { ...toPublicSession(joined!, userId), savedByMe: saved.has(session.id) };
+    return {
+      ...toPublicSession(joined!, userId),
+      savedByMe: saved.has(session.id),
+    };
   }
 
-  async updateSession(sessionId: string, userId: string, dto: UpdateSessionDto) {
+  async updateSession(
+    sessionId: string,
+    userId: string,
+    dto: UpdateSessionDto,
+  ) {
     const session = await this.prisma.client.session.findUnique({
       where: { id: sessionId },
     });
@@ -360,8 +370,8 @@ export class SessionsService {
     }
 
     const updated = await this.prisma.client.session.update({
-      where:  { id: sessionId },
-      data:   dto,
+      where: { id: sessionId },
+      data: dto,
       select: sessionSelect,
     });
     return { ...toPublicSession(updated, userId), savedByMe: false };
@@ -369,7 +379,7 @@ export class SessionsService {
 
   async closeSession(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where:   { id: sessionId },
+      where: { id: sessionId },
       include: { participants: true },
     });
 
@@ -382,17 +392,15 @@ export class SessionsService {
     }
 
     const closed = await this.prisma.client.session.update({
-      where:  { id: sessionId },
-      data:   { status: "CLOSED" },
+      where: { id: sessionId },
+      data: { status: "CLOSED" },
       select: sessionSelect,
     });
 
     endRoom(sessionId, { type: SignalingMessageType.SESSION_ENDED });
-    // Moves the session from "My Sessions" to "Ended" live for everyone,
-    // not just whoever's actively connected to the session's room.
     notifyUsers(
       session.participants.map((p) => p.userId),
-      { type: NotificationMessageType.SESSIONS_CHANGED }
+      { type: NotificationMessageType.SESSIONS_CHANGED },
     );
     return { ...toPublicSession(closed, userId), savedByMe: false };
   }
@@ -410,9 +418,6 @@ export class SessionsService {
     await this.prisma.client.session.delete({ where: { id: sessionId } });
   }
 
-  /// Owner-only — decrypts the session password back to plaintext for the
-  /// "view password" action in the session info panel. Never exposed to
-  /// anyone else; other participants only ever see `hasPassword`.
   async getSessionPassword(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
       where: { id: sessionId },
@@ -430,42 +435,21 @@ export class SessionsService {
     };
   }
 
-  /// Public sessions the caller isn't already in, upcoming, ranked by how
-  /// many of a session's skill tags overlap with the caller's own profile
-  /// skills — the more relevant a session is to what the caller is
-  /// learning, the earlier it surfaces, ahead of raw scheduling order. With
-  /// no `search` a skill-match is also required to appear at all (the feed
-  /// that surfaces on the Home tab's Upcoming Sessions); with a `search`
-  /// term (Discovery tab) that gate is dropped in favor of a title/skill-tag
-  /// search — a search matching a skill's name pulls in sessions tagged
-  /// with it even if the title doesn't mention it — so it works for
-  /// callers with no skills on their profile, with skill
-  /// overlap only affecting order.
   async discoverPublicSessions(userId: string, query: PageQueryDto) {
     const { search, page, limit } = query;
     const skip = (page - 1) * limit;
 
     const myProfile = await this.prisma.client.profile.findUnique({
-      where:  { userId },
+      where: { userId },
       select: { skills: { select: { skillId: true } } },
     });
     const mySkillIds = new Set(myProfile?.skills.map((s) => s.skillId) ?? []);
-    // A connection's public sessions are always worth surfacing, regardless
-    // of skill overlap — connecting is a stronger relevance signal than a
-    // shared tag.
     const connectedUserIds = await getConnectedUserIds(this.prisma, userId);
 
-    // `status: "ACTIVE"` alone already means "still joinable" — the
-    // periodic sweep in sessions.routes.ts (expireStaleSessions) flips a
-    // session to CLOSED as soon as it's past its type's TTL from
-    // scheduledAt/createdAt, so there's no separate need to require
-    // `scheduledAt` be in the future here. Requiring that on top used to
-    // hide a session as soon as its scheduled start time passed, even
-    // while it was still ongoing and perfectly joinable.
     const baseWhere = {
-      isPublic:    true,
-      status:      "ACTIVE" as const,
-      createdBy:   { not: userId },
+      isPublic: true,
+      status: "ACTIVE" as const,
+      createdBy: { not: userId },
       participants: { none: { userId } },
     };
 
@@ -478,7 +462,9 @@ export class SessionsService {
         ...baseWhere,
         OR: [
           { title: { contains: search, mode: "insensitive" as const } },
-          ...(skillIds.length > 0 ? [{ tags: { some: { skillId: { in: skillIds } } } }] : []),
+          ...(skillIds.length > 0
+            ? [{ tags: { some: { skillId: { in: skillIds } } } }]
+            : []),
         ],
       };
     } else {
@@ -489,24 +475,23 @@ export class SessionsService {
       where = {
         ...baseWhere,
         OR: [
-          ...(mySkillIds.size > 0 ? [{ tags: { some: { skillId: { in: [...mySkillIds] } } } }] : []),
-          ...(connectedUserIds.length > 0 ? [{ createdBy: { in: connectedUserIds } }] : []),
+          ...(mySkillIds.size > 0
+            ? [{ tags: { some: { skillId: { in: [...mySkillIds] } } } }]
+            : []),
+          ...(connectedUserIds.length > 0
+            ? [{ createdBy: { in: connectedUserIds } }]
+            : []),
         ],
       };
     }
 
-    // Ranking needs the full matching set scored before it can be paged, so
-    // this fetches everything the where-clause allows rather than a single
-    // DB page — fine at this app's scale (mirrors MatchingService).
     const matches = await this.prisma.client.session.findMany({
       where,
-      select:  sessionSelect,
+      select: sessionSelect,
       orderBy: { scheduledAt: "asc" },
     });
 
     const connectedSet = new Set(connectedUserIds);
-    // +1000 pushes every connection's session above pure skill-matches,
-    // then tag overlap breaks ties within each tier.
     const scored = matches
       .map((session) => ({
         session,
@@ -519,18 +504,19 @@ export class SessionsService {
     const total = scored.length;
     const sessions = scored.slice(skip, skip + limit).map((s) => s.session);
 
-    const saved = await this.savedSessionIds(userId, sessions.map((s) => s.id));
+    const saved = await this.savedSessionIds(
+      userId,
+      sessions.map((s) => s.id),
+    );
     return {
-      sessions: sessions.map((s) => ({ ...toPublicSession(s, userId), savedByMe: saved.has(s.id) })),
+      sessions: sessions.map((s) => ({
+        ...toPublicSession(s, userId),
+        savedByMe: saved.has(s.id),
+      })),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  /// A specific user's public, still-joinable sessions — feeds their
-  /// profile viewer screen. Unlike discoverPublicSessions this has no
-  /// skill-based ranking (only one author's sessions to show) and doesn't
-  /// exclude the viewer's own sessions (viewing your own profile should
-  /// still show them).
   async getPublicSessionsByUser(authorId: string, viewerId: string) {
     const sessions = await this.prisma.client.session.findMany({
       where: { createdBy: authorId, isPublic: true, status: "ACTIVE" },
@@ -538,8 +524,14 @@ export class SessionsService {
       orderBy: { scheduledAt: "asc" },
     });
 
-    const saved = await this.savedSessionIds(viewerId, sessions.map((s) => s.id));
-    return sessions.map((s) => ({ ...toPublicSession(s, viewerId), savedByMe: saved.has(s.id) }));
+    const saved = await this.savedSessionIds(
+      viewerId,
+      sessions.map((s) => s.id),
+    );
+    return sessions.map((s) => ({
+      ...toPublicSession(s, viewerId),
+      savedByMe: saved.has(s.id),
+    }));
   }
 
   async saveSession(userId: string, sessionId: string) {
@@ -549,14 +541,16 @@ export class SessionsService {
     if (!session) throw new AppError("Session not found", 404);
 
     await this.prisma.client.savedSession.upsert({
-      where:  { userId_sessionId: { userId, sessionId } },
+      where: { userId_sessionId: { userId, sessionId } },
       create: { userId, sessionId },
       update: {},
     });
   }
 
   async unsaveSession(userId: string, sessionId: string) {
-    await this.prisma.client.savedSession.deleteMany({ where: { userId, sessionId } });
+    await this.prisma.client.savedSession.deleteMany({
+      where: { userId, sessionId },
+    });
   }
 
   async getSavedSessions(userId: string, query: PageQueryDto) {
@@ -567,7 +561,7 @@ export class SessionsService {
     const [sessions, total] = await Promise.all([
       this.prisma.client.session.findMany({
         where,
-        select:  sessionSelect,
+        select: sessionSelect,
         orderBy: { updatedAt: "desc" },
         skip,
         take: limit,
@@ -576,12 +570,19 @@ export class SessionsService {
     ]);
 
     return {
-      sessions: sessions.map((s) => ({ ...toPublicSession(s, userId), savedByMe: true })),
+      sessions: sessions.map((s) => ({
+        ...toPublicSession(s, userId),
+        savedByMe: true,
+      })),
       meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
-  async addParticipant(sessionId: string, userId: string, participantId: string) {
+  async addParticipant(
+    sessionId: string,
+    userId: string,
+    participantId: string,
+  ) {
     const session = await this.prisma.client.session.findUnique({
       where: { id: sessionId },
     });
@@ -605,25 +606,37 @@ export class SessionsService {
     if (existing) throw new AppError("User is already a participant", 409);
 
     const created = await this.prisma.client.sessionParticipant.create({
-      data:   { sessionId, userId: participantId },
+      data: { sessionId, userId: participantId },
       select: {
         joinedAt: true,
         user: { select: { id: true, name: true, email: true } },
       },
     });
 
-    await this.notifyInvitedParticipants(sessionId, userId, [participantId], session.title);
+    await this.notifyInvitedParticipants(
+      sessionId,
+      userId,
+      [participantId],
+      session.title,
+    );
     return created;
   }
 
-  async removeParticipant(sessionId: string, userId: string, participantId: string) {
+  async removeParticipant(
+    sessionId: string,
+    userId: string,
+    participantId: string,
+  ) {
     const session = await this.prisma.client.session.findUnique({
       where: { id: sessionId },
     });
 
     if (!session) throw new AppError("Session not found", 404);
     if (session.createdBy !== userId) {
-      throw new AppError("Only the session creator can remove participants", 403);
+      throw new AppError(
+        "Only the session creator can remove participants",
+        403,
+      );
     }
     if (session.createdBy === participantId) {
       throw new AppError("Cannot remove the session creator", 400);
@@ -632,32 +645,31 @@ export class SessionsService {
     await this.prisma.client.sessionParticipant.delete({
       where: { sessionId_userId: { sessionId, userId: participantId } },
     });
-    notifyUsers([participantId], { type: NotificationMessageType.SESSIONS_CHANGED });
+    notifyUsers([participantId], {
+      type: NotificationMessageType.SESSIONS_CHANGED,
+    });
 
-    // The creator can never remove themselves, so the count can only ever
-    // bottom out at 1 (the creator, alone). Once no one else is left,
-    // there's no one to have a session with — close it automatically.
     const remaining = await this.prisma.client.sessionParticipant.count({
       where: { sessionId },
     });
     if (remaining <= 1 && session.status !== "CLOSED") {
       await this.prisma.client.session.update({
         where: { id: sessionId },
-        data:  { status: "CLOSED" },
+        data: { status: "CLOSED" },
       });
       endRoom(sessionId, { type: SignalingMessageType.SESSION_ENDED });
-      notifyUsers([session.createdBy], { type: NotificationMessageType.SESSIONS_CHANGED });
+      notifyUsers([session.createdBy], {
+        type: NotificationMessageType.SESSIONS_CHANGED,
+      });
     }
   }
-
-  // ── Messages ──────────────────────────────────────────────────────────────
 
   async getMessages(sessionId: string, userId: string, query: MessageQueryDto) {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
 
     const session = await this.prisma.client.session.findUnique({
-      where:   { id: sessionId },
+      where: { id: sessionId },
       include: { participants: true },
     });
 
@@ -668,8 +680,8 @@ export class SessionsService {
 
     const [messages, total] = await Promise.all([
       this.prisma.client.message.findMany({
-        where:   { sessionId },
-        select:  messageSelect,
+        where: { sessionId },
+        select: messageSelect,
         orderBy: { createdAt: "asc" },
         skip,
         take: limit,
@@ -685,7 +697,7 @@ export class SessionsService {
 
   async sendMessage(sessionId: string, userId: string, dto: SendMessageDto) {
     const session = await this.prisma.client.session.findUnique({
-      where:   { id: sessionId },
+      where: { id: sessionId },
       include: { participants: true },
     });
 
@@ -697,15 +709,14 @@ export class SessionsService {
       throw new AppError("You are not a participant of this session", 403);
     }
 
-    // Create message and bump session updatedAt atomically
     const [message] = await this.prisma.client.$transaction([
       this.prisma.client.message.create({
-        data:   { content: dto.content, sessionId, senderId: userId },
+        data: { content: dto.content, sessionId, senderId: userId },
         select: messageSelect,
       }),
       this.prisma.client.session.update({
         where: { id: sessionId },
-        data:  { updatedAt: new Date() },
+        data: { updatedAt: new Date() },
       }),
     ]);
 
@@ -718,8 +729,8 @@ export class SessionsService {
           title: session.title,
           body: `${message.sender.name}: ${message.content}`,
           data: { type: "NEW_MESSAGE", sessionId },
-        })
-      )
+        }),
+      ),
     );
 
     return message;
@@ -738,14 +749,9 @@ export class SessionsService {
     await this.prisma.client.message.delete({ where: { id: messageId } });
   }
 
-  /// Any participant (not just the creator) can request a recap — this is
-  /// what backs both the "want a summary?" end-of-session prompt and the
-  /// "Summary" button on ended sessions. Builds a transcript from the
-  /// session's messages and hands it to the same fine-tuned summarizer Notes
-  /// uses (see SummariesService / ml-service).
   async generateSummary(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where:  { id: sessionId },
+      where: { id: sessionId },
       select: sessionSelect,
     });
 
@@ -755,52 +761,53 @@ export class SessionsService {
     }
 
     const messages = await this.prisma.client.message.findMany({
-      where:   { sessionId },
-      select:  messageSelect,
+      where: { sessionId },
+      select: messageSelect,
       orderBy: { createdAt: "asc" },
     });
     if (messages.length === 0) {
-      // A VIDEO session has no chat to fall back to — its recap comes from
-      // processRecording() instead, kicked off by the call's recorder right
-      // after hangup. That may well have already finished (the session
-      // already carries its summary) even though `messages` is empty — only
-      // actually still-processing sessions should hit the 409 below, so a
-      // caller polling/regenerating after the first attempt isn't stuck
-      // re-throwing "still processing" forever once it's actually done.
       if (session.type === "VIDEO") {
         if (session.summary) {
           const saved = await this.savedSessionIds(userId, [sessionId]);
-          return { ...toPublicSession(session, userId), savedByMe: saved.has(sessionId) };
+          return {
+            ...toPublicSession(session, userId),
+            savedByMe: saved.has(sessionId),
+          };
         }
-        throw new AppError("The call recap is still processing — check back in a moment", 409);
+        throw new AppError(
+          "The call recap is still processing — check back in a moment",
+          409,
+        );
       }
       throw new AppError("No messages to summarize yet", 400);
     }
 
-    const transcript = messages.map((m) => `${m.sender.name}: ${m.content}`).join("\n");
-    const summary = await this.summariesService.summarize(transcript, "dialogue");
+    const transcript = messages
+      .map((m) => `${m.sender.name}: ${m.content}`)
+      .join("\n");
+    const summary = await this.summariesService.summarize(
+      transcript,
+      "dialogue",
+    );
 
     const updated = await this.prisma.client.session.update({
-      where:  { id: sessionId },
-      data:   { summary },
+      where: { id: sessionId },
+      data: { summary },
       select: sessionSelect,
     });
 
     const saved = await this.savedSessionIds(userId, [sessionId]);
-    return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
+    return {
+      ...toPublicSession(updated, userId),
+      savedByMe: saved.has(sessionId),
+    };
   }
 
-  /// Only the creator's device records a video call (see WebRTCService in
-  /// the Flutter app) — this ingests those tracks once the call has ended,
-  /// transcribes each with Whisper (ml-service), merges them onto one
-  /// timeline using each track's recording-start time, and feeds the
-  /// resulting speaker-labeled dialogue into the same summarizer
-  /// generateSummary() uses for text sessions.
   async processRecording(
     sessionId: string,
     userId: string,
     files: Express.Multer.File[],
-    trackMeta: TrackMetaDto
+    trackMeta: TrackMetaDto,
   ) {
     const cleanup = () => {
       for (const file of files) fs.unlink(file.path, () => {});
@@ -816,27 +823,45 @@ export class SessionsService {
     }
     if (session.createdBy !== userId) {
       cleanup();
-      throw new AppError("Only the session creator can upload the recording", 403);
+      throw new AppError(
+        "Only the session creator can upload the recording",
+        403,
+      );
     }
     if (session.status !== "CLOSED") {
       cleanup();
-      throw new AppError("Session must be closed before uploading its recording", 400);
+      throw new AppError(
+        "Session must be closed before uploading its recording",
+        400,
+      );
     }
 
     try {
-      console.log(`[Recording] Transcribing ${files.length} track(s) for session ${sessionId}`);
-      const earliestStart = Math.min(...trackMeta.map((t) => new Date(t.startedAt).getTime()));
+      console.log(
+        `[Recording] Transcribing ${files.length} track(s) for session ${sessionId}`,
+      );
+      const earliestStart = Math.min(
+        ...trackMeta.map((t) => new Date(t.startedAt).getTime()),
+      );
 
       const labeledSegments = await Promise.all(
         files.map(async (file, i) => {
           const meta = trackMeta[i]!;
-          const offsetSeconds = (new Date(meta.startedAt).getTime() - earliestStart) / 1000;
-          const segments = await this.transcriptionClient.transcribe(file.path, file.mimetype);
-          console.log(
-            `[Recording] Track "${meta.label}" (${file.mimetype}, ${file.size} bytes) → ${segments.length} segment(s)`
+          const offsetSeconds =
+            (new Date(meta.startedAt).getTime() - earliestStart) / 1000;
+          const segments = await this.transcriptionClient.transcribe(
+            file.path,
+            file.mimetype,
           );
-          return segments.map((s) => ({ start: s.start + offsetSeconds, label: meta.label, text: s.text.trim() }));
-        })
+          console.log(
+            `[Recording] Track "${meta.label}" (${file.mimetype}, ${file.size} bytes) → ${segments.length} segment(s)`,
+          );
+          return segments.map((s) => ({
+            start: s.start + offsetSeconds,
+            label: meta.label,
+            text: s.text.trim(),
+          }));
+        }),
       );
 
       const merged = labeledSegments
@@ -844,37 +869,48 @@ export class SessionsService {
         .filter((s) => s.text.length > 0)
         .sort((a, b) => a.start - b.start);
 
-      console.log(`[Recording] Merged transcript: ${merged.length} segment(s) for session ${sessionId}`);
+      console.log(
+        `[Recording] Merged transcript: ${merged.length} segment(s) for session ${sessionId}`,
+      );
       if (merged.length === 0) {
         throw new AppError("No speech detected in the recording", 400);
       }
 
       const transcript = merged.map((s) => `${s.label}: ${s.text}`).join("\n");
-      console.log(`[Recording] Summarizing session ${sessionId} (${transcript.length} chars of transcript)`);
-      const summary = await this.summariesService.summarize(transcript, "dialogue");
+      console.log(
+        `[Recording] Summarizing session ${sessionId} (${transcript.length} chars of transcript)`,
+      );
+      const summary = await this.summariesService.summarize(
+        transcript,
+        "dialogue",
+      );
       console.log(`[Recording] Summary ready for session ${sessionId}`);
 
       const updated = await this.prisma.client.session.update({
-        where:  { id: sessionId },
-        data:   { transcript, summary },
+        where: { id: sessionId },
+        data: { transcript, summary },
         select: sessionSelect,
       });
 
       const saved = await this.savedSessionIds(userId, [sessionId]);
-      return { ...toPublicSession(updated, userId), savedByMe: saved.has(sessionId) };
+      return {
+        ...toPublicSession(updated, userId),
+        savedByMe: saved.has(sessionId),
+      };
     } catch (err) {
-      console.error(`[Recording] Processing failed for session ${sessionId}:`, err);
+      console.error(
+        `[Recording] Processing failed for session ${sessionId}:`,
+        err,
+      );
       throw err;
     } finally {
       cleanup();
     }
   }
 
-  // ── Video calling (WebRTC ICE config) ───────────────────────────────────
-
   async getIceServers(sessionId: string, userId: string) {
     const session = await this.prisma.client.session.findUnique({
-      where:   { id: sessionId },
+      where: { id: sessionId },
       include: { participants: true },
     });
 

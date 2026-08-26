@@ -15,8 +15,14 @@ const prisma = PrismaService.getInstance();
 const usersService = new UsersService(prisma);
 const usersController = new UsersController(usersService);
 
-const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-const ALLOWED_AVATAR_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_AVATAR_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
 
 const avatarUpload = multer({
   storage: multer.diskStorage({
@@ -36,7 +42,11 @@ const avatarUpload = multer({
   },
 });
 
-function uploadAvatarMiddleware(req: Request, res: Response, next: NextFunction) {
+function uploadAvatarMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   avatarUpload.single("avatar")(req, res, (err: unknown) => {
     if (err instanceof multer.MulterError) {
       next(new AppError(err.message, 400));
@@ -59,27 +69,26 @@ router.delete("/me", (req, res) => usersController.deleteMe(req, res));
 
 // Avatar
 router.post("/me/avatar", uploadAvatarMiddleware, (req, res) =>
-  usersController.uploadAvatar(req, res)
+  usersController.uploadAvatar(req, res),
 );
-router.delete("/me/avatar", (req, res) => usersController.deleteAvatar(req, res));
+router.delete("/me/avatar", (req, res) =>
+  usersController.deleteAvatar(req, res),
+);
 
 // Push notification device tokens
 router.post("/me/device-tokens", (req, res) =>
-  usersController.registerDeviceToken(req, res)
+  usersController.registerDeviceToken(req, res),
 );
 router.delete("/me/device-tokens/:token", (req, res) =>
-  usersController.unregisterDeviceToken(req, res)
+  usersController.unregisterDeviceToken(req, res),
 );
 
-// All users
 router.get("/", (req, res) => usersController.getAllUsers(req, res));
 
-// Single user
 router.get("/:id", (req, res) => usersController.getUserById(req, res));
 
-// Admin only
 router.delete("/:id", adminGuard, (req, res) =>
-  usersController.deleteUser(req, res)
+  usersController.deleteUser(req, res),
 );
 
 export default router;

@@ -1,11 +1,6 @@
 import nodemailer, { Transporter } from "nodemailer";
 import { AppError } from "../errors/app-error";
 
-/// Thin SMTP wrapper for transactional email (currently: password reset
-/// codes). Mirrors the rest of the app's approach to optional third-party
-/// integrations (see ZEGO_APP_ID, SKILLS_API_KEY, SUMMARIZER_URL in .env):
-/// the feature that needs it fails loudly with a 503 until it's configured,
-/// rather than silently pretending to send.
 export class MailService {
   private transporter: Transporter | null = null;
 

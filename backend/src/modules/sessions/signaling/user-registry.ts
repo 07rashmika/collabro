@@ -1,9 +1,5 @@
 import { WebSocket } from "ws";
 
-// Per-user (not per-session) socket registry for the "/users/ws" channel —
-// pushes lightweight "something about your sessions changed, go refetch"
-// notifications to every device/tab a user currently has open, independent
-// of whether they're connected to any particular session's room.
 const connections = new Map<string, Set<WebSocket>>();
 
 export function registerUserSocket(userId: string, ws: WebSocket): void {

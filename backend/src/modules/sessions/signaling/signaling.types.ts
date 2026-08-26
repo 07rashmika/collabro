@@ -1,5 +1,3 @@
-// Shared WS message protocol for session signaling (video calls + chat).
-// Keep in sync with frontend/lib/features/sessions/data/signaling_message_types.dart
 
 export const SignalingMessageType = {
   ROOM_SNAPSHOT: "room-snapshot",
@@ -17,9 +15,6 @@ export const SignalingMessageType = {
   ERROR: "error",
 } as const;
 
-// Separate, payload-less protocol for the "/users/ws" channel (see
-// user-registry.ts) — clients just refetch their sessions on receipt rather
-// than the server shuttling session data through the socket.
 export const NotificationMessageType = {
   SESSIONS_CHANGED: "sessions-changed",
   NOTIFICATIONS_CHANGED: "notifications-changed",
@@ -32,8 +27,6 @@ export interface CallParticipant {
   isCameraOff: boolean;
   isScreenSharing: boolean;
 }
-
-// ── Inbound (client → server) ──────────────────────────────────────────────
 
 export interface OfferInbound {
   type: typeof SignalingMessageType.OFFER;

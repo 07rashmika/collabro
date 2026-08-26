@@ -1,5 +1,9 @@
 import { PrismaService } from "../../infrastructure/database/prisma.service";
-import { CreateSkillDto, UpdateSkillDto, FindOrCreateSkillDto } from "./skills.schema";
+import {
+  CreateSkillDto,
+  UpdateSkillDto,
+  FindOrCreateSkillDto,
+} from "./skills.schema";
 
 const SKILLS_API_URL = "https://api.apilayer.com/skills";
 
@@ -15,7 +19,7 @@ export class SkillsService {
         category: true,
         createdAt: true,
         _count: {
-          select: { profileSkills: true }, // how many students have this skill
+          select: { profileSkills: true },
         },
       },
     });
@@ -87,7 +91,6 @@ export class SkillsService {
       throw new Error("Skill not found");
     }
 
-    // check name clash with another skill
     if (dto.name && dto.name !== existing.name) {
       const nameClash = await this.prisma.client.skill.findUnique({
         where: { name: dto.name },
@@ -122,14 +125,6 @@ export class SkillsService {
     await this.prisma.client.skill.delete({ where: { id } });
   }
 
-  /**
-   * Any authenticated student can call this (unlike createSkill, which is
-   * admin-only) — it's how the profile-setup skill picker lets a student
-   * type a skill that isn't in the catalog yet without needing an admin to
-   * pre-seed it. Case-insensitive dedupe so "python" and "Python" collapse
-   * to one row; category defaults to "General" since a student typing a
-   * skill name has no reason to also classify it.
-   */
   async findOrCreateSkill(dto: FindOrCreateSkillDto) {
     const name = dto.name.trim();
 
@@ -148,13 +143,6 @@ export class SkillsService {
     });
   }
 
-  /**
-   * Live typeahead suggestions from the apilayer Skills API
-   * (https://marketplace.apilayer.com/skills-api) — a 70,000+ entry catalog,
-   * far broader than what any one deployment's local `Skill` table has been
-   * seeded with. Returns bare names; picking one still goes through
-   * `findOrCreateSkill` to materialize a local row with a real id.
-   */
   async searchExternalSkills(query: string, count = 10) {
     const apiKey = process.env.SKILLS_API_KEY;
     if (!apiKey) {
@@ -187,34 +175,28 @@ export class SkillsService {
 
   async seedSkills() {
     const defaultSkills = [
-      // CS Fundamentals
       { name: "Data Structures", category: "CS Fundamentals" },
       { name: "Algorithms", category: "CS Fundamentals" },
       { name: "Operating Systems", category: "CS Fundamentals" },
       { name: "Computer Networks", category: "CS Fundamentals" },
       { name: "Database Systems", category: "CS Fundamentals" },
-      // Frontend
       { name: "React", category: "Frontend" },
       { name: "Flutter", category: "Frontend" },
       { name: "HTML & CSS", category: "Frontend" },
       { name: "TypeScript", category: "Frontend" },
       { name: "Next.js", category: "Frontend" },
-      // Backend
       { name: "Node.js", category: "Backend" },
       { name: "NestJS", category: "Backend" },
       { name: "Express", category: "Backend" },
       { name: "REST API Design", category: "Backend" },
       { name: "GraphQL", category: "Backend" },
-      // Data & AI
       { name: "Python", category: "Data & AI" },
       { name: "Machine Learning", category: "Data & AI" },
       { name: "Data Analysis", category: "Data & AI" },
       { name: "TensorFlow", category: "Data & AI" },
-      // DevOps
       { name: "Docker", category: "DevOps" },
       { name: "Git", category: "DevOps" },
       { name: "CI/CD", category: "DevOps" },
-      // Mobile
       { name: "Android (Kotlin)", category: "Mobile" },
       { name: "iOS (Swift)", category: "Mobile" },
     ];

@@ -163,7 +163,6 @@ export class ProfilesService {
     });
 
     if (existing) {
-      // update level if skill already added
       const updated = await this.prisma.client.profileSkill.update({
         where: {
           profileId_skillId: {

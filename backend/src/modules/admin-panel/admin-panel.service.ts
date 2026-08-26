@@ -11,10 +11,6 @@ import {
   AdminReportQueryDto,
 } from "./admin-panel.schema";
 
-/// Constant-time string compare, hashed first so operands of different
-/// length never short-circuit the comparison early (crypto.timingSafeEqual
-/// throws on mismatched buffer lengths otherwise) — used instead of `===`
-/// so login can't be timed to guess the env-configured email/password.
 function safeEqual(a: string, b: string): boolean {
   const bufA = crypto.createHash("sha256").update(a).digest();
   const bufB = crypto.createHash("sha256").update(b).digest();
@@ -32,7 +28,11 @@ const adminUserSelect = {
   suspendedReason: true,
   createdAt: true,
   _count: {
-    select: { createdSessions: true, submittedReports: true, reportsReceived: true },
+    select: {
+      createdSessions: true,
+      submittedReports: true,
+      reportsReceived: true,
+    },
   },
 } as const;
 
@@ -64,21 +64,32 @@ export class AdminPanelService {
       this.prisma.client.user.count(),
       this.prisma.client.user.count({ where: { isSuspended: true } }),
       this.prisma.client.session.count({
-        where: { status: "ACTIVE", OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }] },
+        where: {
+          status: "ACTIVE",
+          OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+        },
       }),
       this.prisma.client.session.count({
         where: { status: "ACTIVE", scheduledAt: { gt: now } },
       }),
       this.prisma.client.session.count({ where: { status: "CLOSED" } }),
-      this.prisma.client.report.count({ where: { status: "PENDING", targetType: "SESSION" } }),
-      this.prisma.client.report.count({ where: { status: "PENDING", targetType: "USER" } }),
+      this.prisma.client.report.count({
+        where: { status: "PENDING", targetType: "SESSION" },
+      }),
+      this.prisma.client.report.count({
+        where: { status: "PENDING", targetType: "USER" },
+      }),
       this.prisma.client.report.count({ where: { status: "REVIEWED" } }),
       this.prisma.client.report.count({ where: { status: "DISMISSED" } }),
     ]);
 
     return {
       users: { total: totalUsers, suspended: suspendedUsers },
-      sessions: { ongoing: ongoingSessions, upcoming: upcomingSessions, ended: endedSessions },
+      sessions: {
+        ongoing: ongoingSessions,
+        upcoming: upcomingSessions,
+        ended: endedSessions,
+      },
       reports: {
         pendingSession: pendingSessionReports,
         pendingUser: pendingUserReports,
@@ -119,21 +130,23 @@ export class AdminPanelService {
   }
 
   async suspendUser(userId: string, dto: SuspendUserDto) {
-    const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+    });
     if (!user) throw new AppError("User not found", 404);
 
     const updated = await this.prisma.client.user.update({
       where: { id: userId },
-      data: { isSuspended: true, suspendedAt: new Date(), suspendedReason: dto.reason ?? null },
+      data: {
+        isSuspended: true,
+        suspendedAt: new Date(),
+        suspendedReason: dto.reason ?? null,
+      },
       select: adminUserSelect,
     });
 
-    // A suspension should cut off a session already in flight too, not just
-    // block the next login/refresh.
     await this.prisma.client.refreshToken.deleteMany({ where: { userId } });
 
-    // Suspending straight from a report row also resolves that report, so
-    // the admin doesn't need a second action to clear it from Pending.
     if (dto.reportId) {
       await this.prisma.client.report.updateMany({
         where: { id: dto.reportId, reportedUserId: userId },
@@ -145,7 +158,9 @@ export class AdminPanelService {
   }
 
   async unsuspendUser(userId: string) {
-    const user = await this.prisma.client.user.findUnique({ where: { id: userId } });
+    const user = await this.prisma.client.user.findUnique({
+      where: { id: userId },
+    });
     if (!user) throw new AppError("User not found", 404);
 
     return this.prisma.client.user.update({
@@ -165,15 +180,26 @@ export class AdminPanelService {
         ? { status: "CLOSED" as const }
         : category === "UPCOMING"
           ? { status: "ACTIVE" as const, scheduledAt: { gt: now } }
-          : { status: "ACTIVE" as const, OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }] };
+          : {
+              status: "ACTIVE" as const,
+              OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+            };
 
     const where = {
       ...categoryWhere,
       ...(search && {
         OR: [
           { title: { contains: search, mode: "insensitive" as const } },
-          { creator: { name: { contains: search, mode: "insensitive" as const } } },
-          { creator: { email: { contains: search, mode: "insensitive" as const } } },
+          {
+            creator: {
+              name: { contains: search, mode: "insensitive" as const },
+            },
+          },
+          {
+            creator: {
+              email: { contains: search, mode: "insensitive" as const },
+            },
+          },
         ],
       }),
     };
@@ -192,7 +218,10 @@ export class AdminPanelService {
           creator: { select: { id: true, name: true, email: true } },
           _count: { select: { participants: true, messages: true } },
         },
-        orderBy: category === "UPCOMING" ? { scheduledAt: "asc" } : { createdAt: "desc" },
+        orderBy:
+          category === "UPCOMING"
+            ? { scheduledAt: "asc" }
+            : { createdAt: "desc" },
         skip,
         take: limit,
       }),
@@ -201,7 +230,10 @@ export class AdminPanelService {
 
     const withExpiry = sessions.map((s) => {
       const anchor = s.scheduledAt ?? s.createdAt;
-      return { ...s, expiresAt: new Date(anchor.getTime() + SESSION_TTL_MS[s.type]) };
+      return {
+        ...s,
+        expiresAt: new Date(anchor.getTime() + SESSION_TTL_MS[s.type]),
+      };
     });
 
     return { sessions: withExpiry, total, page, limit };
@@ -227,7 +259,9 @@ export class AdminPanelService {
           status: true,
           createdAt: true,
           reporter: { select: { id: true, name: true, email: true } },
-          reportedUser: { select: { id: true, name: true, email: true, isSuspended: true } },
+          reportedUser: {
+            select: { id: true, name: true, email: true, isSuspended: true },
+          },
           session: { select: { id: true, title: true, status: true } },
         },
         orderBy: { createdAt: "desc" },
@@ -241,9 +275,14 @@ export class AdminPanelService {
   }
 
   async updateReportStatus(reportId: string, status: "REVIEWED" | "DISMISSED") {
-    const report = await this.prisma.client.report.findUnique({ where: { id: reportId } });
+    const report = await this.prisma.client.report.findUnique({
+      where: { id: reportId },
+    });
     if (!report) throw new AppError("Report not found", 404);
 
-    return this.prisma.client.report.update({ where: { id: reportId }, data: { status } });
+    return this.prisma.client.report.update({
+      where: { id: reportId },
+      data: { status },
+    });
   }
 }

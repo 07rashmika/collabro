@@ -8,10 +8,6 @@ interface AdminPanelPayload {
   email: string;
 }
 
-/// Guards the web admin panel's API — a single operator identity read from
-/// ADMIN_EMAIL/ADMIN_PASSWORD (see admin-panel.service.ts), signed with its
-/// own secret so this session is entirely separate from student JWTs and
-/// can't be confused with the User-row-based Role.ADMIN used elsewhere.
 export function adminPanelGuard(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
 

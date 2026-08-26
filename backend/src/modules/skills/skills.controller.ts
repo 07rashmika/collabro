@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 import { ZodError, z } from "zod";
 import { SkillsService } from "./skills.service";
-import { CreateSkillSchema, UpdateSkillSchema, FindOrCreateSkillSchema } from "./skills.schema";
+import {
+  CreateSkillSchema,
+  UpdateSkillSchema,
+  FindOrCreateSkillSchema,
+} from "./skills.schema";
 
 export class SkillsController {
   constructor(private readonly skillsService: SkillsService) {}
@@ -23,7 +27,7 @@ export class SkillsController {
   async getSkillById(req: Request, res: Response) {
     try {
       const skill = await this.skillsService.getSkillById(
-        req.params.id as string
+        req.params.id as string,
       );
       res.status(200).json(skill);
     } catch (err) {
@@ -92,7 +96,7 @@ export class SkillsController {
       const dto = UpdateSkillSchema.parse(req.body);
       const skill = await this.skillsService.updateSkill(
         req.params.id as string,
-        dto
+        dto,
       );
       res.status(200).json(skill);
     } catch (err) {

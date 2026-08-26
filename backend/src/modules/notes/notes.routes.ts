@@ -13,14 +13,22 @@ import { SummariesService } from "../summaries/summaries.service";
 const router = Router();
 
 const prisma = PrismaService.getInstance();
-const summarizerClient = new SummarizerClient(process.env.SUMMARIZER_URL || "http://localhost:8000");
+const summarizerClient = new SummarizerClient(
+  process.env.SUMMARIZER_URL || "http://localhost:8000",
+);
 const summariesService = new SummariesService(summarizerClient);
 const notesService = new NotesService(prisma, summariesService);
 const notesController = new NotesController(notesService);
 
 const MAX_PHOTOS_PER_UPLOAD = 6;
 const MAX_PHOTO_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
-const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "image/heif",
+]);
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -43,7 +51,11 @@ const upload = multer({
   },
 });
 
-function uploadPhotosMiddleware(req: Request, res: Response, next: NextFunction) {
+function uploadPhotosMiddleware(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   upload.array("photos", MAX_PHOTOS_PER_UPLOAD)(req, res, (err: unknown) => {
     if (err instanceof multer.MulterError) {
       next(new AppError(err.message, 400));
@@ -59,44 +71,37 @@ function uploadPhotosMiddleware(req: Request, res: Response, next: NextFunction)
 
 router.use(jwtGuard);
 
-// My notes
 router.get("/me", (req, res) => notesController.getMyNotes(req, res));
 router.get("/me/tags", (req, res) => notesController.getAllTags(req, res));
 
-// Public notes discovery
 router.get("/public", (req, res) => notesController.getPublicNotes(req, res));
 
-// Notes by a specific student
 router.get("/user/:userId", (req, res) =>
-  notesController.getNotesByUser(req, res)
+  notesController.getNotesByUser(req, res),
 );
 
-// Summarize freeform text before a note exists (used by the "summarize,
-// then post" note creation flow). Must stay ahead of `/:id` routes below.
-router.post("/summarize", (req, res) => notesController.summarizeText(req, res));
+router.post("/summarize", (req, res) =>
+  notesController.summarizeText(req, res),
+);
 
-// Single note
 router.get("/:id", (req, res) => notesController.getNoteById(req, res));
 router.post("/", (req, res) => notesController.createNote(req, res));
 router.patch("/:id", (req, res) => notesController.updateNote(req, res));
 router.delete("/:id", (req, res) => notesController.deleteNote(req, res));
 
-// Toggle public / private
 router.patch("/:id/visibility", (req, res) =>
-  notesController.toggleVisibility(req, res)
+  notesController.toggleVisibility(req, res),
 );
 
-// AI summary
 router.post("/:id/summary", (req, res) =>
-  notesController.generateSummary(req, res)
+  notesController.generateSummary(req, res),
 );
 
-// Photos
 router.post("/:id/photos", uploadPhotosMiddleware, (req, res) =>
-  notesController.uploadPhotos(req, res)
+  notesController.uploadPhotos(req, res),
 );
 router.delete("/:id/photos/:photoId", (req, res) =>
-  notesController.deletePhoto(req, res)
+  notesController.deletePhoto(req, res),
 );
 
 export default router;

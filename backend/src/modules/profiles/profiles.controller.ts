@@ -25,7 +25,7 @@ export class ProfilesController {
   async getProfileByUserId(req: Request, res: Response) {
     try {
       const profile = await this.profilesService.getProfileByUserId(
-        req.params.userId as string
+        req.params.userId as string,
       );
       res.status(200).json(profile);
     } catch (err) {
@@ -38,7 +38,7 @@ export class ProfilesController {
       const dto = CreateProfileSchema.parse(req.body);
       const profile = await this.profilesService.createProfile(
         req.user!.sub,
-        dto
+        dto,
       );
       res.status(201).json(profile);
     } catch (err) {
@@ -57,7 +57,7 @@ export class ProfilesController {
       const dto = UpdateProfileSchema.parse(req.body);
       const profile = await this.profilesService.updateProfile(
         req.user!.sub,
-        dto
+        dto,
       );
       res.status(200).json(profile);
     } catch (err) {
@@ -106,7 +106,10 @@ export class ProfilesController {
   async addStudyArea(req: Request, res: Response) {
     try {
       const dto = AddStudyAreaSchema.parse(req.body);
-      const result = await this.profilesService.addStudyArea(req.user!.sub, dto);
+      const result = await this.profilesService.addStudyArea(
+        req.user!.sub,
+        dto,
+      );
       res.status(200).json(result);
     } catch (err) {
       if (err instanceof ZodError) {

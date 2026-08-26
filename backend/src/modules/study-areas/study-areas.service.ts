@@ -16,7 +16,7 @@ export class StudyAreasService {
         name: true,
         createdAt: true,
         _count: {
-          select: { profileStudyAreas: true }, // how many students study this area
+          select: { profileStudyAreas: true },
         },
       },
     });
@@ -81,11 +81,6 @@ export class StudyAreasService {
     });
   }
 
-  /**
-   * Student-accessible (unlike createStudyArea, admin-only) — lets the
-   * profile-setup picker create a study area on the fly for any field of
-   * study, not just what's been pre-seeded. Case-insensitive dedupe.
-   */
   async findOrCreateStudyArea(dto: FindOrCreateStudyAreaDto) {
     const name = dto.name.trim();
 

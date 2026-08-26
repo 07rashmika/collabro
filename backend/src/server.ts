@@ -1,6 +1,5 @@
 import "dotenv/config";
 
-// Startup env validation
 const REQUIRED_ENV_VARS = [
   "DATABASE_URL",
   "JWT_ACCESS_SECRET",
@@ -14,7 +13,7 @@ const missing = REQUIRED_ENV_VARS.filter((key) => !process.env[key]);
 if (missing.length > 0) {
   console.error(
     `[Server] Missing required environment variables: ${missing.join(", ")}\n` +
-      "Add them to your .env file and restart."
+      "Add them to your .env file and restart.",
   );
   process.exit(1);
 }

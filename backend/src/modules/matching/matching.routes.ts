@@ -12,12 +12,10 @@ const matchingController = new MatchingController(matchingService);
 
 router.use(jwtGuard);
 
-// Get ranked study-partner match suggestions
 router.get("/suggestions", (req, res) =>
   matchingController.getSuggestions(req, res)
 );
 
-// Get match score between me and a specific student
 router.get("/score/:userId", (req, res) =>
   matchingController.getMatchById(req, res)
 );
