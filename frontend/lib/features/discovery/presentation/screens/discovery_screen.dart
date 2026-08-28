@@ -85,7 +85,7 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
     String? password;
     if (session.hasPassword) {
       password = await _promptForPassword(session.title);
-      if (password == null) return; //cancelled
+      if (password == null) return;
       if (!mounted) return;
     }
 
@@ -97,7 +97,10 @@ class _DiscoveryViewState extends State<_DiscoveryView> {
       if (mounted) await context.push(AppRoutes.sessionDetail, extra: joined);
     } catch (e) {
       if (mounted) {
-        showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
+        showErrorSnackBar(
+          context,
+          e.toString().replaceFirst('Exception: ', ''),
+        );
       }
     }
   }

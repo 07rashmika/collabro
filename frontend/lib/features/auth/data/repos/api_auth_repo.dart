@@ -168,6 +168,19 @@ class ApiAuthRepo implements AuthRepo {
     }
   }
 
+  @override
+  Future<void> deleteAccount() async {
+    try {
+      await apiClient.delete(AuthEndpoints.deleteMe);
+    } on DioException catch (e) {
+      throw ApiException.fromDioError(e);
+    } catch (e) {
+      throw Exception('Delete account failed: $e');
+    } finally {
+      await storage.deleteAll();
+    }
+  }
+
   Future<void> _persistTokens(String access, String refresh) async {
     await storage.write(key: SecureStorageKeys.accessToken, value: access);
     await storage.write(key: SecureStorageKeys.refreshToken, value: refresh);

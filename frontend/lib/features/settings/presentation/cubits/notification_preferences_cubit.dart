@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import 'package:frontend/core/network/secure_storage_keys.dart';
 import 'package:frontend/features/users/domain/repos/users_repo.dart';
 
@@ -16,9 +15,6 @@ class NotificationPreferences extends Equatable {
     this.videoSessionNotifications = true,
   });
 
-  // The main toggle reflects the group, not a separately stored value —
-  // any category on counts as notifications being "received"; only when
-  // every category is off does the app consider them fully off.
   bool get anyEnabled =>
       messageNotifications ||
       connectionNotifications ||
@@ -32,10 +28,6 @@ class NotificationPreferences extends Equatable {
   ];
 }
 
-/// Stores the user's preference locally (for instant UI on launch) and
-/// syncs each change up to the backend, which mirrors these on the User
-/// row — that's what the push-sending code actually checks before sending,
-/// since the on-device copy alone never reaches the server otherwise.
 class NotificationPreferencesCubit extends Cubit<NotificationPreferences> {
   final FlutterSecureStorage storage;
   final UsersRepo usersRepo;
@@ -105,7 +97,6 @@ class NotificationPreferencesCubit extends Cubit<NotificationPreferences> {
     _syncToBackend(notifyVideoSessions: value);
   }
 
-  /// Turning the main toggle on/off cascades to every category.
   Future<void> setAll(bool value) async {
     emit(
       NotificationPreferences(
@@ -135,9 +126,6 @@ class NotificationPreferencesCubit extends Cubit<NotificationPreferences> {
     );
   }
 
-  /// Fire-and-forget — the local write above is already the source of
-  /// truth for this device's UI, so a failed sync here (offline, etc.)
-  /// shouldn't block or roll back the toggle the user just flipped.
   Future<void> _syncToBackend({
     bool? notifyMessages,
     bool? notifyConnections,

@@ -9,4 +9,5 @@ abstract class AuthEndpoints {
   static const String resetPassword = '/auth/reset-password';
 
   static const String currentUser = '/users/me';
+  static const String deleteMe = '/users/me';
 }

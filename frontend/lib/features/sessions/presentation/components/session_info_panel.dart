@@ -18,9 +18,6 @@ import 'package:frontend/features/sessions/presentation/components/session_info_
 import 'package:frontend/features/sessions/presentation/components/session_tag_chip.dart';
 import 'package:frontend/features/sessions/presentation/cubits/sessions_cubit.dart';
 
-/// Key used in [_reportingKey] to track an in-flight "report the session
-/// itself" submission, as opposed to a report targeting a specific
-/// participant (keyed by that participant's userId).
 const _sessionReportKey = '__session__';
 
 class SessionInfoPanel extends StatefulWidget {

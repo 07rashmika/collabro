@@ -6,9 +6,6 @@ import 'package:frontend/core/network/api_config.dart';
 class UserAvatar extends StatelessWidget {
   final String name;
   final double size;
-  // Relative backend path (e.g. `/uploads/avatars/xyz.jpg`) as returned by
-  // the API — resolved against ApiConfig.baseUrl. Falls back to initials
-  // when null or the image fails to load.
   final String? imageUrl;
 
   const UserAvatar({

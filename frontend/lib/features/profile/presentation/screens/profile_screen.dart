@@ -44,10 +44,6 @@ class _ProfileViewState extends State<_ProfileView> {
   @override
   void initState() {
     super.initState();
-    // Connection requests being sent/accepted/declined/removed — whether
-    // by this user elsewhere in the app or by the other side — are all
-    // reported over this channel, so the connections count stays live
-    // instead of only updating the next time this screen is rebuilt.
     final profileCubit = context.read<ProfileCubit>();
     _notificationsChangedSubscription = context
         .read<UserNotificationsService>()

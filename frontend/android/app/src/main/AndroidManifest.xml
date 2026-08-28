@@ -17,7 +17,7 @@
     <!-- Required on Android 13+ to show the foreground service's notification. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="frontend"
+        android:label="Collabro"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <service

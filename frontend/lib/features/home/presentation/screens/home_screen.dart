@@ -204,7 +204,7 @@ class _HomeViewState extends State<_HomeView> {
     String? password;
     if (session.hasPassword) {
       password = await _promptForPassword(context, session.title);
-      if (password == null) return; // cancelled
+      if (password == null) return;
       if (!context.mounted) return;
     }
 
@@ -218,7 +218,10 @@ class _HomeViewState extends State<_HomeView> {
       }
     } catch (e) {
       if (context.mounted) {
-        showErrorSnackBar(context, e.toString().replaceFirst('Exception: ', ''));
+        showErrorSnackBar(
+          context,
+          e.toString().replaceFirst('Exception: ', ''),
+        );
       }
     }
   }

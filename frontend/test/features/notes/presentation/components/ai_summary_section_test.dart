@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:frontend/features/notes/presentation/components/ai_summary_section.dart';
 
 void main() {
-  Widget wrap(Widget child) =>
-      MaterialApp(home: Scaffold(body: SingleChildScrollView(child: child)));
+  Widget wrap(Widget child) => MaterialApp(
+    home: Scaffold(body: SingleChildScrollView(child: child)),
+  );
 
   group('AiSummarySection — no summary yet', () {
     testWidgets('shows the generate prompt and button', (tester) async {
@@ -60,13 +60,10 @@ void main() {
         ),
       );
 
-      // PrimaryButton(isLoading: true) swaps its label for a spinner.
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
       expect(find.text('Generate Summary'), findsNothing);
 
-      final button = tester.widget<ElevatedButton>(
-        find.byType(ElevatedButton),
-      );
+      final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
       expect(button.onPressed, isNull);
     });
   });

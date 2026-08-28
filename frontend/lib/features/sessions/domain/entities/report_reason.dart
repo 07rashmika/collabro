@@ -5,9 +5,6 @@ enum ReportTargetType {
   String toJson() => this == ReportTargetType.user ? 'USER' : 'SESSION';
 }
 
-/// Reasons offered when reporting a session or a participant — shared by
-/// both, since a participant report and a session report are both really
-/// "something about this study session needs a moderator's attention".
 enum ReportReason {
   spamOrAdvertising,
   harassmentOrBullying,

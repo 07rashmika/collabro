@@ -18,10 +18,109 @@ class ProfileBody extends StatelessWidget {
 
   const ProfileBody({super.key, required this.state});
 
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final cubit = context.read<ProfileCubit>();
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        final colors = AppColors.of(dialogContext);
+        final typography = AppTypography.of(dialogContext);
+        return AlertDialog(
+          backgroundColor: colors.backgroundCard,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                color: colors.error,
+                size: AppSpacing.iconLg,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text('Delete Account', style: typography.titleLarge),
+            ],
+          ),
+          content: Text(
+            'This action cannot be undone.\n\n'
+            'Your account, notes, sessions, and all associated data will be '
+            'permanently deleted from our servers.',
+            style: typography.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(
+                'Cancel',
+                style: typography.labelLarge.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: Text(
+                'Delete',
+                style: typography.labelLarge.copyWith(color: colors.error),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      cubit.deleteAccount();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final typography = AppTypography.of(context);
+
+    return BlocListener<ProfileCubit, ProfileState>(
+      listener: (context, state) {
+        if (state is ProfileAccountDeleted) {
+          context.go(AppRoutes.signIn);
+        } else if (state is ProfileError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.message),
+              backgroundColor: colors.error,
+            ),
+          );
+        }
+      },
+      child: _buildBody(context, colors, typography),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    AppColors colors,
+    AppTypography typography,
+  ) {
+    if (state is ProfileDeletingAccount) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: colors.error),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'Deleting your account…',
+              style: typography.bodyMedium.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (state is ProfileLoading) {
       return Center(child: CircularProgressIndicator(color: colors.primary));
     }
@@ -29,14 +128,14 @@ class ProfileBody extends StatelessWidget {
     if (state is ProfileError) {
       return Center(
         child: Padding(
-          padding: const .all(AppSpacing.xxl),
+          padding: const EdgeInsets.all(AppSpacing.xxl),
           child: Column(
-            mainAxisSize: .min,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 genericErrorMessage,
                 style: typography.bodyMedium,
-                textAlign: .center,
+                textAlign: TextAlign.center,
               ),
               const SizedBox(height: AppSpacing.lg),
               PrimaryButton(
@@ -51,9 +150,11 @@ class ProfileBody extends StatelessWidget {
 
     final loaded = state as ProfileLoaded;
     return SingleChildScrollView(
-      padding: const .symmetric(horizontal: AppSpacing.screenHorizontal),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.screenHorizontal,
+      ),
       child: Column(
-        crossAxisAlignment: .stretch,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: AppSpacing.md),
           Center(
@@ -114,6 +215,30 @@ class ProfileBody extends StatelessWidget {
               studyAreas: loaded.profile!.studyAreas,
               interests: loaded.profile!.interests,
             ),
+          const SizedBox(height: AppSpacing.xxl),
+
+          Divider(color: colors.border),
+
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            height: AppSpacing.buttonHeightMd,
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _confirmDeleteAccount(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: colors.error,
+                side: BorderSide(color: colors.error),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+                ),
+              ),
+              icon: const Icon(Icons.delete_forever_outlined),
+              label: Text(
+                'Delete Account',
+                style: typography.labelLarge.copyWith(color: colors.error),
+              ),
+            ),
+          ),
           const SizedBox(height: AppSpacing.xxl),
         ],
       ),

@@ -33,3 +33,11 @@ final class ProfileError extends ProfileState {
   @override
   List<Object?> get props => [message];
 }
+
+final class ProfileDeletingAccount extends ProfileState {
+  const ProfileDeletingAccount();
+}
+
+final class ProfileAccountDeleted extends ProfileState {
+  const ProfileAccountDeleted();
+}

@@ -33,9 +33,6 @@ class _MainShellState extends State<MainShell> {
     _pushNotificationsService = PushNotificationsService(
       usersRepo: context.read<UsersRepo>(),
     )..start();
-    // A connection request being accepted or declined by the other side is
-    // reported over this same channel — drop any stale optimistic connect-
-    // button state so it reflects the change instead of masking it.
     final connectionsCubit = context.read<ConnectionsCubit>();
     _notificationsChangedSubscription = _notificationsService
         .notificationsChanged

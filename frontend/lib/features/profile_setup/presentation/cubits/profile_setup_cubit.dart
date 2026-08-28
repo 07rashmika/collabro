@@ -59,8 +59,6 @@ class ProfileSetupCubit extends Cubit<ProfileSetupState> {
     emit(current.copyWith(currentStep: current.currentStep - 1));
   }
 
-  /// Selecting an existing catalog suggestion — added at Beginner by
-  /// default; tap the resulting chip to cycle its level.
   void selectSkill(Skill skill) {
     final current = state;
     if (current is! ProfileSetupReady) return;

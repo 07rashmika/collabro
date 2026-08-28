@@ -53,11 +53,6 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     emit(const AuthLoading(AuthAction.logout));
     try {
-      // Unregister this device's push token first, while the session backing
-      // it is still valid — otherwise the account keeps receiving pushes on
-      // this device after logout (the token is only ever reassigned to
-      // whoever logs in here next, never cleared on its own). Best-effort:
-      // a missed unregister shouldn't block logging out.
       try {
         final token = await FirebaseMessaging.instance.getToken();
         if (token != null) await usersRepo.unregisterDeviceToken(token);

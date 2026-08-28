@@ -4,19 +4,17 @@ import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/features/sessions/domain/entities/report_reason.dart';
 
-/// Confirmed result of the report dialog: the chosen reason plus any
-/// optional free-text elaboration the reporter typed.
 typedef ReportSubmission = ({ReportReason reason, String? details});
 
-/// Reason + optional details picker shared by "Report Session" (info panel)
-/// and "Report" on a participant row — same taxonomy either way, since both
-/// boil down to "something about this session needs a moderator's
-/// attention". Returns null on cancel.
 class ReportDialog extends StatefulWidget {
   final String title;
   final String description;
 
-  const ReportDialog({super.key, required this.title, required this.description});
+  const ReportDialog({
+    super.key,
+    required this.title,
+    required this.description,
+  });
 
   static Future<ReportSubmission?> show(
     BuildContext context, {

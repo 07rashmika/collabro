@@ -3,8 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/widgets/user_avatar.dart';
 
-/// A [UserAvatar] with a tap-to-change camera badge, used wherever the
-/// signed-in user can pick/replace their own profile photo.
 class AvatarPicker extends StatelessWidget {
   final String name;
   final String? imageUrl;

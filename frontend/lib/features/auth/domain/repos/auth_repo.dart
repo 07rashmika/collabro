@@ -16,4 +16,5 @@ abstract class AuthRepo {
     required String resetToken,
     required String newPassword,
   });
+  Future<void> deleteAccount();
 }

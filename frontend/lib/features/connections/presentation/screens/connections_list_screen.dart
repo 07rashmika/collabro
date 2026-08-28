@@ -12,8 +12,6 @@ import 'package:frontend/features/users/domain/entities/public_user.dart';
 import 'package:go_router/go_router.dart';
 
 class ConnectionsListScreen extends StatefulWidget {
-  // Null means "my own connections". Set to view another user's instead —
-  // this reuses the exact same list/panel either way.
   final String? userId;
   final String? userName;
 
@@ -155,10 +153,6 @@ class _ConnectionsListScreenState extends State<ConnectionsListScreen> {
                       return ConnectedUserTile(
                         user: user,
                         onTap: () async {
-                          // The profile screen lets the viewer remove a
-                          // connection of their own — refresh on return so
-                          // this list reflects any change instead of going
-                          // stale.
                           await context.push(
                             AppRoutes.userProfile,
                             extra: user.id,

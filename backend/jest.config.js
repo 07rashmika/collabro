@@ -1,3 +1,4 @@
+//claude code generated file
 /** @type {import('jest').Config} */
 module.exports = {
   testEnvironment: "node",
@@ -6,9 +7,6 @@ module.exports = {
   },
   rootDir: "src",
   testMatch: ["**/__tests__/**/*.test.ts"],
-  // sessions.routes.ts registers a process-lifetime setInterval (the stale-
-  // session sweep) the moment app.ts is imported for the integration suite —
-  // harmless in prod, but it's a handle Jest would otherwise wait on forever.
   forceExit: true,
   setupFiles: ["<rootDir>/../jest.setup.js"],
   collectCoverageFrom: [

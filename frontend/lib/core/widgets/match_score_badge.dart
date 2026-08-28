@@ -3,7 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Small light-green pill showing a match percentage, e.g. "93% Match".
 class MatchScoreBadge extends StatelessWidget {
   final int score;
 

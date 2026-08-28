@@ -5,8 +5,6 @@ import 'package:frontend/core/constants/app_typography.dart';
 import 'package:frontend/core/utils/time_ago.dart';
 import 'package:frontend/features/notes/domain/entities/note.dart';
 
-/// Renders a note's AI-generated summary — only meant to be shown for a
-/// [Note] that actually has one ([Note.summary] non-null).
 class AiSummaryCard extends StatelessWidget {
   final Note note;
   final VoidCallback onReadMore;

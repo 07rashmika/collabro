@@ -39,11 +39,6 @@ class ConnectionsCubit extends Cubit<ConnectionsState> {
     );
   }
 
-  /// Drops all optimistic overrides so the next backend-fetched status wins
-  /// — call this whenever something may have changed a connection's status
-  /// from the OTHER side (e.g. a request was accepted or declined), since
-  /// an override set from this side's own action would otherwise mask that
-  /// change indefinitely.
   void clearOverrides() {
     if (state.overrides.isEmpty) return;
     emit(const ConnectionsState());

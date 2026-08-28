@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
-import 'package:mocktail/mocktail.dart';
-
 import 'package:frontend/features/notes/domain/entities/note.dart';
 import 'package:frontend/features/notes/domain/repos/notes_repo.dart';
 import 'package:frontend/features/notes/presentation/screens/note_detail_screen.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 
 class MockNotesRepo extends Mock implements NotesRepo {}
 
@@ -32,11 +31,6 @@ void main() {
     notesRepo = MockNotesRepo();
   });
 
-  // NoteDetailScreen navigates via go_router's context.pop()/context.push(),
-  // not Navigator directly, so a bare MaterialApp isn't enough for anything
-  // that pops (the back arrow, the delete dialog's actions). Nesting the
-  // route under '/' gives a two-deep page stack so pop() has somewhere to
-  // go back to, matching how it's reached in the real app.
   Widget wrap(Note note) {
     final router = GoRouter(
       initialLocation: '/note',
@@ -75,23 +69,22 @@ void main() {
     expect(find.byIcon(Icons.public), findsNothing);
   });
 
-  testWidgets(
-    'tapping the visibility toggle flips the note to public',
-    (tester) async {
-      when(
-        () => notesRepo.toggleVisibility('n1'),
-      ).thenAnswer((_) async => buildNote(isPublic: true));
+  testWidgets('tapping the visibility toggle flips the note to public', (
+    tester,
+  ) async {
+    when(
+      () => notesRepo.toggleVisibility('n1'),
+    ).thenAnswer((_) async => buildNote(isPublic: true));
 
-      await tester.pumpWidget(wrap(buildNote(isPublic: false)));
+    await tester.pumpWidget(wrap(buildNote(isPublic: false)));
 
-      await tester.tap(find.byIcon(Icons.lock_outline));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.lock_outline));
+    await tester.pumpAndSettle();
 
-      expect(find.byIcon(Icons.public), findsOneWidget);
-      expect(find.byIcon(Icons.lock_outline), findsNothing);
-      verify(() => notesRepo.toggleVisibility('n1')).called(1);
-    },
-  );
+    expect(find.byIcon(Icons.public), findsOneWidget);
+    expect(find.byIcon(Icons.lock_outline), findsNothing);
+    verify(() => notesRepo.toggleVisibility('n1')).called(1);
+  });
 
   testWidgets(
     'tapping Delete Note asks for confirmation before deleting anything',
@@ -102,10 +95,11 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('This permanently deletes "Lecture recap". This can\'t be undone.'),
+        find.text(
+          'This permanently deletes "Lecture recap". This can\'t be undone.',
+        ),
         findsOneWidget,
       );
-      // The repo must not be touched until the user confirms.
       verifyNever(() => notesRepo.deleteNote(any()));
 
       await tester.tap(find.text('Cancel'));

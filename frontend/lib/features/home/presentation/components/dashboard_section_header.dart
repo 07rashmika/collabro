@@ -3,8 +3,6 @@ import 'package:frontend/core/constants/app_colors.dart';
 import 'package:frontend/core/constants/app_spacing.dart';
 import 'package:frontend/core/constants/app_typography.dart';
 
-/// Reusable "Section Title ... View All" row used above every dashboard
-/// section (Recommended Partners, Upcoming Sessions, AI Summaries).
 class DashboardSectionHeader extends StatelessWidget {
   final String title;
   final IconData? leadingIcon;

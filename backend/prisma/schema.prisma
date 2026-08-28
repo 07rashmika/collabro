@@ -132,7 +132,7 @@ model Note {
   id        String      @id @default(cuid())
   title     String
   content   String
-  summary   String?     // AI generated summary — filled later
+  summary   String?     
   tags      String[]
   isPublic  Boolean     @default(false)
   authorId  String

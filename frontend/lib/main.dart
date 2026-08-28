@@ -35,9 +35,6 @@ void main() async {
   try {
     await Firebase.initializeApp();
   } catch (e) {
-    // Push notifications are a soft dependency — don't block the app from
-    // starting if Firebase isn't configured yet (e.g. google-services.json
-    // hasn't been added). Everything else keeps working without it.
     debugPrint('Firebase init failed (push notifications disabled): $e');
   }
   runApp(const MyApp());
