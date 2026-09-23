@@ -12,3 +12,6 @@ uploads/notes/*
 !uploads/notes/.gitkeep
 uploads/sessions/recordings/*
 !uploads/sessions/recordings/.gitkeep
+
+dist
+dist/*
