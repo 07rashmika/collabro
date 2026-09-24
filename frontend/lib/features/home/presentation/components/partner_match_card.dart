@@ -67,6 +67,7 @@ class PartnerMatchCard extends StatelessWidget {
                     .map((s) => SkillChip(label: s))
                     .toList(),
               ),
+            const Spacer(),
             const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: .infinity,
