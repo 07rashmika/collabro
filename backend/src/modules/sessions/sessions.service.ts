@@ -844,6 +844,7 @@ export class SessionsService {
         ...trackMeta.map((t) => new Date(t.startedAt).getTime()),
       );
 
+      //tracks transcribed
       const labeledSegments = await Promise.all(
         files.map(async (file, i) => {
           const meta = trackMeta[i]!;
@@ -860,7 +861,7 @@ export class SessionsService {
             start: s.start + offsetSeconds,
             label: meta.label,
             text: s.text.trim(),
-          }));
+          })); //align on a one timeline
         }),
       );
 
@@ -876,6 +877,7 @@ export class SessionsService {
         throw new AppError("No speech detected in the recording", 400);
       }
 
+      //text messages
       const transcript = merged.map((s) => `${s.label}: ${s.text}`).join("\n");
       console.log(
         `[Recording] Summarizing session ${sessionId} (${transcript.length} chars of transcript)`,

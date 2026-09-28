@@ -26,8 +26,8 @@ class WebRTCService {
   bool _isHungUp = false;
   bool _recordingEnabled = false;
 
-  MediaRecorder? _inputRecorder;
-  MediaRecorder? _outputRecorder;
+  MediaRecorder? _inputRecorder; //obtain input from mic
+  MediaRecorder? _outputRecorder; //obtain output from speaker
   String? _inputRecordingPath;
   String? _outputRecordingPath;
   DateTime? _inputRecordingStartedAt;

@@ -3,6 +3,7 @@ export type SummaryTask = "dialogue" | "notes";
 export class SummarizerClient {
   constructor(private readonly baseUrl: string) {}
 
+  // send text to the summarizer service and return the summary
   async summarize(text: string, task: SummaryTask): Promise<string> {
     const response = await fetch(`${this.baseUrl}/summarize`, {
       method: "POST",

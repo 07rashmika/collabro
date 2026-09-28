@@ -80,10 +80,15 @@ export class MatchingService {
     const me = this.toStudentProfile(myProfile);
 
     const scored: MatchScore[] = candidateProfiles
+      // score each person
       .map((p) => this.scoreCandidate(me, this.toStudentProfile(p)))
+      // remove low scores
       .filter((s) => s.totalScore > 0 && s.totalScore >= minScore)
+      // highest first
       .sort((a, b) => b.totalScore - a.totalScore)
+      // keep top 10
       .slice(0, limit)
+      // add the reason
       .map((s) => ({ ...s, aiReason: this.buildReason(s) }));
 
     const suggestions = scored.map((s) => ({
@@ -156,7 +161,7 @@ export class MatchingService {
       candidateSkillIds.has(id),
     );
     const skillOverlapScore =
-      mySkillIds.size > 0 ? (sharedSkillIds.length / mySkillIds.size) * 30 : 0;
+      mySkillIds.size > 0 ? (sharedSkillIds.length / mySkillIds.size) * 30 : 0; //shared skill
 
     let complementaryScore = 0;
     const complementarySkills: string[] = [];
@@ -172,7 +177,7 @@ export class MatchingService {
         const diff = theirLevel - myLevel;
 
         if (diff > 0) {
-          complementaryScore += diff * (25 / 4);
+          complementaryScore += diff * (25 / 4); // 25 / 4 = 6.25 per level
           complementarySkills.push(mySkill.skill.name);
         }
       }
@@ -182,6 +187,7 @@ export class MatchingService {
 
     let goalAlignmentScore = 0;
 
+    // goal match
     if (me.learningGoal && candidate.teachGoal) {
       const myGoalWords = me.learningGoal
         .toLowerCase()
